@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
         console.log('Received message from server: ', data);
     });
 
-    handleActiveEditor(vscode.window.activeTextEditor, context);
+    // handleActiveEditor(vscode.window.activeTextEditor, context);
 
     vscode.window.onDidChangeActiveTextEditor(
         editor => handleActiveEditor(editor, context), null, context.subscriptions
@@ -31,7 +31,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 function handleActiveEditor(editor: vscode.TextEditor | undefined, context: vscode.ExtensionContext) {
     if (editor) {
+
+        // Getting the current file name and Updating it in the workspace state
         const inputFileName: string | undefined = editor.document.fileName;
+        console.log(`Current file name: ${inputFileName}`);
+
         // if the file is opened for the first time, initialize an empty list for it
         if (inputFileName && !(inputFileName in openedFiles)) {
             openedFiles[inputFileName] = [];
@@ -51,7 +55,6 @@ function handleActiveEditor(editor: vscode.TextEditor | undefined, context: vsco
     }
 }
 
-// ... rest of your existing code ...
 
 function handleTextChange(event: vscode.TextDocumentChangeEvent, context: vscode.ExtensionContext) {
     const editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
