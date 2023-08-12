@@ -17,6 +17,16 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // Register the inline completion item provider
-  context.subscriptions.push(vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, completionProviderModule));
+  vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, completionProviderModule);
+  vscode.workspace.getConfiguration().update('editor.quickSuggestions', false);
 }
 
+
+// vscode.languages.registerInlineCompletionItemProvider(
+//   { pattern: '**' },
+//   {
+//     provideInlineCompletionItems: async (document, position) => {
+//       return [{ text: '< 2) {\n\treturn 1;\n\t}' }]
+//     },
+//   },
+// )
