@@ -31,8 +31,8 @@ export class SocketModule {
     });
   }
 
-  public emitMessage(message: string, inputType: string) {
-    this.socket.emit('send_message', { message, inputType });
+  public emitMessage(prefix: string, suffix: string, inputType: string) {
+    this.socket.emit('send_message', { prefix, suffix, inputType });
   }
 
   private async typeAndDelete(letter: string) {

@@ -37,30 +37,30 @@ export class VscodeEventsModule {
     }
   }
 
-  private getTextAfterCursor(editor: vscode.TextEditor | undefined): string | null {
+  private getTextAfterCursor(editor: vscode.TextEditor | undefined): string {
     // Function to get text after the cursor
     if (editor) {
       const position = editor.selection.active;
       const range = new vscode.Range(position, new vscode.Position(editor.document.lineCount, 0));
       return editor.document.getText(range);
     }
-    return null;
+    return "";
   }
 
-  private getTextBeforeCursor(editor: vscode.TextEditor | undefined): string | null {
+  private getTextBeforeCursor(editor: vscode.TextEditor | undefined): string {
     // Function to get text before the cursor
     if (editor) {
       const position = editor.selection.active;
       const range = new vscode.Range(new vscode.Position(0, 0), position);
       return editor.document.getText(range);
     }
-    return null;
+    return "";
   }
 
   private textPredictionHandeling(editor: vscode.TextEditor | undefined, textAfterCursor: string | null,
      textBeforeCursor: string | null, tempSuggestion: string | undefined,
      event: vscode.TextDocumentChangeEvent): string | null {
-    
+
     console.log(`Current Active Suggestion: ${tempSuggestion}`);
     // Cheking if Active Suggestion has a value or not
     if (tempSuggestion === undefined || tempSuggestion ===""){
@@ -68,33 +68,15 @@ export class VscodeEventsModule {
       if (this.timeout){
         clearTimeout(this.timeout); // Clearing Out Time To make sure correct Time Cheking
       };
-
       if (editor && event.document === editor.document) {
         this.timeout = setTimeout(() => {
           if (vscode.window.activeTextEditor) {
-            // Started Time Wait Calculation for
-            const completeFileText: string = editor.document.getText(); // Getting the Complete Text of the Script
-            console.log(`Complete file text: ${completeFileText}`);
-            // Cheking if complete File Text is Empty or Not
-            if (completeFileText.trim()===""){
-              console.log(`Editor is Empty`);
-            }else{
-
-              // Working on Condition if Cursor is in Middle
               this.textAfterCursor = this.getTextAfterCursor(vscode.window.activeTextEditor);
-              if(this.textAfterCursor){
-                this.textBeforeCursor = this.getTextBeforeCursor(vscode.window.activeTextEditor);
-                if(this.textBeforeCursor){
-                  this.socketModule.emitMessage(this.textBeforeCursor + '$$$$$$' + this.textAfterCursor , "middle_request");
-                  vscode.window.showInformationMessage('You are in the code center!'); // Display a message to the user
-                }
-              }else{
-                this.socketModule.emitMessage(completeFileText, "end_request"); // Sending the event to get the suggestion
-                vscode.window.showInformationMessage('You are great in the code!'); // Display a message to the user
-              }
-            }
+              this.textBeforeCursor = this.getTextBeforeCursor(vscode.window.activeTextEditor);
+              this.socketModule.emitMessage(this.textBeforeCursor, this.textAfterCursor , "emit-request");
+              // vscode.window.showInformationMessage('Predicting'); // Display a message to the user
           }
-        }, 700);
+        }, 1000);
       }
     }else{
       console.log(tempSuggestion);
