@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { SocketModule } from './socketModule';
 import { VscodeEventsModule } from './vscodeEventsModule';
 import { CompletionProviderModule } from './completionProviderModule';
+import { AiChatPanel } from './aiChatPanel';
 
 export function activate(context: vscode.ExtensionContext) {
   const completionProviderModule = new CompletionProviderModule();
@@ -19,6 +20,14 @@ export function activate(context: vscode.ExtensionContext) {
   // Register the inline completion item provider
   vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, completionProviderModule);
   vscode.workspace.getConfiguration().update('editor.quickSuggestions', false);
+
+  const aiChatPanelProvider = new AiChatPanel(context.extensionUri);
+  let view = vscode.window.registerWebviewViewProvider(
+      'aiChatPanel',
+      aiChatPanelProvider
+  );
+  context.subscriptions.push(view);
+
 }
 
 

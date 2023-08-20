@@ -14,9 +14,41 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+          {
+              "id": "codebuddy",
+              "title": "CodeBuddy",
+              "icon": "media/icon.svg"
+          }
+      ]
+  },
+  "views": {
+      "codebuddy": [
+          {
+              "type": "webview",
+              "id": "aiChatPanel",
+              "name": "AI Chat Panel",
+              "icon": "media/icon.svg"
+          }
+      ]
+  },
+  "webview": {
+    "retainContextWhenHidden": true,
+    "scripts": [
+        "./webview/assets/aiChatPanel.js"
+    ],
+    "styles": [
+        "./webview/assets/aiChatPanel.css"
+    ]
+  },
     "commands": [{
       "command": "disable-code-suggestions",
       "title": "Disable Code Suggestions"
+    },
+    {
+      "command": "codebuddy.showAiChatPanel",
+      "title": "Show AI Chat Panel"
     }]
   },
   "scripts": {
