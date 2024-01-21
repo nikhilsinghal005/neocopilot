@@ -10,7 +10,8 @@ export function activate(context: vscode.ExtensionContext) {
   const vscodeEventsModule = new VscodeEventsModule(socketModule);
 
   vscode.window.onDidChangeActiveTextEditor(
-    editor => vscodeEventsModule.handleActiveEditor(editor, context), null, context.subscriptions
+    // To handle when the user changes the active text editor
+    editor => vscodeEventsModule.getCurrentFileName(editor, context), null, context.subscriptions
   );
 
   vscode.workspace.onDidChangeTextDocument(
@@ -18,7 +19,10 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // Register the inline completion item provider
-  vscode.languages.registerInlineCompletionItemProvider({ pattern: '**' }, completionProviderModule);
+  vscode.languages.registerInlineCompletionItemProvider(
+    { pattern: '**' },
+    completionProviderModule,
+    );
   vscode.workspace.getConfiguration().update('editor.quickSuggestions', false);
 
   const aiChatPanelProvider = new AiChatPanel(context.extensionUri);
@@ -29,13 +33,3 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(view);
 
 }
-
-
-// vscode.languages.registerInlineCompletionItemProvider(
-//   { pattern: '**' },
-//   {
-//     provideInlineCompletionItems: async (document, position) => {
-//       return [{ text: '< 2) {\n\treturn 1;\n\t}' }]
-//     },
-//   },
-// )
