@@ -11,7 +11,7 @@ export class SocketModule {
 
   constructor(completionProvider: CompletionProviderModule) {
     this.completionProvider = completionProvider;
-    this.socket = io('ws://localhost:4000'); // replace with the address of your Flask-SocketIO server
+    this.socket = io('ws://localhost:5000'); // replace with the address of your Flask-SocketIO server
     this.suggestion = "";
     this.socket.on('connect', () => {
       console.log('Connected to Flask-SocketIO server');
