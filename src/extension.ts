@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { SocketModule } from './socketModule';
 import { VscodeEventsModule } from './vscodeEventsModule';
 import { CompletionProviderModule } from './completionProviderModule';
-import { AiChatPanel } from './aiChatPanel';
+import { AiChatPanel } from './providers/AiChatPanel';
 
 export function activate(context: vscode.ExtensionContext) {
   const completionProviderModule = new CompletionProviderModule();
