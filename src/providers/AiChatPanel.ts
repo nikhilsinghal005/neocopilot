@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getNonce } from "../utilities/getNonce";
 import { getUri } from "../utilities/getUri";
+import {getIsLoggedIn, setIsLoggedIn} from "../utilities/logInStatus";
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
 
@@ -22,17 +23,70 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             localResourceRoots: [this._extensionUri]
         };
 
-        webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
-        webviewView.webview.onDidReceiveMessage(data => {
-            switch (data.type) {
-                case 'showWarning':
-                    vscode.window.showWarningMessage(data.message);
+        // webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+        this.restartStateFunction(webviewView)
+        webviewView.webview.onDidReceiveMessage(async message => {
+            switch (message.command) {
+                case 'openBrowser':
+                    // Show a confirmation dialog before opening the URL
+                    const result = await vscode.window.showInformationMessage(
+                        "You will be redirected to an external site for authentication. Continue?",
+                        "Continue", "Cancel"
+                    );
+                    if (result === "Continue") {
+                        vscode.env.openExternal(vscode.Uri.parse(message.url));
+                    }
                     break;
-                case 'showPopup': // Handle the showPopup command
-                    vscode.window.showInformationMessage(data.message);
-                    break;
+                // Handle other messages as necessary
+            }
+        }); 
+
+        webviewView.onDidChangeVisibility(() => {
+            if (this._view?.visible) {
+                // You might want to check some condition here
+                this.visibilityStateFunction(webviewView)
             }
         });
+    }
+
+    public updateViewWithToken(accessToken: string) {
+        if (this._view) {
+            this._view.webview.postMessage({
+                command: 'update',
+                accessToken: accessToken
+            });
+        }
+    }
+
+    public userAlreadyLoggedIn() {
+        if (this._view) {
+            this._view.webview.postMessage({
+                command: 'alreadyLoggedIn'
+            });
+        }
+    }
+
+    private async restartStateFunction(webviewView: vscode.WebviewView) {
+        const isLogged: Boolean = false;
+        if (isLogged) {
+            webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+            this.userAlreadyLoggedIn();
+            console.log("Status is True");
+        } else {
+            console.log("Unable to provide data");
+            webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+        }
+    }
+
+    private async visibilityStateFunction(webviewView: vscode.WebviewView) {
+        const isLogged: Boolean = true;
+        if (isLogged) {
+            this.userAlreadyLoggedIn();
+            console.log("Status is True");
+        } else {
+            console.log("Unable to provide data");
+            webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+        }
     }
 
     private _getHtmlForWebview(webview: vscode.Webview): string {

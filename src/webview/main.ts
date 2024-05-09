@@ -2,6 +2,7 @@ import { provideVSCodeDesignSystem, vsCodeButton, vsCodeTextField } from '@vscod
 import './style.css';
 import { io } from 'socket.io-client';
 import hljs from 'highlight.js';
+import {verifyAccessToken} from '../utilities/accessTokenVerification'
 
 const vscode = acquireVsCodeApi();
 const socket = io('ws://localhost:5000');
@@ -21,12 +22,46 @@ function main() {
     const loginButton = document.getElementById("login-button");
     if (loginButton) {
         loginButton.addEventListener("click", () => {
-            document.body.innerHTML = getLoggedInPage();
-            setupChat();
-            renderMessages(); // Render messages after setting up the chat
+            // Send a message to the extension to open the URL
+            vscode.postMessage({
+                command: 'openBrowser',  // Make sure this matches in your AiChatPanel.ts
+                url: 'http://localhost:3000'
+            });            
         });
     }
 }
+
+window.addEventListener('message', event => {
+    const message = event.data; // The JSON data sent from the extension
+    switch (message.command) {
+        case 'update':
+            const accessToken = message.accessToken;
+            verifyAccessToken(accessToken)
+                .then(isValid => {
+                    if (isValid) {
+                        document.body.innerHTML = getLoggedInPage();
+                        setupChat();
+                        renderMessages();
+                    } else {
+                        console.error('Invalid access token');
+                        // Optionally, update the UI to reflect an invalid token scenario
+                    }
+                })
+                .catch(error => {
+                    console.error('Error verifying access token:', error);
+                });
+            break;
+        }
+});
+
+window.addEventListener('message', event => {
+    const message = event.data; // The JSON data sent from the extension
+    switch (message.command) {
+        case 'alreadyLoggedIn':
+            document.body.innerHTML = getLoggedInPage();
+            setupChat();
+            renderMessages();
+}});
 
 function getLoggedInPage() {
     return `
