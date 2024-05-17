@@ -19,15 +19,17 @@
     "configuration": {
       "title": "My Extension Configurations",
       "properties": {
-          "isLoggedIn": {
-              "type": "boolean",
-              "default": false,
-              "description": "Login status of the user"
-          }
+        "isLoggedIn": {
+          "type": "boolean",
+          "default": false,
+          "description": "Login status of the user"
+        }
       }
     },
     "uriHandlers": [
-      { "uri": "vscode://codebuddy/token" }
+      {
+        "uri": "vscode://codebuddy/token"
+      }
     ],
     "viewsContainers": {
       "activitybar": [
@@ -63,6 +65,7 @@
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "20.2.5",
+    "@types/uuid": "^9.0.8",
     "@types/vscode": "^1.80.0",
     "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "^5.59.8",
@@ -83,6 +86,7 @@
     "@vscode/webview-ui-toolkit": "^1.4.0",
     "highlight.js": "^11.9.0",
     "socket.io-client": "^4.7.5",
+    "uuid": "^9.0.1",
     "weather-js": "^2.0.0"
   }
 }

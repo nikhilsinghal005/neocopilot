@@ -4,6 +4,7 @@ import { VscodeEventsModule } from './vscodeEventsModule';
 import { CompletionProviderModule } from './completionProviderModule';
 import { AiChatPanel } from './providers/AiChatPanel';
 import {storeTokens} from './utilities/secretStore'
+import {verifyAccessToken} from './utilities/accessTokenVerification'
 
 export function activate(context: vscode.ExtensionContext) {
   const completionProviderModule = new CompletionProviderModule();
@@ -14,6 +15,9 @@ export function activate(context: vscode.ExtensionContext) {
     // To handle when the user changes the active text editor
     editor => vscodeEventsModule.getCurrentFileName(editor, context), null, context.subscriptions
   );
+
+  // const disposable = vscode.window.onDidChangeTextEditorSelection(vscodeEventsModule.handleCursorChange);
+  // context.subscriptions.push(disposable);
 
   vscode.workspace.onDidChangeTextDocument(
     event => vscodeEventsModule.handleTextChange(event, context), null, context.subscriptions
@@ -26,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
   vscode.workspace.getConfiguration().update('editor.quickSuggestions', false);
 
-  const aiChatPanelProvider = new AiChatPanel(context.extensionUri);
+  const aiChatPanelProvider = new AiChatPanel(context.extensionUri, context);
   let view = vscode.window.registerWebviewViewProvider(
       'aiChatPanel',
       aiChatPanelProvider
@@ -39,41 +43,37 @@ export function activate(context: vscode.ExtensionContext) {
     async handleUri(uri: vscode.Uri): Promise<void> {
       if (uri.path === '/token') {
         const query = new URLSearchParams(uri.query);
-        const accessToken = query.get('access_token');
-        const refreshToken = query.get('refresh_token');
-        const idToken = query.get('id_token');
+        const accessToken: string | null = query.get('access_token');
+        const refreshToken: string | null = query.get('refresh_token');
+        const idToken: string | null = query.get('id_token');
   
-        if (accessToken && refreshToken && idToken) {
-          console.log('Received tokens:', { accessToken, refreshToken, idToken });
-          try {
-            await storeTokens(context.secrets, extensionId, accessToken, refreshToken, idToken);
-            aiChatPanelProvider.updateViewWithToken(accessToken);
-
-            vscode.window.showInformationMessage('You are logged in successfully!');
-          } catch (error) {
-            console.error('Failed to store tokens:', error);
-            vscode.window.showErrorMessage('Failed to authenticate due to storage issue.');
+        if (accessToken) {
+          const isValid = await verifyAccessToken(accessToken);
+          if (isValid) {
+            if (refreshToken && idToken) {
+              await storeTokens(context.secrets, extensionId, accessToken, refreshToken, idToken);
+              await aiChatPanelProvider.updateViewWithToken(accessToken);
+            } else {
+              console.error('Refresh token or ID token missing.');
+            }
+          } else {
+            console.error('Invalid access token');
           }
-        } else {
-          console.error('Tokens were not provided correctly.');
-          vscode.window.showErrorMessage('Failed to authenticate. Tokens missing.');
-        }
-      } else {
-        console.error('Unexpected URI path:', uri.path);
-      }
-    }
-  });
+  }}}});
 
-  // // Register a command for starting the authentication process
-  // const signInCommand = vscode.commands.registerCommand(`${extensionId}.signin`, async () => {
-  //   const callbackUri = await vscode.env.asExternalUri(
-  //     vscode.Uri.parse(`${vscode.env.uriScheme}://${extensionId}/auth-complete`)
-  //   );
-  //   vscode.env.clipboard.writeText(callbackUri.toString());
-  //   await vscode.window.showInformationMessage(
-  //     'Open the URI copied to the clipboard in a browser window to authorize.'
-  //   );
-  // });
-  // context.subscriptions.push(signInCommand);
+  const authUrl = 'http://localhost:3000';
+  setTimeout(() => {
+    promptUserForAuthentication(authUrl);
+  }, 30000);
 }
 
+
+async function promptUserForAuthentication(url: string) {
+  const result = await vscode.window.showInformationMessage(
+    "Login to use CodeBuddy chat and inline code completion",
+    "LogIn", "Cancel"
+  );
+  if (result === "LogIn") {
+    await vscode.env.openExternal(vscode.Uri.parse(url));
+  }
+}

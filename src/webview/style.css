@@ -9,7 +9,7 @@ html, body {
 
 /* style.css */
 #chat-container {
-    flex-grow: 1; /*height: 80%;*/
+    height: 90vh;  /* Set the height to 70% of the viewport height */
     flex-direction: column;
     overflow-y: auto;
     /* border: 1px solid #ccc; */

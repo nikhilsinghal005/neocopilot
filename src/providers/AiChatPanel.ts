@@ -2,13 +2,20 @@ import * as vscode from 'vscode';
 import { getNonce } from "../utilities/getNonce";
 import { getUri } from "../utilities/getUri";
 import {getIsLoggedIn, setIsLoggedIn} from "../utilities/logInStatus";
+import {getSecret} from "../utilities/getSecret";
+import {verifyAccessToken} from '../utilities/accessTokenVerification'
+
+// import {setupChat, renderMessages} from "../webview/main"
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
 
     private _view?: vscode.WebviewView;
     private _doc?: vscode.TextDocument;
 
-    constructor(private readonly _extensionUri: vscode.Uri) {}
+    constructor(
+        private readonly _extensionUri: vscode.Uri,
+        private readonly _main_context: vscode.ExtensionContext
+    ) {}
 
     public resolveWebviewView(
         webviewView: vscode.WebviewView,
@@ -18,12 +25,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         this._view = webviewView;
 
         webviewView.webview.options = {
-            // Allow scripts in the webview
             enableScripts: true,
             localResourceRoots: [this._extensionUri]
         };
 
-        // webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
         this.restartStateFunction(webviewView)
         webviewView.webview.onDidReceiveMessage(async message => {
             switch (message.command) {
@@ -40,51 +45,48 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 // Handle other messages as necessary
             }
         }); 
-
         webviewView.onDidChangeVisibility(() => {
             if (this._view?.visible) {
-                // You might want to check some condition here
                 this.visibilityStateFunction(webviewView)
             }
         });
     }
 
-    public updateViewWithToken(accessToken: string) {
+    public async updateViewWithToken(accessToken: string) {
         if (this._view) {
-            this._view.webview.postMessage({
-                command: 'update',
-                accessToken: accessToken
-            });
-        }
-    }
-
-    public userAlreadyLoggedIn() {
-        if (this._view) {
-            this._view.webview.postMessage({
-                command: 'alreadyLoggedIn'
-            });
+            await setIsLoggedIn(true)
+            // await this._view.webview.postMessage({
+            //     command: 'update',
+            //     accessToken: accessToken
+            // });
+            this.visibilityStateFunction(this._view)
         }
     }
 
     private async restartStateFunction(webviewView: vscode.WebviewView) {
-        const isLogged: Boolean = false;
-        if (isLogged) {
-            webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
-            this.userAlreadyLoggedIn();
-            console.log("Status is True");
-        } else {
-            console.log("Unable to provide data");
+        const accessToken: string | undefined = await getSecret(this._main_context, "accessToken")
+        const idToken: string | undefined = await getSecret(this._main_context, "idToken")
+        if (accessToken!=undefined){
+            const isLogged: Boolean = await getIsLoggedIn();
+            const isValid = await verifyAccessToken(accessToken);
+            if (isLogged && isValid){
+                webviewView.webview.html = this._getHtmlForChatWebview(webviewView.webview);
+            }else{
+                await setIsLoggedIn(false)
+                webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+            }
+        }else{
+            await setIsLoggedIn(false)
             webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
         }
     }
 
     private async visibilityStateFunction(webviewView: vscode.WebviewView) {
-        const isLogged: Boolean = true;
+        const isLogged: Boolean = true; //await getIsLoggedIn();
+        console.log(isLogged)
         if (isLogged) {
-            this.userAlreadyLoggedIn();
-            console.log("Status is True");
+            webviewView.webview.html = this._getHtmlForChatWebview(webviewView.webview);
         } else {
-            console.log("Unable to provide data");
             webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
         }
     }
@@ -95,9 +97,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         const toolkitUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode/webview-ui-toolkit', 'dist', 'toolkit.js'));
         const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
         const webviewUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'out', 'webview', 'main.js'));
-        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'out', 'webview', 'main.css'));
         const highlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', 'highlight.js', 'styles', 'default.css'));
-        
+
         return `
             <!DOCTYPE html>
             <html lang="en">
@@ -114,7 +115,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 <title>AI Chat Panel</title>
                 <link rel="stylesheet" type="text/css" href="${codiconsUri}" nonce="${nonce}">
                 <script nonce="${nonce}" type="module" src="${toolkitUri}"></script>
-                <link rel="stylesheet" type="text/css" href="${styleUri}">
                 <link rel="stylesheet" type="text/css" href="${highlightUri}">
 
             </head>
@@ -127,6 +127,56 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                         Login
                     </vscode-button>
                     <vscode-button style="padding:0; margin-left:10%; margin-right:10%; margin-top:1%; margin-bottom:1%;">Create Account</vscode-button>
+                </div>
+                <script nonce="${nonce}" type="module" src="${webviewUri}"></script>
+            </body>
+            </html>
+        `;
+    }  
+
+    private _getHtmlForChatWebview(webview: vscode.Webview): string {
+        const nonce = getNonce();
+        // Paths to the toolkit and Codicon stylesheets
+        const toolkitUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode/webview-ui-toolkit', 'dist', 'toolkit.js'));
+        const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
+        const webviewUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'out', 'webview', 'main.js'));
+        const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'out', 'webview', 'main.css'));
+        const highlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', 'highlight.js', 'styles', 'default.css'));
+
+        return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta http-equiv="Content-Security-Policy" content=" 
+                    default-src 'none'; 
+                    img-src ${webview.cspSource} https:;
+                    script-src 'nonce-${nonce}' ${webview.cspSource} 'unsafe-inline' 'unsafe-eval';
+                    style-src 'self' ${webview.cspSource} 'unsafe-inline';
+                    font-src ${webview.cspSource} https:;
+                    connect-src ${webview.cspSource} https: http: ws://localhost:5000;
+                ">              
+                <link rel="stylesheet" type="text/css" href="${codiconsUri}" nonce="${nonce}">
+                <script nonce="${nonce}" type="module" src="${toolkitUri}"></script>
+                <link rel="stylesheet" type="text/css" href="${styleUri}">
+                <link rel="stylesheet" type="text/css" href="${highlightUri}">
+
+            </head>
+            <body style="margin:0; padding:0; display:flex; flex-direction:column;">
+                <vscode-divider role="separator"></vscode-divider>
+                <div>
+                <div id="chat-container" class="chat-container">
+                <!-- Messages will be appended here -->
+                </div>
+                <vscode-divider role="separator"></vscode-divider>
+                <div class="input-container">
+                    <input type="text" id="message-input" class="message-input" placeholder="Message your buddy...">
+                    <button id="send-button" class="send-button" aria-label="Send">
+                        <span class="codicon codicon-send"></span>
+                    </button>
+                </div>
+                <vscode-checkbox checked id="select-current-file" class="select-current-file">Select current file</vscode-checkbox>
+                <vscode-checkbox checked id="select-current-file" class="select-current-file">Crisp answer</vscode-checkbox>
                 </div>
                 <script nonce="${nonce}" type="module" src="${webviewUri}"></script>
             </body>

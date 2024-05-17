@@ -2,10 +2,10 @@ import { provideVSCodeDesignSystem, vsCodeButton, vsCodeTextField } from '@vscod
 import './style.css';
 import { io } from 'socket.io-client';
 import hljs from 'highlight.js';
-import {verifyAccessToken} from '../utilities/accessTokenVerification'
 
 const vscode = acquireVsCodeApi();
-const socket = io('ws://localhost:5000');
+const socket = io('ws://localhost:5000'); // replace with the address of your Flask-SocketIO server
+
 
 interface Message {
     messageContent: string;
@@ -17,6 +17,8 @@ const messages: Message[] = []; // This should solve the issue
 
 provideVSCodeDesignSystem().register(vsCodeButton(), vsCodeTextField());
 window.addEventListener("load", main);
+window.addEventListener("load", setupChat);
+window.addEventListener("load", renderMessages);
 
 function main() {
     const loginButton = document.getElementById("login-button");
@@ -31,54 +33,28 @@ function main() {
     }
 }
 
-window.addEventListener('message', event => {
-    const message = event.data; // The JSON data sent from the extension
-    switch (message.command) {
-        case 'update':
-            const accessToken = message.accessToken;
-            verifyAccessToken(accessToken)
-                .then(isValid => {
-                    if (isValid) {
-                        document.body.innerHTML = getLoggedInPage();
-                        setupChat();
-                        renderMessages();
-                    } else {
-                        console.error('Invalid access token');
-                        // Optionally, update the UI to reflect an invalid token scenario
-                    }
-                })
-                .catch(error => {
-                    console.error('Error verifying access token:', error);
-                });
-            break;
-        }
-});
-
-window.addEventListener('message', event => {
-    const message = event.data; // The JSON data sent from the extension
-    switch (message.command) {
-        case 'alreadyLoggedIn':
-            document.body.innerHTML = getLoggedInPage();
-            setupChat();
-            renderMessages();
-}});
-
-function getLoggedInPage() {
-    return `
-        <div id="chat-container" class="chat-container">
-            <!-- Messages will be appended here -->
-        </div>
-        <vscode-divider role="separator"></vscode-divider>
-        <div class="input-container">
-            <input type="text" id="message-input" class="message-input" placeholder="Message your buddy...">
-            <button id="send-button" class="send-button" aria-label="Send">
-                <span class="codicon codicon-send"></span>
-            </button>
-        </div>
-        <vscode-checkbox checked id="select-current-file" class="select-current-file">Select current file</vscode-checkbox>
-        <vscode-checkbox checked id="select-current-file" class="select-current-file">Crisp answer</vscode-checkbox>
-    `;
-}
+// window.addEventListener('message', event => {
+//     const message = event.data; // The JSON data sent from the extension
+//     switch (message.command) {
+//         case 'update':
+//             const accessToken = message.accessToken;
+//             verifyAccessToken(accessToken)
+//                 .then(isValid => {
+//                     if (isValid) {
+//                         setIsLoggedIn(true)
+//                         console.log("Token is Verified")
+//                     } else {
+//                         console.error('Invalid access token');
+//                         // Optionally, update the UI to reflect an invalid token scenario
+//                     }
+//                 })
+//                 .catch(error => {
+//                     setIsLoggedIn(false)
+//                     console.error('Error verifying access token:', error);
+//                 });
+//             break;
+//         }
+// });
 
 function setupChat() {
     const sendButton = document.getElementById('send-button') as HTMLButtonElement | null;
@@ -86,25 +62,23 @@ function setupChat() {
     const chatContainer = document.getElementById('chat-container') as HTMLElement | null;
 
     if (sendButton && messageInput && chatContainer) {
-        const sendMessage = (message: string) => {
+        const sendMessage = (message) => {
             if (message) {
-                const messageData: Message = { messageContent: message, messageFrom: "user",  chatId : "1"};
+                const messageData = { messageContent: message, messageFrom: "user",  chatId: "1"};
                 messages.push(messageData);
-                if (chatContainer) {
-                    displayMessage(messageData, chatContainer);
-                }
+                displayMessage(messageData, chatContainer);
                 socket.emit('chat_message', { message: message });
                 messageInput.value = '';
             }
         };
 
         sendButton.addEventListener('click', () => {
-            if (messageInput?.value) {
+            if (messageInput.value) {
                 sendMessage(messageInput.value);
             }
         });
 
-        messageInput?.addEventListener('keypress', (event) => {
+        messageInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
                 if (messageInput.value) {
                     sendMessage(messageInput.value);
@@ -113,16 +87,72 @@ function setupChat() {
             }
         });
 
-        socket.on('chat_response', (data: any) => {
+        socket.on('chat_response', (data) => {
             if (data.message) {
-                const messageData: Message = { messageContent: data.message, messageFrom: "system" ,  chatId : "1"};
-                messages.push(messageData);
-                if (chatContainer) {
+                let lastMessage = messages[messages.length - 1];
+                if (data.message_id === lastMessage.chatId) {
+                    lastMessage.messageContent += data.message;
+                    updateLastMessageDisplay(lastMessage, chatContainer);
+                } else {
+                    const messageData = { messageContent: data.message, messageFrom: "system", chatId: data.message_id };
+                    messages.push(messageData);
                     displayMessage(messageData, chatContainer);
                 }
             }
         });
     }
+}
+
+function updateLastMessageDisplay(messageData, container) {
+    const lastMessageElement = container.lastElementChild;
+    if (lastMessageElement) {
+        lastMessageElement.textContent = ''; // Clear existing content
+        processMessageContent(messageData.messageContent, lastMessageElement);
+    }
+}
+
+function processMessageContent(content, messageElement) {
+    const segments = content.split(/(```[\w-]*\n[\s\S]*?\n```)/g);
+    segments.forEach(segment => {
+        if (segment.startsWith('```')) {
+            const match = segment.match(/```(\w+)?\n([\s\S]*?)\n```/);
+            if (match && match[2]) {
+                const language = match[1] || "plaintext";
+                const codeText = match[2];
+
+                const codeContainer = document.createElement('div');
+                codeContainer.classList.add('code-container');
+
+                const header = document.createElement('div');
+                header.classList.add('code-header');
+                header.textContent = language.toUpperCase(); // Add language to the header
+
+                const copyButton = document.createElement('button');
+                copyButton.classList.add('copy-button');
+                copyButton.textContent = 'Copy';
+                copyButton.onclick = function () {
+                    navigator.clipboard.writeText(codeText);
+                };
+
+                header.appendChild(copyButton);
+                codeContainer.appendChild(header);
+
+                const pre = document.createElement('pre');
+                const code = document.createElement('code');
+                code.textContent = codeText;
+                pre.appendChild(code);
+                codeContainer.appendChild(pre);
+
+                hljs.highlightElement(code); // Apply syntax highlighting
+
+                messageElement.appendChild(codeContainer);
+            }
+        } else {
+            const textSegment = document.createElement('span');
+            textSegment.textContent = segment;
+            messageElement.appendChild(textSegment);
+        }
+    });
 }
 
 function displayMessage(messageData, container) {
@@ -179,14 +209,6 @@ function displayMessage(messageData, container) {
     container.appendChild(messageElement);
     container.scrollTop = container.scrollHeight;
 }
-
-
-function extractCode(text) {
-    const codeRegex = /```(.*?)```/gs;
-    const match = codeRegex.exec(text);
-    return match ? match[1].trim() : null; // Returns the code between the markers or null if not found.
-}
-
 
 function renderMessages() {
     const chatContainer = document.getElementById('chat-container') as HTMLElement | null;

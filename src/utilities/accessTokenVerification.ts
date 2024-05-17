@@ -1,23 +1,23 @@
-export function verifyAccessToken(token: string) {
-  return new Promise((resolve, reject) => {
-      fetch('http://localhost:5000/verify-token', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`  // Sending token as Bearer in the Authorization header
-          },
-          // No need to send token in the body
-      })
-      .then(response => response.json())
-      .then(data => {
-          if (data.isValid) {
-              resolve(true);
-          } else {
-              resolve(false);
-          }
-      })
-      .catch(error => {
-          reject(error);
-      });
-  });
-}
+export function verifyAccessToken(token: string): Promise<boolean> {
+    return fetch('https://api.vidyuthdatalabs.com/verify-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.isValid) {
+        console.log("Token is Verified");
+        return true;
+      } else {
+        console.log("Token is Not Verified");
+        return false;
+      }
+    })
+    .catch(error => {
+      console.log("Error in Verifying Token", error);
+      return false;  // Resolve to false on any error
+    });
+  }
