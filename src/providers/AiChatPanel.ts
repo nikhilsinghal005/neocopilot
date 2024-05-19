@@ -61,16 +61,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         }
     }
 
-    public async updateViewWithSocket(socketConnection: Socket) {
-        if (this._view) {
-            await this._view.webview.postMessage({
-                command: 'update',
-                socketConnection: socketConnection
-            });
-        }
-    }
-
-
     private async restartStateFunction(webviewView: vscode.WebviewView) {
         const accessToken: string | undefined = await getSecret(this._main_context, "accessToken")
         const idToken: string | undefined = await getSecret(this._main_context, "idToken")
@@ -142,7 +132,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         `;
     }  
 
-    private _getHtmlForChatWebview(webview: vscode.Webview, URL:string): string {
+    private _getHtmlForChatWebview(webview: vscode.Webview, URL: string): string {
         const nonce = getNonce();
         // Paths to the toolkit and Codicon stylesheets
         const toolkitUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode/webview-ui-toolkit', 'dist', 'toolkit.js'));
@@ -150,7 +140,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         const webviewUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'out', 'webview', 'main.js'));
         const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'out', 'webview', 'main.css'));
         const highlightUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', 'highlight.js', 'styles', 'default.css'));
-
+    
         return `
             <!DOCTYPE html>
             <html lang="en">
@@ -168,28 +158,35 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 <script nonce="${nonce}" type="module" src="${toolkitUri}"></script>
                 <link rel="stylesheet" type="text/css" href="${styleUri}">
                 <link rel="stylesheet" type="text/css" href="${highlightUri}">
-
+                <style>
+                    .coming-soon-container {
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        text-align: center;
+                    }
+                    .coming-soon-icon {
+                        font-size: 50px;
+                        margin-bottom: 20px;
+                    }
+                    .coming-soon-text {
+                        font-size: 24px;
+                        font-weight: bold;
+                    }
+                </style>
             </head>
-            <body style="margin:0; padding:0; display:flex; flex-direction:column;">
-                <vscode-divider role="separator"></vscode-divider>
-                <div>
-                <div id="chat-container" class="chat-container">
-                <!-- Messages will be appended here -->
-                </div>
-                <vscode-divider role="separator"></vscode-divider>
-                <div class="input-container">
-                    <input type="text" id="message-input" class="message-input" placeholder="Message your buddy...">
-                    <button id="send-button" class="send-button" aria-label="Send">
-                        <span class="codicon codicon-send"></span>
-                    </button>
-                </div>
-                <vscode-checkbox checked id="select-current-file" class="select-current-file">Select current file</vscode-checkbox>
-                <vscode-checkbox checked id="select-current-file" class="select-current-file">Crisp answer</vscode-checkbox>
+            <body style="margin:0; padding:0;">
+                <div class="coming-soon-container">
+                    <span class="codicon codicon-smiley coming-soon-icon"></span>
+                    <div class="coming-soon-text">Chat Coming Soon!</div>
                 </div>
                 <script nonce="${nonce}" type="module" src="${webviewUri}"></script>
             </body>
             </html>
         `;
-    }   
+    }
+    
 }
 

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { io, Socket } from 'socket.io-client';
 import { CompletionProviderModule } from './completionProviderModule';
-import { SOCKET_API_BASE_URL } from './config';
+import { SOCKET_API_BASE_URL, APP_VERSION } from './config';
 
 export class SocketModule {
   public socket: Socket | null = null;
@@ -20,17 +20,17 @@ export class SocketModule {
 
   public connect(): Socket {
     if (this.socket) {
-      console.log('WebSocket already connected');
+      // console.log('WebSocket already connected');
       return this.socket;
     }
     this.socket = io(SOCKET_API_BASE_URL);
-    console.log('WebSocket connected');
+    // console.log('WebSocket connected');
 
     this.socket.on('receive_message', (data: any) => {
-      console.log("================ Recived a Response from Backend ===============")
-      console.log("UUID sent - " , this.tempUniqueIdentifier)
-      console.log("UUID received - " , data.unique_Id)
-      console.log(JSON.stringify(data.message));
+      // console.log("================ Recived a Response from Backend ===============")
+      // console.log("UUID sent - " , this.tempUniqueIdentifier)
+      // console.log("UUID received - " , data.unique_Id)
+      // console.log(JSON.stringify(data.message));
       if (data.message && this.tempUniqueIdentifier === data.unique_Id) {
         this.suggestion = data.message;
         this.socketMainSuggestion = data.message;
@@ -44,10 +44,10 @@ export class SocketModule {
     return this.socket;
   }
 
-  public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string) {
+  public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string ) {
     this.tempUniqueIdentifier = uuid;
     if (this.socket) {
-      this.socket.emit('send_message', { prefix, suffix, inputType, uuid });
+      this.socket.emit('send_message', { prefix, suffix, inputType, uuid, APP_VERSION, language});
     }
   }
 
@@ -55,7 +55,7 @@ export class SocketModule {
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
-      console.log('WebSocket connection closed');
+      // console.log('WebSocket connection closed');
     }
   }
 
@@ -69,9 +69,9 @@ export class SocketModule {
       if (editor) {
         vscode.commands.executeCommand('editor.action.inlineSuggest.hide');
         vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
-        console.log("Suggestion Triggered")
+        // console.log("Suggestion Triggered")
       } else {
-        console.log('No active editor!');
+        // console.log('No active editor!');
       }
     }, 10); // Adjust the debounce delay as needed
   }

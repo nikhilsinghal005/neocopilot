@@ -47,7 +47,7 @@ export class VscodeEventsModule {
         this.textPredictionHandeling(vscode.window.activeTextEditor, event);
       }
     }else{
-      console.log("Web Socket Not Connected VS Module")
+      // console.log("Web Socket Not Connected VS Module")
     }
   }
 
@@ -60,7 +60,7 @@ export class VscodeEventsModule {
         //   console.log(`File is not supported - No Action Required`);
         //   return null;
         // }
-          console.log('Vscode File - Updated text - ', event.contentChanges[0].text)
+          // console.log('Vscode File - Updated text - ', event.contentChanges[0].text)
           this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
           if (isNullOrEmptyOrWhitespace(this.textBeforeCursor)){
             this.socketModule.completionProvider.updateSuggestion("");
@@ -76,7 +76,9 @@ export class VscodeEventsModule {
           this.updatedText = event.contentChanges[0].text;
           let currentEndtLineNumber = range.end.line;
           let currentEndCharacterPosition = range.end.character;
-      
+          if (!this.currentLanguage){
+            this.currentLanguage = ''
+          }
           // Check if Text Deleted or Updated
           if (this.mainSuggestion && this.tempSuggestion){
 
@@ -111,12 +113,13 @@ export class VscodeEventsModule {
                     // this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
                     this.uniqueIdentifier = uuidv4();
                     this.socketModule.completionProvider.updateSuggestion("");
-                    console.log('================== Data Requested ==============================')
-                    console.log("UUID request - ", this.uniqueIdentifier)
+                    // console.log('================== Data Requested ==============================')
+                    // console.log("UUID request - ", this.uniqueIdentifier)
                     this.socketModule.emitMessage(this.uniqueIdentifier, 
                       getTextBeforeCursor(vscode.window.activeTextEditor), 
                       getTextAfterCursor(vscode.window.activeTextEditor) , 
-                      "emit-request"
+                      "emit-request",
+                      this.currentLanguage
                     );
                 }
               }, 500);
@@ -124,7 +127,7 @@ export class VscodeEventsModule {
           }else{
             const change = event.contentChanges[0];
             if (change.text === '\r\n') {
-              console.log('Enter is pressed')
+              // console.log('Enter is pressed')
             }
             if (this.tempSuggestion.startsWith(change.text) && change.text.length < this.tempSuggestion.length){
                 this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion.slice(change.text.length));
@@ -135,12 +138,13 @@ export class VscodeEventsModule {
                   // this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
                   // this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
                   this.uniqueIdentifier = uuidv4();
-                  console.log('**************** Data Requested ***************************')
-                  console.log("UUID request - ", this.uniqueIdentifier)
+                  // console.log('**************** Data Requested ***************************')
+                  // console.log("UUID request - ", this.uniqueIdentifier)
                   this.socketModule.emitMessage(this.uniqueIdentifier, 
                     getTextBeforeCursor(vscode.window.activeTextEditor), 
                     getTextAfterCursor(vscode.window.activeTextEditor) , 
-                    "emit-request"
+                    "emit-request",
+                    this.currentLanguage
                   );
                 }, 500);
               }

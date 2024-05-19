@@ -44,10 +44,8 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(view);
 
   // If User is Logged in it Will connect the Websocket
-  if (true) {
-    console.log("Extension.ts - Cheking Weather user is Logged in to connect with Websocket")
+  if (isLoggedIn) {
     const socketConnection: Socket = socketModule.connect();
-    await aiChatPanelProvider.updateViewWithSocket(socketConnection);
   }
 
   // Register URI handler for OAuth callback

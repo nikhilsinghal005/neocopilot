@@ -11,3 +11,4 @@ export const VERIFICATION_URL = "verify-token";
 // Combine base URL with endpoints
 export const FULL_VERIFICATION_URL = `${API_BASE_URL}/${VERIFICATION_URL}`;
 
+export const APP_VERSION = "1.0";
