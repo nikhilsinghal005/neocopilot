@@ -1,77 +1,78 @@
-import { io, Socket } from 'socket.io-client';
 import * as vscode from 'vscode';
+import { io, Socket } from 'socket.io-client';
 import { CompletionProviderModule } from './completionProviderModule';
+import { SOCKET_API_BASE_URL } from './config';
 
 export class SocketModule {
-  private socket: Socket;
+  public socket: Socket | null = null;
   public socketMainSuggestion: string | undefined;
   public suggestion: string;
   public completionProvider: CompletionProviderModule;
-  public systemChangeInProgress = false; // Add this line to declare the flag
+  public systemChangeInProgress = false;
   private tempUniqueIdentifier: string;
+  private debounceTimer: NodeJS.Timeout | null = null;
 
   constructor(completionProvider: CompletionProviderModule) {
     this.completionProvider = completionProvider;
-    this.socket = io('ws://localhost:5000'); // replace with the address of your Flask-SocketIO server
     this.suggestion = "";
-    this.socket.on('connect', () => {
-      console.log('Connected to Flask-SocketIO server');
-    });
     this.tempUniqueIdentifier = "NA";
+  }
+
+  public connect(): Socket {
+    if (this.socket) {
+      console.log('WebSocket already connected');
+      return this.socket;
+    }
+    this.socket = io(SOCKET_API_BASE_URL);
+    console.log('WebSocket connected');
 
     this.socket.on('receive_message', (data: any) => {
-      console.log(`*************************************************************************************`);
-      // console.log(`${data.message}`);
-      console.log('Input Recived');
-      console.log('data.unique_Id', data.unique_Id);
-      console.log('data.unique_Id', this.tempUniqueIdentifier);
-
-      if(data.message && this.tempUniqueIdentifier === data.unique_Id){
-        // console.log(`Processing suggestion: ${data.message}`);
-        // data.message = data.message.replace(/\n/g, ""); // Note: Remember to remove extra line characters.
-        console.log(JSON.stringify(data.message));
+      console.log("================ Recived a Response from Backend ===============")
+      console.log("UUID sent - " , this.tempUniqueIdentifier)
+      console.log("UUID received - " , data.unique_Id)
+      console.log(JSON.stringify(data.message));
+      if (data.message && this.tempUniqueIdentifier === data.unique_Id) {
         this.suggestion = data.message;
         this.socketMainSuggestion = data.message;
+        // this.completionProvider.updateSuggestion("");
         this.completionProvider.updateSuggestion(data.message);
-        this.typeAndDelete(data.message[0]);
+        this.triggerInlineSuggestion();
       } else {
         // console.log("No suggestion required");
       }
     });
+    return this.socket;
   }
 
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string) {
-    // console.log(`========================== Getting New Suggestions ===================================`);
-    // console.log(`Uuid: ${uuid}`);
-    // console.log(`Prefix: ${prefix}`);
-    // console.log(`Suffix: ${suffix}`);
-    this.tempUniqueIdentifier = uuid
-    // console.log(`tempUniqueIdentifier: ${this.tempUniqueIdentifier}`);
-    this.socket.emit('send_message', { prefix, suffix, inputType, uuid });
+    this.tempUniqueIdentifier = uuid;
+    if (this.socket) {
+      this.socket.emit('send_message', { prefix, suffix, inputType, uuid });
+    }
   }
 
-  private async typeAndDelete(letter: string) {
-    const editor = vscode.window.activeTextEditor;
-
-    if (editor) {
-        const position = editor.selection.active;
-        // console.log(`Current Position of Cursor: ${position}`);
-        // console.log(`Provided Letter: ${letter.length}`);
-
-        this.systemChangeInProgress = true; // Set the flag to true before making the change
-
-        await editor.edit(editBuilder => {
-            editBuilder.insert(position, ' ');
-        });
-
-        const range = new vscode.Range(position, position.translate(0, 1));
-        await editor.edit(editBuilder => {
-            editBuilder.delete(range);
-        });
-
-        this.systemChangeInProgress = false; // Set the flag back to false after the change
-    } else {
-        console.log('No active editor!');
+  public disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+      console.log('WebSocket connection closed');
     }
+  }
+
+  private triggerInlineSuggestion() {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+
+    this.debounceTimer = setTimeout(() => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        vscode.commands.executeCommand('editor.action.inlineSuggest.hide');
+        vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
+        console.log("Suggestion Triggered")
+      } else {
+        console.log('No active editor!');
+      }
+    }, 10); // Adjust the debounce delay as needed
   }
 }

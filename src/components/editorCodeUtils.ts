@@ -34,19 +34,19 @@ export function checkFileNameForCodeCompletion(fileName: string | null | undefin
 
 
 export function modifySuggestion(mainString: string, tempString: string, sliceLength: number): string {
-  console.log(`mainString: ${mainString}`);
-  console.log(`tempString: ${tempString}`);
-  console.log(`sliceLength: ${sliceLength}`);
+  // console.log(`mainString: ${mainString}`);
+  // console.log(`tempString: ${tempString}`);
+  // console.log(`sliceLength: ${sliceLength}`);
   if (mainString.endsWith(tempString) && mainString!=tempString) {
       const endIndex = mainString.length - tempString.length;
       const modifiedMainSuggestion = mainString.slice(0, endIndex);
-      console.log(`endIndex: ${endIndex}`);
-      console.log(`modifiedMainSuggestion: ${modifiedMainSuggestion}`);
+      // console.log(`endIndex: ${endIndex}`);
+      // console.log(`modifiedMainSuggestion: ${modifiedMainSuggestion}`);
 
       if (sliceLength > 0 && sliceLength <= modifiedMainSuggestion.length) {
           const slice = modifiedMainSuggestion.slice(-sliceLength);  // get slice from the end
           // console.log(`slice: ${slice}`);
-          console.log(`slice: ${slice}`);
+          // console.log(`slice: ${slice}`);
 
           return slice + tempString;  // prepend slice to tempSuggestion
       }else{

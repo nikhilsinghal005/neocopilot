@@ -38,49 +38,29 @@ export class VscodeEventsModule {
     this.uniqueIdentifier = uuidv4();
   }
 
-
-  // public handleCursorChange(event: vscode.TextEditorSelectionChangeEvent) {
-  //   // const editor = event.textEditor;
-  //   // const selection = editor.selection;
-  //   // console.log("this data")
-  //   // console.log(this.tempSuggestion)
-  //   // if (this.tempSuggestion){
-  //   //   console.log("this data enter")
-  //   //   this.socketModule.completionProvider.updateSuggestion("");
-  //   // }
-  // } 
-
   public handleTextChange(event: vscode.TextDocumentChangeEvent, context: vscode.ExtensionContext) {
-    // To handle when the user changes the text in the active text editor
-    // console.log("Test Data 1111")
-
-    this.mainSuggestion = this.socketModule.suggestion;
-    this.tempSuggestion = this.socketModule.completionProvider.suggestion;
-    if(!this.socketModule.systemChangeInProgress){
-      this.textPredictionHandeling(vscode.window.activeTextEditor, event);
+    if (this.socketModule.socket){
+      // To handle when the user changes the text in the active text editor
+      this.mainSuggestion = this.socketModule.suggestion;
+      this.tempSuggestion = this.socketModule.completionProvider.suggestion;
+      if(!this.socketModule.systemChangeInProgress){
+        this.textPredictionHandeling(vscode.window.activeTextEditor, event);
+      }
+    }else{
+      console.log("Web Socket Not Connected VS Module")
     }
   }
 
   private textPredictionHandeling(editor: vscode.TextEditor | undefined, event: vscode.TextDocumentChangeEvent): string | null {
     
     try {
-        // console.error('-------------------------------------------------------------')
-        // console.error('mainSuggestion:', this.mainSuggestion)
-        // console.error('tempSuggestion:', this.tempSuggestion)
-
         // if (!this.isFileSupported){
         //   // Cheking if File Format is Supported
         //   this.socketModule.completionProvider.updateSuggestion("");
         //   console.log(`File is not supported - No Action Required`);
         //   return null;
         // }
-
-        // if (vscode.window.activeTextEditor?.document.lineCount === 1){
-        //   // As it is hard to understand 
-        //   this.socketModule.completionProvider.updateSuggestion("");
-        //   console.log(`Complete Document is of only one line - No Action Required`);
-        //   return null;
-        // }
+          console.log('Vscode File - Updated text - ', event.contentChanges[0].text)
           this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
           if (isNullOrEmptyOrWhitespace(this.textBeforeCursor)){
             this.socketModule.completionProvider.updateSuggestion("");
@@ -88,46 +68,33 @@ export class VscodeEventsModule {
             return null;
           }
       
-          this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
+          // this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
           const range = event.contentChanges[0].range;
           this.currentLanguage = event.document.languageId;
           this.currentStartLineNumber = range.start.line;
           this.currentStartCharacterPosition = range.start.character;
           this.updatedText = event.contentChanges[0].text;
-          // console.error('updatedText:', this.updatedText)
-          // console.log('this.currentStartCharacterPosition', this.currentStartCharacterPosition)
-
           let currentEndtLineNumber = range.end.line;
           let currentEndCharacterPosition = range.end.character;
       
           // Check if Text Deleted or Updated
           if (this.mainSuggestion && this.tempSuggestion){
-            // console.log(`Suggestion Exists`);
-            // console.error('currentEndtLineNumber:', currentEndtLineNumber)
-            // console.error('currentStartLineNumber:', this.currentStartLineNumber)
 
             if (!this.updatedText || this.currentStartLineNumber !== currentEndtLineNumber || this.currentStartCharacterPosition !== currentEndCharacterPosition){
               if (this.currentStartLineNumber === currentEndtLineNumber){
-                // console.log(`Text Deleted or Updated in the same line`);
-                // console.error('tempSuggestion:', this.currentStartCharacterPosition)
-                // console.error('tempSuggestion:', currentEndCharacterPosition)
                 if (this.currentStartCharacterPosition < currentEndCharacterPosition){
                   let positionChange = currentEndCharacterPosition - this.currentStartCharacterPosition;
-                  // console.log(`Text Deleted or Updated in the same line - Position Change: ${positionChange}`);
                   this.tempSuggestion = modifySuggestion(this.mainSuggestion, this.tempSuggestion, positionChange);
                   this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
                 }
               }
               if (this.currentStartLineNumber !== currentEndtLineNumber){
-                // console.log(`Multiple Lines Deleted`);
                 if (this.tempSuggestion===this.mainSuggestion){
-                  // console.log(`Text Deleted or Updated in the multiple line`);
                   this.tempSuggestion = "";
                   this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
                 }
                 if (this.tempSuggestion===this.mainSuggestion){
                   this.tempSuggestion = "";
-                  // console.log(`Text Deleted or Updated in the multiple line with constant`);
                 }
               }
             }
@@ -140,21 +107,21 @@ export class VscodeEventsModule {
             if (editor && event.document === editor.document) {
               this.debounceTimeout = setTimeout(() => {
                 if (vscode.window.activeTextEditor) {
-                    this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
-                    this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
-                    // console.log(" -**************************************************************-")
-                    // console.log('this.textBeforeCursor', this.textBeforeCursor)
-                    // console.log('this.textAfterCursor', this.textAfterCursor)
+                    // this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
+                    // this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
                     this.uniqueIdentifier = uuidv4();
-                    // console.log('this.uniqueIdentifier', this.uniqueIdentifier)
-                    console.log('Data Requested')
-                    this.socketModule.emitMessage(this.uniqueIdentifier, this.textBeforeCursor, this.textAfterCursor , "emit-request");
-                    // vscode.window.showInformationMessage('Predicting'); // Display a message to the user
+                    this.socketModule.completionProvider.updateSuggestion("");
+                    console.log('================== Data Requested ==============================')
+                    console.log("UUID request - ", this.uniqueIdentifier)
+                    this.socketModule.emitMessage(this.uniqueIdentifier, 
+                      getTextBeforeCursor(vscode.window.activeTextEditor), 
+                      getTextAfterCursor(vscode.window.activeTextEditor) , 
+                      "emit-request"
+                    );
                 }
               }, 500);
             }
           }else{
-            // console.log('console.log', event.contentChanges[0])
             const change = event.contentChanges[0];
             if (change.text === '\r\n') {
               console.log('Enter is pressed')
@@ -162,17 +129,20 @@ export class VscodeEventsModule {
             if (this.tempSuggestion.startsWith(change.text) && change.text.length < this.tempSuggestion.length){
                 this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion.slice(change.text.length));
             }else{
-              console.log("impoort asdfghm")
               this.socketModule.completionProvider.updateSuggestion("");
               if (vscode.window.activeTextEditor) {
                 setTimeout(() => {
-                  this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
-                  this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
+                  // this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
+                  // this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
                   this.uniqueIdentifier = uuidv4();
-                  console.log('Data Requested')
-
-                  this.socketModule.emitMessage(this.uniqueIdentifier, this.textBeforeCursor, this.textAfterCursor , "emit-request");
-                }, 800);
+                  console.log('**************** Data Requested ***************************')
+                  console.log("UUID request - ", this.uniqueIdentifier)
+                  this.socketModule.emitMessage(this.uniqueIdentifier, 
+                    getTextBeforeCursor(vscode.window.activeTextEditor), 
+                    getTextAfterCursor(vscode.window.activeTextEditor) , 
+                    "emit-request"
+                  );
+                }, 500);
               }
             }
           }
@@ -189,15 +159,12 @@ export class VscodeEventsModule {
     }
     this.debounceTimeout = setTimeout(() => {
       this.currentSelectedFileName = handleActiveEditor(editor, context);
-      // console.log(`Current file name selected: ${this.currentSelectedFileName}`);
-      // console.log(`Current file name: ${checkFileNameForCodeCompletion(this.currentSelectedFileName)}`);
       if (!checkFileNameForCodeCompletion(this.currentSelectedFileName)){
         this.isFileSupported = false;
       }else{
         this.isFileSupported = true;
       }
       this.socketModule.completionProvider.updateSuggestion("");
-      // console.log(`Suggestion nullified because file name is changed`);
     }, 100);
   }
 }

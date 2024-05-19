@@ -4,6 +4,8 @@ import { getUri } from "../utilities/getUri";
 import {getIsLoggedIn, setIsLoggedIn} from "../utilities/logInStatus";
 import {getSecret} from "../utilities/getSecret";
 import {verifyAccessToken} from '../utilities/accessTokenVerification'
+import {SOCKET_API_BASE_URL } from '../config';
+import { Socket } from 'socket.io-client';
 
 // import {setupChat, renderMessages} from "../webview/main"
 
@@ -54,44 +56,50 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     public async updateViewWithToken(accessToken: string) {
         if (this._view) {
-            await setIsLoggedIn(true)
-            // await this._view.webview.postMessage({
-            //     command: 'update',
-            //     accessToken: accessToken
-            // });
+            await setIsLoggedIn(this._main_context.secrets, true)
             this.visibilityStateFunction(this._view)
         }
     }
+
+    public async updateViewWithSocket(socketConnection: Socket) {
+        if (this._view) {
+            await this._view.webview.postMessage({
+                command: 'update',
+                socketConnection: socketConnection
+            });
+        }
+    }
+
 
     private async restartStateFunction(webviewView: vscode.WebviewView) {
         const accessToken: string | undefined = await getSecret(this._main_context, "accessToken")
         const idToken: string | undefined = await getSecret(this._main_context, "idToken")
         if (accessToken!=undefined){
-            const isLogged: Boolean = await getIsLoggedIn();
+            const isLogged: Boolean = await getIsLoggedIn(this._main_context);
             const isValid = await verifyAccessToken(accessToken);
             if (isLogged && isValid){
-                webviewView.webview.html = this._getHtmlForChatWebview(webviewView.webview);
+                webviewView.webview.html = this._getHtmlForChatWebview(webviewView.webview, SOCKET_API_BASE_URL);
             }else{
-                await setIsLoggedIn(false)
-                webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+                await setIsLoggedIn(this._main_context.secrets, false)
+                webviewView.webview.html = this._getHtmlForWebview(webviewView.webview, SOCKET_API_BASE_URL);
             }
         }else{
-            await setIsLoggedIn(false)
-            webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+            await setIsLoggedIn(this._main_context.secrets, false)
+            webviewView.webview.html = this._getHtmlForWebview(webviewView.webview, SOCKET_API_BASE_URL);
         }
     }
 
     private async visibilityStateFunction(webviewView: vscode.WebviewView) {
-        const isLogged: Boolean = true; //await getIsLoggedIn();
+        const isLogged: Boolean = await getIsLoggedIn(this._main_context);
         console.log(isLogged)
         if (isLogged) {
-            webviewView.webview.html = this._getHtmlForChatWebview(webviewView.webview);
+            webviewView.webview.html = this._getHtmlForChatWebview(webviewView.webview, SOCKET_API_BASE_URL);
         } else {
-            webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+            webviewView.webview.html = this._getHtmlForWebview(webviewView.webview, SOCKET_API_BASE_URL);
         }
     }
 
-    private _getHtmlForWebview(webview: vscode.Webview): string {
+    private _getHtmlForWebview(webview: vscode.Webview, URL:string): string {
         const nonce = getNonce();
         // Paths to the toolkit and Codicon stylesheets
         const toolkitUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode/webview-ui-toolkit', 'dist', 'toolkit.js'));
@@ -110,7 +118,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                     script-src 'nonce-${nonce}' ${webview.cspSource} 'unsafe-inline' 'unsafe-eval';
                     style-src 'self' ${webview.cspSource} 'unsafe-inline';
                     font-src ${webview.cspSource} https:;
-                    connect-src ${webview.cspSource} https: http: ws://localhost:5000;
+                    connect-src ${webview.cspSource} https: http: ${URL};
                 ">              
                 <title>AI Chat Panel</title>
                 <link rel="stylesheet" type="text/css" href="${codiconsUri}" nonce="${nonce}">
@@ -134,7 +142,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         `;
     }  
 
-    private _getHtmlForChatWebview(webview: vscode.Webview): string {
+    private _getHtmlForChatWebview(webview: vscode.Webview, URL:string): string {
         const nonce = getNonce();
         // Paths to the toolkit and Codicon stylesheets
         const toolkitUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode/webview-ui-toolkit', 'dist', 'toolkit.js'));
@@ -154,7 +162,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                     script-src 'nonce-${nonce}' ${webview.cspSource} 'unsafe-inline' 'unsafe-eval';
                     style-src 'self' ${webview.cspSource} 'unsafe-inline';
                     font-src ${webview.cspSource} https:;
-                    connect-src ${webview.cspSource} https: http: ws://localhost:5000;
+                    connect-src ${webview.cspSource} https: http: ${URL};
                 ">              
                 <link rel="stylesheet" type="text/css" href="${codiconsUri}" nonce="${nonce}">
                 <script nonce="${nonce}" type="module" src="${toolkitUri}"></script>

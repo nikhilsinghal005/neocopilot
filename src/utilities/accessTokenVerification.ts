@@ -1,5 +1,7 @@
+import {FULL_VERIFICATION_URL} from '../config';
+
 export function verifyAccessToken(token: string): Promise<boolean> {
-    return fetch('https://api.vidyuthdatalabs.com/verify-token', {
+    return fetch(FULL_VERIFICATION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

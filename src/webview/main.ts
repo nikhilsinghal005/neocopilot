@@ -1,11 +1,11 @@
 import { provideVSCodeDesignSystem, vsCodeButton, vsCodeTextField } from '@vscode/webview-ui-toolkit';
 import './style.css';
-import { io } from 'socket.io-client';
 import hljs from 'highlight.js';
+import { SOCKET_API_BASE_URL, LOGIN_REDIRECT_URL} from '../config';
+import { io, Socket } from 'socket.io-client';
 
 const vscode = acquireVsCodeApi();
-const socket = io('ws://localhost:5000'); // replace with the address of your Flask-SocketIO server
-
+let socket: Socket;
 
 interface Message {
     messageContent: string;
@@ -27,34 +27,19 @@ function main() {
             // Send a message to the extension to open the URL
             vscode.postMessage({
                 command: 'openBrowser',  // Make sure this matches in your AiChatPanel.ts
-                url: 'http://localhost:3000'
+                url: LOGIN_REDIRECT_URL
             });            
         });
     }
 }
 
-// window.addEventListener('message', event => {
-//     const message = event.data; // The JSON data sent from the extension
-//     switch (message.command) {
-//         case 'update':
-//             const accessToken = message.accessToken;
-//             verifyAccessToken(accessToken)
-//                 .then(isValid => {
-//                     if (isValid) {
-//                         setIsLoggedIn(true)
-//                         console.log("Token is Verified")
-//                     } else {
-//                         console.error('Invalid access token');
-//                         // Optionally, update the UI to reflect an invalid token scenario
-//                     }
-//                 })
-//                 .catch(error => {
-//                     setIsLoggedIn(false)
-//                     console.error('Error verifying access token:', error);
-//                 });
-//             break;
-//         }
-// });
+window.addEventListener('message', event => {
+    const message = event.data; // The JSON data sent from the extension
+    switch (message.command) {
+        case 'update':
+            socket = message.socketConnection;
+        }
+});
 
 function setupChat() {
     const sendButton = document.getElementById('send-button') as HTMLButtonElement | null;
@@ -67,7 +52,9 @@ function setupChat() {
                 const messageData = { messageContent: message, messageFrom: "user",  chatId: "1"};
                 messages.push(messageData);
                 displayMessage(messageData, chatContainer);
-                socket.emit('chat_message', { message: message });
+                if (socket){
+                    socket.emit('chat_message', { message: message });
+                }
                 messageInput.value = '';
             }
         };
@@ -86,8 +73,7 @@ function setupChat() {
                 }
             }
         });
-
-        socket.on('chat_response', (data) => {
+        socket?.on('chat_response', (data) => {
             if (data.message) {
                 let lastMessage = messages[messages.length - 1];
                 if (data.message_id === lastMessage.chatId) {
