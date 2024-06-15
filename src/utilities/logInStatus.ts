@@ -12,10 +12,10 @@ export async function getIsLoggedIn(context: vscode.ExtensionContext): Promise<b
     try {
         const secretValue = await context.secrets.get(isLoggedInKey);
         if (secretValue === undefined) {
-            console.log(`No login status found.`);
+            // console.log(`No login status found.`);
             return false;
         }
-        console.log(`Retrieved login status.`);
+        // console.log(`Retrieved login status.`);
         return secretValue === 'true';
     } catch (error) {
         console.error('Error fetching login status:', error);
@@ -33,7 +33,7 @@ export async function getIsLoggedIn(context: vscode.ExtensionContext): Promise<b
 export async function setIsLoggedIn(secrets: vscode.SecretStorage, value: boolean): Promise<void> {
     try {
         await secrets.store(isLoggedInKey, value.toString());
-        console.log("Login Status Updated");
+        // console.log("Login Status Updated");
     } catch (error) {
         console.error('Error updating login status:', error);
     }

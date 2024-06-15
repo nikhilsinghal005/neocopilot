@@ -63,7 +63,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     private async restartStateFunction(webviewView: vscode.WebviewView) {
         const accessToken: string | undefined = await getSecret(this._main_context, "accessToken")
-        const idToken: string | undefined = await getSecret(this._main_context, "idToken")
+        // const idToken: string | undefined = await getSecret(this._main_context, "idToken")
         if (accessToken!=undefined){
             const isLogged: Boolean = await getIsLoggedIn(this._main_context);
             const isValid = await verifyAccessToken(accessToken);
@@ -81,7 +81,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     private async visibilityStateFunction(webviewView: vscode.WebviewView) {
         const isLogged: Boolean = await getIsLoggedIn(this._main_context);
-        console.log(isLogged)
+        // console.log(isLogged)
         if (isLogged) {
             webviewView.webview.html = this._getHtmlForChatWebview(webviewView.webview, SOCKET_API_BASE_URL);
         } else {
@@ -124,7 +124,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                         style="padding:0; margin-left:10%; margin-right:10%; margin-top:1%; margin-bottom:3%;">
                         Login
                     </vscode-button>
-                    <vscode-button style="padding:0; margin-left:10%; margin-right:10%; margin-top:1%; margin-bottom:1%;">Create Account</vscode-button>
                 </div>
                 <script nonce="${nonce}" type="module" src="${webviewUri}"></script>
             </body>

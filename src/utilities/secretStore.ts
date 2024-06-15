@@ -4,5 +4,5 @@ export async function storeTokens(secrets: SecretStorage, extensionId: string, a
   await secrets.store(`${extensionId}.accessToken`, accessToken);
   await secrets.store(`${extensionId}.refreshToken`, refreshToken);
   await secrets.store(`${extensionId}.idToken`, idToken);
-  console.log("Tokens Are Stored")
+  // console.log("Tokens Are Stored")
 }

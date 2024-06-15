@@ -11,10 +11,10 @@ export async function getSecret(context: vscode.ExtensionContext, key: string): 
     try {
         const secretValue = await context.secrets.get(key);
         if (secretValue === undefined) {
-            console.log(`No secret found for key: ${key}`);
+            // console.log(`No secret found for key: ${key}`);
             return undefined;
         }
-        console.log(`Retrieved secret for key: ${key}`);
+        // console.log(`Retrieved secret for key: ${key}`);
         return secretValue;
     } catch (error) {
         console.error(`Error retrieving secret for key: ${key}`, error);

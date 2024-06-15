@@ -1,12 +1,14 @@
 {
   "publisher": "vidyutdatalabs",
-  "name": "codebuddy",
-  "displayName": "CodeBuddy",
+  "name": "neocopilot",
+  "displayName": "neocopilot",
   "description": "CodeAssist: Unleash the power of intelligent code suggestions with CodeAssist. Boost your productivity and streamline your coding workflow by harnessing the advanced suggestion engine that understands your code like a pro.",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.80.0"
   },
+  "homepage": "https://www.neocopilot.io",
+  "icon": "media/icon.png",
   "categories": [
     "Other"
   ],
@@ -16,39 +18,6 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "configuration": {
-      "title": "My Extension Configurations",
-      "properties": {
-        "isLoggedIn": {
-          "type": "boolean",
-          "default": false,
-          "description": "Login status of the user"
-        }
-      }
-    },
-    "uriHandlers": [
-      {
-        "uri": "vscode://codebuddy/token"
-      }
-    ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "codebuddy",
-          "title": "CodeBuddy",
-          "icon": "media/icon.svg"
-        }
-      ]
-    },
-    "views": {
-      "codebuddy": [
-        {
-          "type": "webview",
-          "id": "aiChatPanel",
-          "name": "AI Chat Panel"
-        }
-      ]
-    },
     "commands": [
       {
         "command": "disable-code-suggestions",

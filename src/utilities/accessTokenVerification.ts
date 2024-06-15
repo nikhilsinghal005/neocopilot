@@ -11,15 +11,15 @@ export function verifyAccessToken(token: string): Promise<boolean> {
     .then(response => response.json())
     .then(data => {
       if (data.isValid) {
-        console.log("Token is Verified");
+        // console.log("Token is Verified");
         return true;
       } else {
-        console.log("Token is Not Verified");
+        // console.log("Token is Not Verified");
         return false;
       }
     })
     .catch(error => {
-      console.log("Error in Verifying Token", error);
+      // console.log("Error in Verifying Token", error);
       return false;  // Resolve to false on any error
     });
   }
