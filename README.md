@@ -9,7 +9,6 @@ NeoCopilot is a powerful Visual Studio Code extension that offers inline code co
     </video>
 </div>
 
-
 ## Features
 
 - **Real-time Code Completion**: Get code suggestions instantly as you type.
@@ -29,7 +28,7 @@ NeoCopilot is a powerful Visual Studio Code extension that offers inline code co
 
 1. **Open a file** in your desired programming language.
 2. **Start typing**. NeoCopilot will provide inline code suggestions.
-3. **Accept suggestions** by pressing `Tab` or `Enter`.
+3. **Accept suggestions** by pressing `Tab`.
 
 ## Configuration
 
@@ -47,3 +46,39 @@ If you encounter any issues or have feedback, please visit our [website](https:/
 ---
 
 Happy coding with NeoCopilot!
+
+## Categories
+
+- Programming Languages
+- Machine Learning
+- Code Completion
+- Developer Tools
+- AI Tools
+- Software Development
+- Productivity
+- Code Snippets
+- Code Generation
+- Copilot
+
+## Tags
+
+- inline code completion
+- real-time suggestions
+- multiple languages
+- context-aware
+- NeoCopilot
+- python
+- ChatGPT
+- GitHub Copilot
+- CodeWhisperer
+- Tabnine
+- Codeium
+- AI pair programming
+- automated coding
+- smart code suggestions
+- OpenAI
+- GPT-4
+- coding assistant
+- software development tools
+- productivity tools
+- Copilot

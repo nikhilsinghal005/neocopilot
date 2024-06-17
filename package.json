@@ -3,7 +3,7 @@
   "name": "neocopilot",
   "displayName": "neocopilot",
   "description": "CodeAssist: Unleash the power of intelligent code suggestions with CodeAssist. Boost your productivity and streamline your coding workflow by harnessing the advanced suggestion engine that understands your code like a pro.",
-  "version": "0.0.5",
+  "version": "0.0.7",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -14,7 +14,8 @@
   ],
   "activationEvents": [
     "onUri",
-    "onLanguage"
+    "onLanguage:python",
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -35,7 +36,7 @@
     "@types/mocha": "^10.0.1",
     "@types/node": "20.2.5",
     "@types/uuid": "^9.0.8",
-    "@types/vscode": "^1.90.0",
+    "@types/vscode": "^1.80.0",
     "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "^5.59.8",
     "@typescript-eslint/parser": "^5.59.8",
