@@ -1,0 +1,144 @@
+/* style.css */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* style.css */
+#chat-container {
+    height: 90vh;  /* Set the height to 70% of the viewport height */
+    flex-direction: column;
+    overflow-y: auto;
+    /* border: 1px solid #ccc; */
+    padding: 5px;
+    }
+
+
+.chat-message {
+    font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    color: white;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    background-color: #333; 
+}
+
+
+.code-header {
+    font-family: Arial, sans-serif;
+    background-color: #201d1d;
+    color: #fff;
+    padding: 4px 7px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    font-size: 0.8em;
+
+}
+
+/* Style for the copy button */
+.copy-button {
+    padding: 5px 10px;
+    /* background-color: #0c79cd; Blue color; adjust as needed */
+    /* color: white; */
+    border: none;
+    cursor: pointer;
+    font-size: 0.8em;
+    margin-left: 10px;
+    border-radius: 4px;
+}
+
+.copy-button:hover {
+    background-color: #0a67a3; /* Slightly darker blue on hover */
+}
+
+.chat-message pre code {
+    font-family: 'Consolas', 'Monaco', 'Ubuntu Mono', monospace;
+    background-color: #0a0909;
+    color: #ccc;
+    /* border-radius: 4px; */
+    padding: 5px;
+    overflow-x: auto;
+    white-space: pre;
+    display: block; /* Add display block to ensure the pre tag takes full width */
+    /* border-bottom-left-radius: 4px; */
+    /* border-bottom-right-radius: 4px; */
+}
+
+    
+.chat-message pre {
+    margin: 0;
+    padding: 0;
+}
+
+.user-msg {
+    align-self: flex-end;
+    background-color: #0c79cd; /* Blue color; adjust as needed */
+    text-align: left;
+    margin-right: 2%;
+    padding-right: 5px;
+}
+
+/* Styles for system messages */
+.system-msg {
+    align-self: flex-start;
+    background-color: var(--vscode-input-background); /* Dynamic input background */
+    text-align: left;
+    margin-left: 2%;
+
+}
+
+.input-container {
+    display: flex;
+    position: relative;
+    width: 100%;
+    align-items: center;
+}
+
+.message-input {
+    flex-grow: 1;
+    padding: 20px 23px 23px 10px;
+    height: 40px;
+    border: 1px solid var(--vscode-editorGroupHeader-tabsBorder); /* Dynamic border color */
+    background-color: var(--vscode-input-background); /* Dynamic input background */
+    color: var(--vscode-input-foreground); /* Dynamic input text color */
+    border-radius: 6px;
+    box-sizing: border-box;
+    outline: none;
+    margin-left:10px;
+    margin-right:10px;
+    margin-top:5px;
+    margin-bottom:5px;
+}
+
+.send-button {
+    position: absolute;
+    right: 15px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--vscode-input-placeholderForeground); /* Dynamic icon color */
+    outline: none;
+}
+
+.send-button:hover {
+    color: var(--vscode-button-hoverBackground); /* Dynamic hover color */
+}
+
+.send-button .codicon {
+    font-size: 25px;
+}
+
+.select-current-file {
+    margin-left:10px;
+    margin-top:5px;
+    margin-bottom:10px;
+}

@@ -1,0 +1,33 @@
+Software License Agreement
+
+This Software License Agreement (the "Agreement") is a binding agreement between NeoCopilot ("Licensor") and the person or entity downloading, installing, or using the software ("Licensee").
+
+1. License Grant.
+Subject to the terms of this Agreement, Licensor grants Licensee a limited, non-exclusive, non-transferable, and revocable license to use the software (the "Software") solely for internal purposes.
+
+2. Restrictions.
+Licensee shall not:
+- Modify, copy, or create derivative works based on the Software.
+- Reverse engineer, decompile, or disassemble the Software.
+- Remove, alter, or obscure any proprietary notices in the Software.
+- Rent, lease, lend, sell, sublicense, assign, distribute, publish, transfer, or otherwise make the Software available to any third party.
+
+3. Ownership.
+Licensor retains all right, title, and interest in and to the Software, including all intellectual property rights. Licensee acknowledges that the Software is licensed, not sold, to Licensee.
+
+4. Term and Termination.
+This Agreement is effective until terminated. Licensor may terminate this Agreement at any time without notice if Licensee breaches any provision of this Agreement. Upon termination, Licensee shall cease all use of the Software and destroy all copies of the Software.
+
+5. Disclaimer of Warranties.
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. LICENSOR DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+6. Limitation of Liability.
+IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION WITH THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+7. Governing Law.
+This Agreement shall be governed by and construed in accordance with the laws of India, without regard to its conflict of law principles.
+
+8. Entire Agreement.
+This Agreement constitutes the entire agreement between Licensor and Licensee with respect to the Software and supersedes all prior or contemporaneous understandings regarding such subject matter.
+
+NeoCopilot
