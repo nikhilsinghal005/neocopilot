@@ -14,7 +14,7 @@
   ],
   "activationEvents": [
     "onUri",
-    "onLanguage:python"
+    "onLanguage"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -35,7 +35,7 @@
     "@types/mocha": "^10.0.1",
     "@types/node": "20.2.5",
     "@types/uuid": "^9.0.8",
-    "@types/vscode": "^1.80.0",
+    "@types/vscode": "^1.90.0",
     "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "^5.59.8",
     "@typescript-eslint/parser": "^5.59.8",
