@@ -1,6 +1,6 @@
 // src/config.ts
-// export const API_BASE_URL = "https://api.neocopilot.io"; 
-export const API_BASE_URL = "http://localhost:5000";
+export const API_BASE_URL = "https://api.neocopilot.io"; 
+// export const API_BASE_URL = "http://localhost:5000";
 
 export const SOCKET_API_BASE_URL = "wss://api.neocopilot.io";
 // export const SOCKET_API_BASE_URL = "ws://localhost:5000";
