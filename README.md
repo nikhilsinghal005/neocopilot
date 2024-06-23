@@ -32,13 +32,6 @@ NeoCopilot is a powerful Visual Studio Code extension that offers inline code co
 
 ## Configuration
 
-You can customize the behavior of NeoCopilot through the settings.
-
-1. **Open the Command Palette** (`Ctrl+Shift+P` or `Cmd+Shift+P` on macOS).
-2. **Type `Preferences: Open Settings`**.
-3. **Search for "NeoCopilot"** to find the extension's settings.
-4. **Adjust the settings** as needed.
-
 ## Issues and Feedback
 
 If you encounter any issues or have feedback, please visit our [website](https://www.neocopilot.io).
@@ -46,39 +39,3 @@ If you encounter any issues or have feedback, please visit our [website](https:/
 ---
 
 Happy coding with NeoCopilot!
-
-## Categories
-
-- Programming Languages
-- Machine Learning
-- Code Completion
-- Developer Tools
-- AI Tools
-- Software Development
-- Productivity
-- Code Snippets
-- Code Generation
-- Copilot
-
-## Tags
-
-- inline code completion
-- real-time suggestions
-- multiple languages
-- context-aware
-- NeoCopilot
-- python
-- ChatGPT
-- GitHub Copilot
-- CodeWhisperer
-- Tabnine
-- Codeium
-- AI pair programming
-- automated coding
-- smart code suggestions
-- OpenAI
-- GPT-4
-- coding assistant
-- software development tools
-- productivity tools
-- Copilot
