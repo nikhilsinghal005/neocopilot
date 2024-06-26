@@ -10,8 +10,13 @@
   "homepage": "https://www.neocopilot.io",
   "icon": "media/icon.png",
   "categories": [
-    "Other"
-  ],
+    "Other", "Programming Languages", "Machine Learning", "AI",
+    "Snippets", "Chat", "Education", "Debuggers", "Data Science"],
+  "tags": [
+    "code-assist", "code-completion", "python", "javascript", "typescript", "java",
+    "c#", "c++", "c", "php", "ruby", "go", "swift", "kotlin", "scala", "dart",
+    "rust", "r", "sql", "html", "css", "json", "yaml", "xml", "google", "chatgpt",
+    "gpt4", "chat"],
   "activationEvents": [
     "onUri",
     "onLanguage:python",
@@ -32,6 +37,8 @@
     "lint": "eslint 'src/**/*.{ts,tsx}'"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/diff": "^5.2.1",
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "20.2.5",
@@ -54,6 +61,8 @@
   "dependencies": {
     "@vscode/codicons": "^0.0.35",
     "@vscode/webview-ui-toolkit": "^1.4.0",
+    "axios": "^1.7.2",
+    "diff": "^5.2.0",
     "highlight.js": "^11.9.0",
     "socket.io-client": "^4.7.5",
     "uuid": "^9.0.1",
