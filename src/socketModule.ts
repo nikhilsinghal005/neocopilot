@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import { io, Socket } from 'socket.io-client';
 import { CompletionProviderModule } from './completionProviderModule';
-import { SOCKET_API_BASE_URL, APP_VERSION } from './config';
+import { SOCKET_API_BASE_URL } from './config';
 import { StatusBarManager } from './StatusBarManager';
+import { versionConfig } from './versionConfig';
 
 export class SocketModule {
   public socket: Socket | null = null;
@@ -12,6 +13,7 @@ export class SocketModule {
   public systemChangeInProgress = false;
   private tempUniqueIdentifier: string;
   private debounceTimer: NodeJS.Timeout | null = null;
+  private currentVersion = versionConfig.getCurrentVersion();
   // private statusBarManager = StatusBarManager.getInstance();
 
   constructor(completionProvider: CompletionProviderModule) {
@@ -20,20 +22,17 @@ export class SocketModule {
     this.tempUniqueIdentifier = "NA";
   }
 
-  public connect(): Socket {
+  public connect(appVersion: string): Socket {
     if (this.socket) {
-      // // console.log('WebSocket already connected');
       return this.socket;
     }
-    this.socket = io(SOCKET_API_BASE_URL);
-    // // console.log('WebSocket connected');
+    this.socket = io(SOCKET_API_BASE_URL, {
+      query: { appVersion }
+    });
 
     this.socket.on('receive_message', (data: any) => {
       StatusBarManager.updateMessage(`Neo`);
 
-      // // console.log("================ Recived a Response from Backend ===============")
-      // // console.log("UUID sent - " , this.tempUniqueIdentifier)
-      // // console.log("UUID received - " , data.unique_Id)
       console.log(JSON.stringify(data.message));
       if (data.message && this.tempUniqueIdentifier === data.unique_Id) {
         this.suggestion = data.message;
@@ -42,9 +41,21 @@ export class SocketModule {
         this.completionProvider.updateSuggestion(data.message);
         this.triggerInlineSuggestion();
       } else {
-        // // console.log("No suggestion required");
       }
     });
+
+    this.socket.on('rate_limit_exceeded', (data: any) => {
+      StatusBarManager.updateMessage(`Neo`);
+      // vscode.window.showInformationMessage(data.error);
+    });
+
+    this.socket.on('update_app_version', (data: any) => {
+      const extensionId = data.extension_id;
+      this.promptUpdate(extensionId, this.currentVersion);
+
+      // vscode.window.showInformationMessage(data.error);
+    });
+  
     return this.socket;
   }
 
@@ -52,7 +63,7 @@ export class SocketModule {
     StatusBarManager.updateMessage(`$(loading~spin)`);
     this.tempUniqueIdentifier = uuid;
     if (this.socket) {
-      this.socket.emit('send_message', { prefix, suffix, inputType, uuid, APP_VERSION, language});
+      this.socket.emit('send_message', { prefix, suffix, inputType, uuid, appVersion: this.currentVersion, language});
     }
   }
 
@@ -79,5 +90,20 @@ export class SocketModule {
         // // console.log('No active editor!');
       }
     }, 10); // Adjust the debounce delay as needed
+  }
+
+  private promptUpdate(extensionId: string, currentVersion: string) {
+    vscode.window.showWarningMessage(
+      `You are using an outdated version of this extension. Please update to the latest version (${currentVersion}).`,
+      'Update Now'
+    ).then(selection => {
+      if (selection === 'Update Now') {
+        this.openExtensionInMarketplace(extensionId);
+      }
+    });
+  }
+
+  private openExtensionInMarketplace(extensionId: string) {
+    vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`vscode:extension/${extensionId}`));
   }
 }

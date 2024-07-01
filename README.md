@@ -1,4 +1,4 @@
-# NeoCopilot Inline Code Completion
+# NeoCopilot: Inline Code Completion
 
 NeoCopilot is a powerful Visual Studio Code extension that offers inline code completion. Enhance your coding experience with real-time code suggestions as you type, powered by advanced machine learning models.
 

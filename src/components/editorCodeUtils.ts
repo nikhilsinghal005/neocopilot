@@ -32,30 +32,42 @@ export function checkFileNameForCodeCompletion(fileName: string | null | undefin
   return supportedExtensions.some(extension => fileName?.endsWith(extension));
 }
 
+export function notSupportedFiles(fileName: string | null | undefined): boolean {
+  // console.log("fileName", fileName)
+  const commonIncludedFileList = ["requirements.txt", "package.json", "package-lock.json", "config.json", ".env"];
+  if (fileName === undefined || fileName === null) {
+    return true;
+  }
+  if (commonIncludedFileList.includes(fileName)) {
+    // console.log("includes_file_name")
+    return false;
+  }
+  const notSupportedExtensions = ['.csv', '.log', '.json', '.xml', '.md', '.txt', '.sql', '.html', '.xlsx', '.pdf'];
+  return notSupportedExtensions.some(extension => fileName.endsWith(extension));
+}
+
 
 export function modifySuggestion(mainString: string, tempString: string, sliceLength: number): string {
-  // // console.log(`mainString: ${mainString}`);
-  // // console.log(`tempString: ${tempString}`);
-  // // console.log(`sliceLength: ${sliceLength}`);
+  // Function to modify suggestion string
+  // This function is used to modify the suggestion string to remove the part of the string
+  // that is already typed by the user.
+  // For example, if the user has typed "import" and the suggestion is "import os",
+  // then the suggestion will be modified to "os".
+  // This is done to avoid showing suggestions that are already typed by the user.
+  // The sliceLength parameter is used to limit the length of the modified suggestion.
+  // This is done to avoid showing suggestions that are too long.
   if (mainString.endsWith(tempString) && mainString!=tempString) {
       const endIndex = mainString.length - tempString.length;
       const modifiedMainSuggestion = mainString.slice(0, endIndex);
-      // // console.log(`endIndex: ${endIndex}`);
-      // // console.log(`modifiedMainSuggestion: ${modifiedMainSuggestion}`);
-
       if (sliceLength > 0 && sliceLength <= modifiedMainSuggestion.length) {
-          const slice = modifiedMainSuggestion.slice(-sliceLength);  // get slice from the end
-          // // console.log(`slice: ${slice}`);
-          // // console.log(`slice: ${slice}`);
-
-          return slice + tempString;  // prepend slice to tempSuggestion
+          const slice = modifiedMainSuggestion.slice(-sliceLength);
+          return slice + tempString;
       }else{
           return "";
       }
   }else{
     return "";
   }
-  // return "";  // return tempSuggestion unchanged if there's no match or invalid sliceLength
 }
 
 // if(this.socketModule.systemChangeInProgress){

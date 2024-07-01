@@ -1,9 +1,9 @@
 {
   "publisher": "vidyutdatalabs",
   "name": "neocopilot",
-  "displayName": "neocopilot",
+  "displayName": "Neo Copilot",
   "description": "CodeAssist: Unleash the power of intelligent code suggestions with CodeAssist. Boost your productivity and streamline your coding workflow by harnessing the advanced suggestion engine that understands your code like a pro.",
-  "version": "0.0.7",
+  "version": "0.0.9",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -11,8 +11,8 @@
   "icon": "media/icon.png",
   "categories": [
     "Other", "Programming Languages", "Machine Learning", "AI",
-    "Snippets", "Chat", "Education", "Debuggers", "Data Science"],
-  "tags": [
+    "Snippets", "Chat", "Education", "Data Science"],
+  "keywords": [
     "code-assist", "code-completion", "python", "javascript", "typescript", "java",
     "c#", "c++", "c", "php", "ruby", "go", "swift", "kotlin", "scala", "dart",
     "rust", "r", "sql", "html", "css", "json", "yaml", "xml", "google", "chatgpt",

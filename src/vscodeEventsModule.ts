@@ -1,11 +1,14 @@
+// src/vscodeEventsModule.ts
 import * as vscode from 'vscode';
 import { SocketModule } from './socketModule';
 import { handleActiveEditor, handleAllOpenEditors, handleAllOpenFiles } from "./components/editorUtils";
 import { getTextAfterCursor, getTextBeforeCursor } from "./components/editorCodeUtils";
 import { isNullOrEmptyOrWhitespace } from "./components/editorCodeUtils";
-import { checkFileNameForCodeCompletion } from "./components/editorCodeUtils";
+import { notSupportedFiles } from "./components/editorCodeUtils";
 import { modifySuggestion } from "./components/editorCodeUtils";
 import { v4 as uuidv4 } from 'uuid';
+import { StatusBarManager } from './StatusBarManager';
+import * as path from 'path';
 
 export class VscodeEventsModule {
   private socketModule: SocketModule;
@@ -14,7 +17,7 @@ export class VscodeEventsModule {
   private textBeforeCursor: string | null; // Text before cursor sent to Frontend
   private currentSelectedFileName: string | null;
   private debounceTimeout: NodeJS.Timeout | undefined;
-  private isFileSupported: boolean;
+  private isFileNotSupported: boolean;
   private currentLanguage: string;
   private currentStartLineNumber: number;
   private currentStartCharacterPosition: number;
@@ -28,7 +31,7 @@ export class VscodeEventsModule {
     this.textAfterCursor = null;
     this.textBeforeCursor = null;
     this.currentSelectedFileName = "";
-    this.isFileSupported = true;
+    this.isFileNotSupported = false;
     this.currentLanguage = "";
     this.currentStartLineNumber = -1;
     this.currentStartCharacterPosition = -1;
@@ -54,22 +57,17 @@ export class VscodeEventsModule {
   private textPredictionHandeling(editor: vscode.TextEditor | undefined, event: vscode.TextDocumentChangeEvent): string | null {
     
     try {
-        // if (!this.isFileSupported){
-        //   // Cheking if File Format is Supported
-        //   this.socketModule.completionProvider.updateSuggestion("");
-        //   // console.log(`File is not supported - No Action Required`);
-        //   return null;
-        // }
-          // // console.log('Vscode File - Updated text - ', event.contentChanges[0].text)
+          if (this.isFileNotSupported){
+            return null;
+          }
+
+          const range = event.contentChanges[0].range;
           this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
           if (isNullOrEmptyOrWhitespace(this.textBeforeCursor)){
             this.socketModule.completionProvider.updateSuggestion("");
-            // // console.log(`Text before cursor is empty. No action required`);
             return null;
           }
       
-          // this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
-          const range = event.contentChanges[0].range;
           this.currentLanguage = event.document.languageId;
           this.currentStartLineNumber = range.start.line;
           this.currentStartCharacterPosition = range.start.character;
@@ -109,12 +107,8 @@ export class VscodeEventsModule {
             if (editor && event.document === editor.document) {
               this.debounceTimeout = setTimeout(() => {
                 if (vscode.window.activeTextEditor) {
-                    // this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
-                    // this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
                     this.uniqueIdentifier = uuidv4();
                     this.socketModule.completionProvider.updateSuggestion("");
-                    // // console.log('================== Data Requested ==============================')
-                    // // console.log("UUID request - ", this.uniqueIdentifier)
                     this.socketModule.emitMessage(this.uniqueIdentifier, 
                       getTextBeforeCursor(vscode.window.activeTextEditor), 
                       getTextAfterCursor(vscode.window.activeTextEditor) , 
@@ -135,11 +129,7 @@ export class VscodeEventsModule {
               this.socketModule.completionProvider.updateSuggestion("");
               if (vscode.window.activeTextEditor) {
                 setTimeout(() => {
-                  // this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
-                  // this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
                   this.uniqueIdentifier = uuidv4();
-                  // // console.log('**************** Data Requested ***************************')
-                  // // console.log("UUID request - ", this.uniqueIdentifier)
                   this.socketModule.emitMessage(this.uniqueIdentifier, 
                     getTextBeforeCursor(vscode.window.activeTextEditor), 
                     getTextAfterCursor(vscode.window.activeTextEditor) , 
@@ -152,23 +142,32 @@ export class VscodeEventsModule {
           }
         return null;
     } catch (error) {
-        console.error('An error occurred:', error);
+        // console.error('An error occurred:', error);
         return null;  
     } 
   };
 
   public getCurrentFileName(editor: vscode.TextEditor | undefined, context: vscode.ExtensionContext) {
-    if (this.debounceTimeout) {
-      clearTimeout(this.debounceTimeout);
-    }
-    this.debounceTimeout = setTimeout(() => {
-      this.currentSelectedFileName = handleActiveEditor(editor, context);
-      if (!checkFileNameForCodeCompletion(this.currentSelectedFileName)){
-        this.isFileSupported = false;
-      }else{
-        this.isFileSupported = true;
-      }
-      this.socketModule.completionProvider.updateSuggestion("");
-    }, 100);
+    try {
+        if (this.debounceTimeout) {
+          clearTimeout(this.debounceTimeout);
+        }
+        this.debounceTimeout = setTimeout(() => {
+          this.currentSelectedFileName =  path.basename(handleActiveEditor(editor, context));
+          // console.log("Cheking File Names");
+          // console.log(notSupportedFiles(this.currentSelectedFileName));
+          if (notSupportedFiles(this.currentSelectedFileName)) {
+            // console.log("Large non code file detected");
+            StatusBarManager.updateMessage(`$(error) Neo`);
+            this.isFileNotSupported = true;
+          }else{
+            StatusBarManager.updateMessage(`Neo`);
+            this.isFileNotSupported = false;
+          }
+          // console.log(`File Not Supported: ${this.isFileNotSupported}`);
+          this.socketModule.completionProvider.updateSuggestion("");
+        }, 100);
+      } catch (error) {
+    } 
   }
 }

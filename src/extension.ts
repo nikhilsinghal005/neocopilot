@@ -1,12 +1,15 @@
+// extension.ts
 import * as vscode from 'vscode';
 import { SocketModule } from './socketModule';
 import { VscodeEventsModule } from './vscodeEventsModule';
 import { CompletionProviderModule } from './completionProviderModule';
 import { Socket } from 'socket.io-client';
 import { StatusBarManager } from './StatusBarManager';
+import { versionConfig } from './versionConfig'; // Import the versionConfig module
 
 export async function activate(context: vscode.ExtensionContext) {
   const completionProviderModule = new CompletionProviderModule();
+  versionConfig.initialize(context);
   const socketModule = new SocketModule(completionProviderModule);
   const vscodeEventsModule = new VscodeEventsModule(socketModule);
   
@@ -34,7 +37,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // If User is Logged in it Will connect the Websocket
   if (isLoggedIn) {
-    const socketConnection: Socket = socketModule.connect();
+    const currentVersion = context.extension.packageJSON.version;
+    const socketConnection: Socket = socketModule.connect(currentVersion);
   }
 }
 
