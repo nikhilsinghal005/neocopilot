@@ -1,11 +1,12 @@
 // extension.ts
 import * as vscode from 'vscode';
 import { SocketModule } from './socketModule';
-import { VscodeEventsModule } from './vscodeEventsModule';
+import { VscodeEventsModule } from './codeCompletion/vscodeEventsModule';
 import { CompletionProviderModule } from './completionProviderModule';
 import { Socket } from 'socket.io-client';
 import { StatusBarManager } from './StatusBarManager';
 import { versionConfig } from './versionConfig'; // Import the versionConfig module
+
 
 export async function activate(context: vscode.ExtensionContext) {
   const completionProviderModule = new CompletionProviderModule();

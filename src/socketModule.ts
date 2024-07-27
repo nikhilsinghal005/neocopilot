@@ -8,18 +8,24 @@ import { versionConfig } from './versionConfig';
 export class SocketModule {
   public socket: Socket | null = null;
   public socketMainSuggestion: string | undefined;
+  public socketListSuggestion: string[];
   public suggestion: string;
   public completionProvider: CompletionProviderModule;
-  public systemChangeInProgress = false;
+  public predictionRequestInProgress = false;
+  public predictionWaitText = "";
   private tempUniqueIdentifier: string;
   private debounceTimer: NodeJS.Timeout | null = null;
   private currentVersion = versionConfig.getCurrentVersion();
+
+
   // private statusBarManager = StatusBarManager.getInstance();
 
   constructor(completionProvider: CompletionProviderModule) {
     this.completionProvider = completionProvider;
     this.suggestion = "";
+    this.socketListSuggestion = [];
     this.tempUniqueIdentifier = "NA";
+    this.predictionWaitText = "";
   }
 
   public connect(appVersion: string): Socket {
@@ -31,14 +37,26 @@ export class SocketModule {
     });
 
     this.socket.on('receive_message', (data: any) => {
+      this.predictionRequestInProgress = false;
       StatusBarManager.updateMessage(`Neo`);
 
       console.log(JSON.stringify(data.message));
       if (data.message && this.tempUniqueIdentifier === data.unique_Id) {
         this.suggestion = data.message;
         this.socketMainSuggestion = data.message;
+        // console.log("Message List", data.message_list)
         // this.completionProvider.updateSuggestion("");
-        this.completionProvider.updateSuggestion(data.message);
+        this.socketListSuggestion = data.message_list;
+        if (this.predictionWaitText !== "") {
+          if (this.suggestion.startsWith(this.predictionWaitText)){
+            this.completionProvider.updateSuggestion(this.suggestion.substring(this.predictionWaitText.length));
+            this.predictionWaitText = "";
+          }else{
+            this.completionProvider.updateSuggestion("");
+          }
+        }else{
+          this.completionProvider.updateSuggestion(this.suggestion);
+        }
         this.triggerInlineSuggestion();
       } else {
       }
@@ -60,6 +78,10 @@ export class SocketModule {
   }
 
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string ) {
+    console.log("Emit Message - ",uuid);
+    this.predictionRequestInProgress = true;
+    this.suggestion = "";
+    this.completionProvider.updateSuggestion("");
     StatusBarManager.updateMessage(`$(loading~spin)`);
     this.tempUniqueIdentifier = uuid;
     if (this.socket) {
