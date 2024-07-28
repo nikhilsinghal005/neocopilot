@@ -3,14 +3,13 @@
   "name": "neocopilot",
   "displayName": "Neo Copilot",
   "description": "CodeAssist: Unleash the power of intelligent code suggestions with CodeAssist. Boost your productivity and streamline your coding workflow by harnessing the advanced suggestion engine that understands your code like a pro.",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.80.0"
   },
   "homepage": "https://www.neocopilot.io",
   "icon": "media/icon.png",
   "categories": [
-    "Other",
     "Programming Languages",
     "Machine Learning",
     "AI",
@@ -44,9 +43,7 @@
     "json",
     "yaml",
     "xml",
-    "google",
     "chatgpt",
-    "gpt4",
     "chat"
   ],
   "activationEvents": [

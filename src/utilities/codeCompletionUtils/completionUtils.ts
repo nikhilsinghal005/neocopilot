@@ -58,7 +58,7 @@ export function handleAddedSpecialCharacters(mianString: string, tempString: str
     }   
     const closeCharIndex = findLastMatchingParenthesis(tempString, 0);
     if (closeCharIndex === -1){
-        console.log("No matching close char found");
+        // console.log("No matching close char found");
         return "";
     }
     const beforeInsert = tempString.substring(1, closeCharIndex);

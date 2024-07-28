@@ -21,7 +21,6 @@ export class CommentDetection {
 
         // Skip processing if the change text is empty (e.g., undo, remove comment)
         if (afterText === '') {
-            console.log('Empty change text detected. Skipping processing.');
             return false;
         }       
 
@@ -47,16 +46,6 @@ export class CommentDetection {
     );
   }
 
-//   private static isBlockCommentToggle(beforeText: string, afterText: string, language: string): boolean {
-//     const [blockCommentStart, blockCommentEnd] = this.getBlockCommentDelimiters(language);
-
-//     return (
-//       (beforeText.includes(blockCommentStart) && beforeText.includes(blockCommentEnd) &&
-//        !afterText.includes(blockCommentStart) && !afterText.includes(blockCommentEnd)) ||
-//       (!beforeText.includes(blockCommentStart) && !beforeText.includes(blockCommentEnd) &&
-//        afterText.includes(blockCommentStart) && afterText.includes(blockCommentEnd))
-//     );
-//   }
 
   private static getLineCommentStart(language: string): string {
     switch (language) {
@@ -73,18 +62,3 @@ export class CommentDetection {
     }
   }
 
-//   private static getBlockCommentDelimiters(language: string): [string, string] {
-//     switch (language) {
-//       case 'javascript':
-//       case 'typescript':
-//       case 'java':
-//       case 'c':
-//       case 'cpp':
-//         return ['/*', '*/'];
-//       case 'python':
-//         return ['"""', '"""'];
-//       default:
-//         return ['/*', '*/'];
-//     }
-//   }
-}
