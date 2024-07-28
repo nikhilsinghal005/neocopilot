@@ -29,10 +29,6 @@ export class CommentDetection {
             return true;
         }
 
-        // Check for adding or removing block comments
-        // if (this.isBlockCommentToggle(beforeText, afterText, language)) {
-        //     return true;
-        // }
     }
 
     return false;
@@ -62,3 +58,4 @@ export class CommentDetection {
     }
   }
 
+}
