@@ -16,7 +16,7 @@ export class SocketModule {
   private tempUniqueIdentifier: string;
   private debounceTimer: NodeJS.Timeout | null = null;
   private currentVersion = versionConfig.getCurrentVersion();
-
+  public currentSuggestionId: string = "";
 
   // private statusBarManager = StatusBarManager.getInstance();
 
@@ -26,6 +26,7 @@ export class SocketModule {
     this.socketListSuggestion = [];
     this.tempUniqueIdentifier = "NA";
     this.predictionWaitText = "";
+    this.currentSuggestionId = "";
   }
 
   public connect(appVersion: string): Socket {
@@ -42,17 +43,21 @@ export class SocketModule {
 
       console.log(JSON.stringify(data.message));
       if (data.message && this.tempUniqueIdentifier === data.unique_Id) {
+        this.currentSuggestionId = data.unique_Id;
+        console.log("Suggestion ID - ", this.currentSuggestionId);
+
+        // Update and regulate suggestions
         this.suggestion = data.message;
         this.socketMainSuggestion = data.message;
-        // console.log("Message List", data.message_list)
-        // this.completionProvider.updateSuggestion("");
+
         this.socketListSuggestion = data.message_list;
         if (this.predictionWaitText !== "") {
           if (this.suggestion.startsWith(this.predictionWaitText)){
             this.completionProvider.updateSuggestion(this.suggestion.substring(this.predictionWaitText.length));
+            this.chatCompletionMessage("partial_completion", 'prediction_wait_feature', this.predictionWaitText.length);
             this.predictionWaitText = "";
           }else{
-            this.completionProvider.updateSuggestion("");
+            this.completionProvider.updateSuggestion(this.suggestion);
           }
         }else{
           this.completionProvider.updateSuggestion(this.suggestion);
@@ -83,9 +88,23 @@ export class SocketModule {
     this.suggestion = "";
     this.completionProvider.updateSuggestion("");
     StatusBarManager.updateMessage(`$(loading~spin)`);
+    console.log("prefix - ", prefix);
+    console.log("suffix - ", suffix);
+
     this.tempUniqueIdentifier = uuid;
     if (this.socket) {
       this.socket.emit('send_message', { prefix, suffix, inputType, uuid, appVersion: this.currentVersion, language});
+    }
+  }
+
+  public chatCompletionMessage(completion_type: string, completion_comment: string, completion_size: number) {
+    if (this.socket) {
+      this.socket.emit('completion_accepted', {
+        uuid: this.currentSuggestionId,
+        completion_type,
+        completion_comment,
+        completion_size,
+      });
     }
   }
 

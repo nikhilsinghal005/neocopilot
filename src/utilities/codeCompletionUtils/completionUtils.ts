@@ -149,3 +149,53 @@ function findLastMatchingParenthesis(code: string, startIndex: number): number {
     }
     return -1; // No match found
 }
+
+export function getDeletedText(
+    fullText: string,
+    startLine: number,
+    startCharacter: number,
+    endLine: number,
+    endCharacter: number
+    ): string {
+
+    // Split the full text into lines
+    const lines = fullText.split('\n');
+
+    // Get the part of the text that was deleted
+    let deletedText = '';
+    if (startLine === endLine) {
+        // Deletion within a single line
+        deletedText = lines[startLine].substring(startCharacter, endCharacter);
+    } else {
+        // Deletion spans multiple lines
+        deletedText += lines[startLine].substring(startCharacter) + '\n';
+        for (let i = startLine + 1; i < endLine; i++) {
+            deletedText += lines[i] + '\n';
+        }
+        deletedText += lines[endLine].substring(0, endCharacter);
+    }
+
+    return deletedText;
+}
+
+export function removeSubstringFromEnd(str: string, subStr: string): string {
+    if (str.endsWith(subStr)) {
+      const newLength = str.length - subStr.length;
+      return str.substring(0, newLength);
+    }
+    return str;
+}
+
+export function findFirstMatch(mainListSuggestion: string[], mainSuggestion: string, subStr: string): string {
+    // remove main suggestion from mainSuggestionList
+    if (mainSuggestion) {
+      mainListSuggestion = mainListSuggestion.filter(item => item !== mainSuggestion);
+    }
+    
+    for (let item of mainListSuggestion) {
+      if (item.startsWith(subStr)) {
+        return item;
+      }
+    }
+    return '';
+  }

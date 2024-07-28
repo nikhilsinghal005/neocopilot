@@ -4,8 +4,9 @@ import { SocketModule } from '../socketModule';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { handleActiveEditor, handleAllOpenEditors, handleAllOpenFiles } from "../utilities/codeCompletionUtils/editorUtils";
-import { getCompleteEditorText, getTextAfterCursor, getTextBeforeCursor } from "../utilities/codeCompletionUtils/editorCodeUtils";
-import { isNullOrEmptyOrWhitespace, notSupportedFiles, modifySuggestion, handleAddedSpecialCharacters } from "../utilities/codeCompletionUtils/completionUtils";
+import { getCompleteEditorText, getTextAfterCursor, getTextBeforeCursor, getCursorPosition } from "../utilities/codeCompletionUtils/editorCodeUtils";
+import { isNullOrEmptyOrWhitespace, notSupportedFiles, modifySuggestion, handleAddedSpecialCharacters, getDeletedText } from "../utilities/codeCompletionUtils/completionUtils";
+import { removeSubstringFromEnd, findFirstMatch } from "../utilities/codeCompletionUtils/completionUtils";
 import { StatusBarManager } from '../StatusBarManager';
 import { CommentDetection } from './CommentDetection';
 
@@ -33,10 +34,17 @@ export class VscodeEventsModule {
   private previousText: string = "";
   private currentText: string = "";
   private specialCharacters: string[];
+  private deleteSpecialCharacters: string[];
+  private currentCursorPosition: object | null = {
+    line: -1,
+    character: -1
+  };
 
   constructor(socketModule: SocketModule) {
     this.socketModule = socketModule;
     this.specialCharacters = ['(', '{', '[', '"', "'"];
+    this.deleteSpecialCharacters = ['()', '{}', '[]', '""', "''"];
+    this.typeOfAction = "emit-request";
   }
   public handleTextChange(event: vscode.TextDocumentChangeEvent, context: vscode.ExtensionContext) {
     if (this.socketModule.socket){
@@ -90,13 +98,13 @@ export class VscodeEventsModule {
           const range = event.contentChanges[0].range; // Range of the text that is changed
           this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
           this.predictionDelay = 300; // Reseting time to 300ms for code precompletion diction
-
+          this.currentCursorPosition = getCursorPosition(vscode.window.activeTextEditor);
           // If text before cursor is empty then return null no prediction
           if (isNullOrEmptyOrWhitespace(this.currentText)){
             this.socketModule.completionProvider.updateSuggestion("");
             return null;
           }
-
+          
           // Getting other parameters required for prediction
           this.currentLanguage = event.document.languageId; // Language of the file
           this.currentStartLineNumber = range.start.line; // Line number of the text that is changed
@@ -117,26 +125,6 @@ export class VscodeEventsModule {
           console.log("Current End Line Number: ", currentEndtLineNumber);
           console.log("Current End Character Position: ", currentEndCharacterPosition);
 
-          // const deletedText = this.getDeletedText(
-          //   this.previousText,
-          //   this.currentStartLineNumber,
-          //   this.currentStartCharacterPosition,
-          //   currentEndtLineNumber,
-          //   currentEndCharacterPosition
-          // );
-          // console.log(deletedText);
-          // const isDeleting = this.updatedText === '' && range.start.character === range.end.character - 2;
-
-
-          // const closingChars = [')', '}', ']', '"', "'"];
-          // if (closingChars.includes(this.updatedText[0])) {
-          //     if (this.tempSuggestion && this.tempSuggestion[0] === this.updatedText[0]) {
-          //         this.tempSuggestion = this.tempSuggestion.substring(1);
-          //         this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
-          //     }
-          //     return null;
-          // }
-
           // Action in case if prediction already exist
           if (this.mainSuggestion && this.tempSuggestion){
             console.log('============================= Suggestion Exists =============================')
@@ -149,6 +137,21 @@ export class VscodeEventsModule {
               if (this.currentStartLineNumber === currentEndtLineNumber){
 
                 console.log("=================== Text Deleted in the Same Line ===========================")
+                const deletedText = getDeletedText( this.previousText, 
+                                                    this.currentStartLineNumber, 
+                                                    this.currentStartCharacterPosition, 
+                                                    currentEndtLineNumber, 
+                                                    currentEndCharacterPosition);
+                if (deletedText.length===2 && this.deleteSpecialCharacters.includes(deletedText)){
+                  console.log(" ====================== In case of special characters are deleted ================================")
+                  if (this.userTempString.endsWith(deletedText)){
+                    this.userTempString = this.userTempString.substring(0, this.userTempString.length - 2);
+                    this.tempSuggestion = this.mainSuggestion.slice(this.userTempString.length);
+                    this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
+                    return null;
+                  }
+                }
+
                 let positionChange = currentEndCharacterPosition - this.currentStartCharacterPosition;
                 this.tempSuggestion = modifySuggestion(this.mainSuggestion, this.tempSuggestion, positionChange);
                 this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
@@ -159,6 +162,7 @@ export class VscodeEventsModule {
                   this.predictionDelay = 5000;
                   this.mainSuggestion = "";
                   this.mainListSuggestion = [];
+                  this.typeOfAction = "NEO-SE-LC-1";
                 }
               }
 
@@ -169,7 +173,8 @@ export class VscodeEventsModule {
                 this.mainSuggestion = "";
                 this.mainListSuggestion = [];
                 this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
-                this.predictionDelay = 20000;
+                this.predictionDelay = 15000;
+                this.typeOfAction = "NEO-SE-D-LC-X";
               }
             }
           }else{
@@ -178,6 +183,7 @@ export class VscodeEventsModule {
             this.mainListSuggestion = [];
             this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
             console.log('============================= No Suggestion Exists =============================')
+
             if (this.updatedText == "" || !this.updatedText){
               console.log('============================= Text Deleted ==================================')
               this.predictionDelay = 3000;
@@ -185,23 +191,28 @@ export class VscodeEventsModule {
               if (this.currentStartLineNumber === currentEndtLineNumber){
                 console.log("=================== Text Deleted in the Same Line ===========================")
                 if (currentEndCharacterPosition - this.currentStartCharacterPosition > 2){
-                  this.predictionDelay = 10000;
+                  this.predictionDelay = 8000;
+                  this.typeOfAction = "NEO-SNE-D-LC-1";
                 }
               }else{
                 console.log("Text Deleted or Updated in the Different Line")
                 this.predictionDelay = 15000;
+                this.typeOfAction = "NEO-SNE-D-LC-X";
               }
             }else{
               console.log('============================= Text Updated ==================================')
               this.predictionDelay = 500;
+              this.typeOfAction = "NEO-SNE-A-LC-1";
               if (this.currentStartLineNumber != currentEndtLineNumber){
                 this.predictionDelay = 5000;
+                this.typeOfAction = "NEO-SNE-A-LC-X";
               }
             }
           }
 
           // Action in case if prediction does not exist and not text is deleted
           if (!this.mainSuggestion){
+            console.log("============================= No Suggestion Exists =============================")
 
             // Clearing debounce for prediction
             if (this.debounceTimeout) {
@@ -212,7 +223,7 @@ export class VscodeEventsModule {
             if (editor && event.document === editor.document) {
               this.debounceTimeout = setTimeout(() => {
 
-                if (vscode.window.activeTextEditor) {
+                if (vscode.window.activeTextEditor && this.currentCursorPosition===getCursorPosition(vscode.window.activeTextEditor)) {
                     this.userTempString = "";
                     this.mainSuggestion = "";
                     this.tempSuggestion = "";
@@ -222,7 +233,7 @@ export class VscodeEventsModule {
                     this.socketModule.emitMessage(this.uniqueIdentifier, 
                       getTextBeforeCursor(vscode.window.activeTextEditor), 
                       getTextAfterCursor(vscode.window.activeTextEditor) , 
-                      "emit-request",
+                      this.typeOfAction,
                       this.currentLanguage
                     );
                 }
@@ -233,31 +244,51 @@ export class VscodeEventsModule {
 
             // Check if updated text is in the temp suggestion and is less then the length of the actual tempsugesstions length
             if (this.tempSuggestion.startsWith(this.updatedText) && updatedTextLength < this.tempSuggestion.length){
-                // Check for special suggestion and handle them seprately
-                if (this.specialCharacters.includes(this.updatedText[0]) && this.updatedText.length == 2){
-                  const outputSuggestion = handleAddedSpecialCharacters(this.mainSuggestion, this.tempSuggestion, this.updatedText);
-                  if (outputSuggestion){
-                    this.tempSuggestion = outputSuggestion;
-                    this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
-                    return null;
-                  }
-                }
 
                 // Update the suugestion after removing the left string
                 console.log("Suggestion is trimmed to update ans show")
                 this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion.slice(updatedTextLength));
-                this.userTempString = this.removeSubstringFromEnd(this.mainSuggestion, this.tempSuggestion.slice(updatedTextLength))
+                this.userTempString = removeSubstringFromEnd(this.mainSuggestion, this.tempSuggestion.slice(updatedTextLength))
+                this.socketModule.chatCompletionMessage(
+                    "partial_completion", 
+                    "-",
+                    updatedTextLength
+                )
+            }else if(this.specialCharacters.includes(this.updatedText[0]) && this.updatedText.length == 2 && this.tempSuggestion.startsWith(this.updatedText[0])){
 
-            }else{
+              // Check for special characters in the suggestion
+              console.log("Special Character is present in the suggestion")
+              const outputSuggestion = handleAddedSpecialCharacters(this.mainSuggestion, this.tempSuggestion, this.updatedText);
+              if (outputSuggestion){
+                this.tempSuggestion = outputSuggestion;
+                this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
+                this.userTempString = this.userTempString + this.updatedText;
+                this.socketModule.chatCompletionMessage(
+                  "partial_completion", 
+                  "special_character",
+                  updatedTextLength
+                )
+                return null;
+              }
+            }
+            else{
               // Check in other messages if suggestion exists or not
+
+              if (this.updatedText===this.mainSuggestion){
+                this.socketModule.chatCompletionMessage("complete_completion",  "main", updatedTextLength)
+              }else if (this.updatedText===this.tempSuggestion){
+                this.socketModule.chatCompletionMessage("complete_completion",  "partial", updatedTextLength)
+              }
+
               this.userTempString = this.userTempString + this.updatedText;
               console.log("Searching this String to Update Suggestion - ", this.userTempString)
-              this.mainSuggestion = this.findFirstMatch(this.mainListSuggestion,this.mainSuggestion, this.userTempString)
-              
+              this.mainSuggestion = findFirstMatch(this.mainListSuggestion,this.mainSuggestion, this.userTempString)
+
               if (this.mainSuggestion){
                 console.log("Updated Suggestion Found")
                 this.tempSuggestion = this.mainSuggestion.slice(this.userTempString.length);
                 this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
+                this.socketModule.chatCompletionMessage("search_completion", "found", this.tempSuggestion.length)
               }else{
                 console.log("Updated Suggestion Not Found")
                 this.userTempString = "";
@@ -268,15 +299,18 @@ export class VscodeEventsModule {
                 if (this.debounceTimeout) {
                   clearTimeout(this.debounceTimeout);
                 }
-                if (vscode.window.activeTextEditor) {
-                  setTimeout(() => {
-                    this.uniqueIdentifier = uuidv4();
-                    this.socketModule.emitMessage(this.uniqueIdentifier, 
-                      getTextBeforeCursor(vscode.window.activeTextEditor), 
-                      getTextAfterCursor(vscode.window.activeTextEditor),
-                      "emit-request",
-                      this.currentLanguage
-                    );
+                if (editor && event.document === editor.document) {
+                // if (vscode.window.activeTextEditor) {
+                  this.debounceTimeout = setTimeout(() => {
+                      if (vscode.window.activeTextEditor && this.currentCursorPosition===getCursorPosition(vscode.window.activeTextEditor)) {
+                      this.uniqueIdentifier = uuidv4();
+                      this.socketModule.emitMessage(this.uniqueIdentifier, 
+                        getTextBeforeCursor(vscode.window.activeTextEditor), 
+                        getTextAfterCursor(vscode.window.activeTextEditor),
+                        this.typeOfAction,
+                        this.currentLanguage
+                      );
+                    }
                   }, this.predictionDelay);
                 }
               }
@@ -288,36 +322,6 @@ export class VscodeEventsModule {
         return null;  
     } 
   };
-
-
-  public getDeletedText(
-    fullText: string,
-    startLine: number,
-    startCharacter: number,
-    endLine: number,
-    endCharacter: number
-): string {
-    // Split the full text into lines
-    const lines = fullText.split('\n');
-
-    // Get the part of the text that was deleted
-    let deletedText = '';
-    if (startLine === endLine) {
-        // Deletion within a single line
-        deletedText = lines[startLine].substring(startCharacter, endCharacter);
-    } else {
-        // Deletion spans multiple lines
-        deletedText += lines[startLine].substring(startCharacter) + '\n';
-        for (let i = startLine + 1; i < endLine; i++) {
-            deletedText += lines[i] + '\n';
-        }
-        deletedText += lines[endLine].substring(0, endCharacter);
-    }
-
-    return deletedText;
-}
-
-
 
   public getCurrentFileName(editor: vscode.TextEditor | undefined, context: vscode.ExtensionContext) {
     try {
@@ -340,28 +344,6 @@ export class VscodeEventsModule {
     } 
   }
 
-  public removeSubstringFromEnd(str: string, subStr: string): string {
-    if (str.endsWith(subStr)) {
-      const newLength = str.length - subStr.length;
-      return str.substring(0, newLength);
-    }
-    return str;
-  }
-
-  public findFirstMatch(mainListSuggestion: string[], mainSuggestion: string, subStr: string): string {
-    // remove main suggestion from mainSuggestionList
-    if (mainSuggestion) {
-      mainListSuggestion = mainListSuggestion.filter(item => item !== mainSuggestion);
-    }
-    
-    for (let item of mainListSuggestion) {
-      if (item.startsWith(subStr)) {
-        return item;
-      }
-    }
-    return '';
-  }
-  
   public handleCommentAction() {
     console.log('Comment action detected. Disabling prediction.');
     this.disablePrediction = true;
@@ -371,6 +353,5 @@ export class VscodeEventsModule {
       this.disablePrediction = false;
     }, 500);
   }
-
 
 }

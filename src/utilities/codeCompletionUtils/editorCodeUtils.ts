@@ -28,3 +28,11 @@ export function getCompleteEditorText(editor: vscode.TextEditor | undefined): st
   }    
    return ''
 }
+
+export function getCursorPosition(editor: vscode.TextEditor | undefined): { line: number, character: number } | null {
+  if (editor) {
+    const position = editor.selection.active;
+    return { line: position.line, character: position.character };
+  }
+  return null;
+}
