@@ -108,7 +108,6 @@ export class SocketModule {
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string ) {
 
     if (this.rateLimitExceeded) { // No action if rate limit is exceded
-      this.predictionRequestInProgress = true; // Setting up the prediction request is progress to true
       this.suggestion = ""; // Setting up the suggestion to empty
       this.socketListSuggestion = []; // Setting up the socket list suggestion to empty
       this.completionProvider.updateSuggestion(""); // Setting up the completion provider suggestion to empty
