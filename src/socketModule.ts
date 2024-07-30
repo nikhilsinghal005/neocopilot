@@ -4,6 +4,7 @@ import { CompletionProviderModule } from './completionProviderModule';
 import { SOCKET_API_BASE_URL } from './config';
 import { StatusBarManager } from './StatusBarManager';
 import { versionConfig } from './versionConfig';
+import { v4 as uuidv4 } from 'uuid';
 
 export class SocketModule {
   public socket: Socket | null = null;
@@ -17,8 +18,9 @@ export class SocketModule {
   private debounceTimer: NodeJS.Timeout | null = null;
   private currentVersion = versionConfig.getCurrentVersion();
   public currentSuggestionId: string = "";
-  public rateLimitExceeded = false;
+  public rateLimitExceeded: Boolean = false;
   private rateLimitTimer: NodeJS.Timeout | null = null;
+  private isUpdatePopupShown: Boolean = false;
   // private statusBarManager = StatusBarManager.getInstance();
 
   constructor(completionProvider: CompletionProviderModule) {
@@ -98,13 +100,23 @@ export class SocketModule {
 
     // In case of user is using previous bersion of the app
     this.socket.on('update_app_version', (data: any) => {
-      const extensionId = data.extension_id;
-      this.promptUpdate(extensionId, this.currentVersion);
+      if (this.isUpdatePopupShown) { // If popup is already shown then no need to show again
+        console.log("Popup already shown. No need to show again.")
+        return;
+      } else {
+
+        // Showing a popup to users to update the app
+        console.log("Neo Copilot updated version available. User need to update the app.")
+        const extensionId = data.extension_id;
+        const newRequiredVersion = data.latest_version;
+        this.promptUpdate(extensionId, newRequiredVersion);}
+        this.isUpdatePopupShown = true;
     });
 
     return this.socket;
   }
 
+  // Sending codes to backend for code completion
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string ) {
 
     if (this.rateLimitExceeded) { // No action if rate limit is exceded
@@ -129,6 +141,7 @@ export class SocketModule {
     }
   }
 
+  // Sending completion message summary to backend
   public chatCompletionMessage(completion_type: string, completion_comment: string, completion_size: number) {
     if (this.rateLimitExceeded) { // No action if rate limit is exceded
       return;
@@ -140,6 +153,21 @@ export class SocketModule {
         completion_type,
         completion_comment,
         completion_size,
+      });
+    }
+  }
+
+  // Sending miscellaneous information to backend
+  public customInformationMessage(infomration_type: string, information_comment: string) {
+    if (this.rateLimitExceeded) { // No action if rate limit is exceded
+      return;
+    }
+    // Sending Completion report to backend
+    if (this.socket) {
+      this.socket.emit('custom_information', {
+        uuid: uuidv4(),
+        infomration_type,
+        information_comment,
       });
     }
   }
@@ -167,12 +195,13 @@ export class SocketModule {
     }, 10);
   }
 
-  private promptUpdate(extensionId: string, currentVersion: string) {
+  private promptUpdate(extensionId: string, newRequiredVersion: string) {
     vscode.window.showWarningMessage(
-      `You are using an outdated version of this extension. Please update to the latest version (${currentVersion}).`,
+      `You are using an outdated version of this extension. Please update to the latest version (${newRequiredVersion}).`,
       'Update Now'
-    ).then(selection => {
+    ).then((selection: string | undefined) => { // Explicitly type the parameter
       if (selection === 'Update Now') {
+        this.customInformationMessage('update_app_button_clicked', `User clicked on update button to update the app to ${newRequiredVersion}`);
         this.openExtensionInMarketplace(extensionId);
       }
     });
