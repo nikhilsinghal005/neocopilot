@@ -35,12 +35,14 @@ export class VscodeEventsModule {
   private currentText: string = "";
   private specialCharacters: string[];
   private deleteSpecialCharacters: string[];
+  private previousPositionState: { startLine: number; startCharacter: number; endLine: number; endCharacter: number } | null = null;
 
   constructor(socketModule: SocketModule) {
     this.socketModule = socketModule;
     this.specialCharacters = ['(', '{', '[', '"', "'"];
     this.deleteSpecialCharacters = ['()', '{}', '[]', '""', "''"];
     this.typeOfAction = "emit-request";
+    this.previousPositionState = null;
 
   }
 
@@ -126,6 +128,19 @@ export class VscodeEventsModule {
           // console.log("Current End Line Number: ", currentEndtLineNumber);
           // console.log("Current End Character Position: ", currentEndCharacterPosition);
 
+          const currentPostionState = {
+            "startLine": this.currentStartLineNumber,
+            "startCharacter": this.currentStartCharacterPosition,
+            "endLine": currentEndtLineNumber,
+            "endCharacter": currentEndCharacterPosition
+          }
+
+          if (this.previousPositionState && this.areStatesEqual(this.previousPositionState, currentPostionState)) {
+            console.log("State has not changed. Skipping code completion.");
+            return null;
+          }
+          this.previousPositionState = currentPostionState;
+
           // Action in case if prediction already exist
           if (this.mainSuggestion && this.tempSuggestion){
             // console.log('============================= Suggestion Exists =============================')
@@ -164,7 +179,7 @@ export class VscodeEventsModule {
                   this.predictionDelay = 5000;
                   this.mainSuggestion = "";
                   this.mainListSuggestion = [];
-                  this.typeOfAction = "NEO-SE-LC-1";
+                  this.typeOfAction = "NEO-SE-D-LC-1";
                 }
               }
 
@@ -332,13 +347,19 @@ export class VscodeEventsModule {
               }
             }
           }
-
         return null;
     } catch (error) {
         return null;  
     } 
   };
-
+  private areStatesEqual(state1: { startLine: number; startCharacter: number; endLine: number; endCharacter: number }, state2: { startLine: number; startCharacter: number; endLine: number; endCharacter: number }): boolean {
+    return (
+      state1.startLine === state2.startLine &&
+      state1.startCharacter === state2.startCharacter &&
+      state1.endLine === state2.endLine &&
+      state1.endCharacter === state2.endCharacter
+    );
+  }
   public getCurrentFileName(editor: vscode.TextEditor | undefined, context: vscode.ExtensionContext) {
     try {
         if (this.debounceTimeout) {
