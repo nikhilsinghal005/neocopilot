@@ -5,10 +5,11 @@ import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { handleActiveEditor, handleAllOpenEditors, handleAllOpenFiles } from "../utilities/codeCompletionUtils/editorUtils";
 import { getCompleteEditorText, getTextAfterCursor, getTextBeforeCursor, getCursorPosition } from "../utilities/codeCompletionUtils/editorCodeUtils";
-import { isNullOrEmptyOrWhitespace, notSupportedFiles, modifySuggestion, handleAddedSpecialCharacters, getDeletedText } from "../utilities/codeCompletionUtils/completionUtils";
+import { isNullOrEmptyOrWhitespace, notSupportedFiles, modifySuggestion } from "../utilities/codeCompletionUtils/completionUtils";
+import { handleAddedSpecialCharacters, getDeletedText } from "../utilities/codeCompletionUtils/completionUtils";
 import { removeSubstringFromEnd, findFirstMatch } from "../utilities/codeCompletionUtils/completionUtils";
 import { StatusBarManager } from '../StatusBarManager';
-import { CommentDetection } from './CommentDetection';
+import { Socket } from 'socket.io-client';
 
 export class VscodeEventsModule {
   private socketModule: SocketModule;
@@ -21,7 +22,9 @@ export class VscodeEventsModule {
   private currentLanguage: string = "";
   private currentStartLineNumber: number = -1;
   private currentStartCharacterPosition: number = -1;
-  private updatedText: string | null = "";
+  private currentEndLineNumber: number = -1;
+  private currentEndCharacterPosition: number = -1;
+  private updatedText: string = "";
   private mainSuggestion: string = "";
   private tempSuggestion: string = "";
   private mainListSuggestion: string[] = [];
@@ -43,121 +46,123 @@ export class VscodeEventsModule {
     this.deleteSpecialCharacters = ['()', '{}', '[]', '""', "''"];
     this.typeOfAction = "emit-request";
     this.previousPositionState = null;
+    this.predictionWaitText = "";
+    this.mainSuggestion = "";
+    this.tempSuggestion = "";
+    this.mainListSuggestion = [];
+  }
 
+  public reinitialize(): void {
+    this.socketModule.completionProvider.updateSuggestion("");
+    this.mainSuggestion = "";
+    this.socketModule.predictionWaitText = "";
+    this.mainListSuggestion = [];
+    this.socketModule.predictionRequestInProgress = false;
+    this.predictionDelay = 300;
+  }
+
+  public eventPostionVariables(event: vscode.TextDocumentChangeEvent): void {
+    const range = event.contentChanges[0].range;
+    this.currentStartLineNumber = range.start.line; // Line number of the text that is changed
+    this.currentStartCharacterPosition = range.start.character; // Character position of the text that is changed
+    this.updatedText = event.contentChanges[0].text // Text that is changed
+    this.currentEndLineNumber = range.end.line; // Line number of the text that is changed
+    this.currentEndCharacterPosition = range.end.character; // Character position of the text that is changed
+    this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
   }
 
   public handleTextChange(event: vscode.TextDocumentChangeEvent, context: vscode.ExtensionContext) {
     if (this.socketModule.socket ){
 
-      // To handle when the user adds comment in the active text editor
-      const editor = vscode.window.activeTextEditor;
-      if (editor && CommentDetection.isCommentAction(event, editor)) {
-        this.handleCommentAction();
-        return;
-      }
-      
-      // To enable and disbale prediction in case of comment
-      if (this.disablePrediction) {
-        this.disablePrediction = false;
-        return;
-      }
-
-      // To handle when the user changes the text in the active text editor
+      // Update the suggestion parameters to make sure they always remain updated
       this.mainSuggestion = this.socketModule.suggestion;
       this.tempSuggestion = this.socketModule.completionProvider.suggestion;
       this.mainListSuggestion = this.socketModule.socketListSuggestion;
 
       // Check in Case if Prediction is Already in Progress
-      if(!this.socketModule.predictionRequestInProgress && !this.socketModule.rateLimitExceeded){
-        // If Prediction is not in Progress
-        this.predictionWaitText = "";
-        this.socketModule.predictionWaitText = this.predictionWaitText;
+      if(!this.socketModule.rateLimitExceeded){
         this.previousText = this.currentText;
         this.textPredictionHandeling(vscode.window.activeTextEditor, event);
-      }else{
-        // If Prediction is in Progress
-        this.predictionWaitText = this.predictionWaitText + event.contentChanges[0].text;
-        this.socketModule.predictionWaitText = this.predictionWaitText;
-        // console.log("Prediction Wait Text: ", this.predictionWaitText);
       }
+
     }else{
-      // console.log("Socket is not connected");
+      this.reinitialize()
+      this.socketModule.rateLimitExceeded = false;
+      const currentVersion = context.extension.packageJSON.version;
+      const socketConnection: Socket = this.socketModule.connect(currentVersion);
     }
   }
 
   private textPredictionHandeling(editor: vscode.TextEditor | undefined, event: vscode.TextDocumentChangeEvent): string | null {
 
     try { 
-          // // console.log(getCursorPosition(vscode.window.activeTextEditor))
-          // Cheking if File is Supported or not
-          if (this.isFileNotSupported){
+          if (this.isFileNotSupported){ // Cheking if File is Supported or not
+            this.reinitialize();
             return null;
           }
 
-          // Getting editor texts for prediction
-          this.currentText = getCompleteEditorText(vscode.window.activeTextEditor)
-          const range = event.contentChanges[0].range; // Range of the text that is changed
-          this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor);
-          this.predictionDelay = 300; // Reseting time to 300ms for code precompletion diction
+          // console.log("====================== Starting the process =========================")
+          this.currentText = getCompleteEditorText(vscode.window.activeTextEditor) // Getting editor texts for prediction
+          this.textBeforeCursor = getTextBeforeCursor(vscode.window.activeTextEditor); // Getting text before cursor for prediction
+          this.currentLanguage = event.document.languageId; // Language of the file
+          if (!this.currentLanguage){this.currentLanguage = 'neo-defined'}
 
-          // If text before cursor is empty then return null no prediction
-          if (isNullOrEmptyOrWhitespace(this.currentText)){
+          if (isNullOrEmptyOrWhitespace(this.textBeforeCursor)){ // strip white spaces from current text
             this.socketModule.completionProvider.updateSuggestion("");
             return null;
           }
 
-          // Getting other parameters required for prediction
-          this.currentLanguage = event.document.languageId; // Language of the file
-          this.currentStartLineNumber = range.start.line; // Line number of the text that is changed
-          this.currentStartCharacterPosition = range.start.character; // Character position of the text that is changed
-          this.updatedText = event.contentChanges[0].text // Text that is changed
-          let currentEndtLineNumber = range.end.line; // Line number of the text that is changed
-          let currentEndCharacterPosition = range.end.character; // Character position of the text that is changed
-          this.textAfterCursor = getTextAfterCursor(vscode.window.activeTextEditor);
-
-          if (!this.currentLanguage){
-            this.currentLanguage = 'neo-defined'
-          }
-
-          // console.log("***********************************************")
-          // console.log("Document VersionId: ", event.document.version);
-          // console.log("Updated Text: ", JSON.stringify(this.updatedText));
-          // console.log("Current Language: ", this.currentLanguage);
-          // console.log("Current Start Line Number: ", this.currentStartLineNumber);
-          // console.log("Current Start Character Position: ", this.currentStartCharacterPosition);
-          // console.log("Current End Line Number: ", currentEndtLineNumber);
-          // console.log("Current End Character Position: ", currentEndCharacterPosition);
-
-          const currentPostionState = {
-            "startLine": this.currentStartLineNumber,
-            "startCharacter": this.currentStartCharacterPosition,
-            "endLine": currentEndtLineNumber,
-            "endCharacter": currentEndCharacterPosition
-          }
-
-          if (this.previousPositionState && this.areStatesEqual(this.previousPositionState, currentPostionState)) {
-            console.log("State has not changed. Skipping code completion.");
+          if (event.contentChanges.length > 1){ // If there are more than one changes in the editor
+            const multipleChange = event.contentChanges[0].text
+            if (["// " , "# "].includes(multipleChange)){
+              this.reinitialize();
+              return null;
+            }
             return null;
           }
-          this.previousPositionState = currentPostionState;
 
-          // Action in case if prediction already exist
-          if (this.mainSuggestion && this.tempSuggestion){
-            // console.log('============================= Suggestion Exists =============================')
+          this.predictionDelay = 300; // Reseting time to 300ms for code precompletion diction
+          this.eventPostionVariables(event); // Getting the position of the text that is changed
 
-            // Check if text is deleted or not
-            if (this.updatedText === "" || !this.updatedText){
-              // console.log('============================= Text Deleted ==================================')
+          if (this.socketModule.predictionRequestInProgress){ // If prediction is already in progress
+            if (this.updatedText){
+              this.predictionWaitText = this.predictionWaitText + this.updatedText;
+              this.socketModule.predictionWaitText = this.predictionWaitText;
+              // console.log("Prediction Wait Text: ", this.predictionWaitText);
+            }else{
+              // console.log("Text is deleted");
+              let deletedText = getDeletedText( this.previousText, this.currentStartLineNumber, this.currentStartCharacterPosition, 
+                this.currentEndLineNumber, this.currentEndCharacterPosition);
+              if (this.predictionWaitText.endsWith(deletedText)){
+                this.predictionWaitText = this.predictionWaitText.slice(0, -deletedText.length);
+                // console.log("Prediction Wait Text: ", this.predictionWaitText);
+                this.socketModule.predictionWaitText = this.predictionWaitText;
+              }else{
+                this.predictionWaitText = "";
+                this.socketModule.predictionWaitText = "";
+                this.socketModule.isSuggestionRequired = false;
+              }
+            }
+            return null;
+          }else{
+            this.predictionWaitText = "";
+            this.socketModule.predictionWaitText = "";
+          }
 
-              // Check if text is deleted or updated in same line or not
-              if (this.currentStartLineNumber === currentEndtLineNumber){
+          if (this.mainSuggestion && this.tempSuggestion){ // Action in case if prediction already exist
 
-                // console.log("=================== Text Deleted in the Same Line ===========================")
-                const deletedText = getDeletedText( this.previousText, 
-                                                    this.currentStartLineNumber, 
-                                                    this.currentStartCharacterPosition, 
-                                                    currentEndtLineNumber, 
-                                                    currentEndCharacterPosition);
+            if (this.updatedText === "" || !this.updatedText){ // Check if text is deleted or not
+
+                // Get deleted text from the editor
+                const deletedText = getDeletedText( 
+                  this.previousText, 
+                  this.currentStartLineNumber, 
+                  this.currentStartCharacterPosition, 
+                  this.currentEndLineNumber, 
+                  this.currentEndCharacterPosition
+                );
+                console.log("Deleted Text: ", deletedText)
+              if (this.currentStartLineNumber === this.currentEndLineNumber){ // Check if text is deleted or updated in same line or not
 
                 if (deletedText.length===2 && this.deleteSpecialCharacters.includes(deletedText)){
                   // console.log(" ====================== In case of special characters are deleted ================================")
@@ -169,48 +174,49 @@ export class VscodeEventsModule {
                   }
                 }
 
-                let positionChange = currentEndCharacterPosition - this.currentStartCharacterPosition;
+                let positionChange = this.currentEndCharacterPosition - this.currentStartCharacterPosition;
                 this.tempSuggestion = modifySuggestion(this.mainSuggestion, this.tempSuggestion, positionChange);
                 this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
                 // console.log("Temp Suggestion: ", this.tempSuggestion);
                 if (this.tempSuggestion){
                   return null;
                 }else{
-                  this.predictionDelay = 5000;
-                  this.mainSuggestion = "";
-                  this.mainListSuggestion = [];
+                  this.reinitialize()
+                  this.predictionDelay = 4000;
                   this.typeOfAction = "NEO-SE-D-LC-1";
                 }
               }
 
               // Check if text is deleted or updated in different line
-              if (this.currentStartLineNumber !== currentEndtLineNumber){
-                // console.log("=================== Text Deleted in the Different Line =======================")
-                this.tempSuggestion = "";
-                this.mainSuggestion = "";
-                this.mainListSuggestion = [];
-                this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
-                this.predictionDelay = 15000;
-                this.typeOfAction = "NEO-SE-D-LC-X";
+              if (this.currentStartLineNumber !== this.currentEndLineNumber){
+                if (this.mainSuggestion.endsWith(deletedText + this.tempSuggestion)){
+                  this.tempSuggestion = deletedText + this.tempSuggestion;
+                  this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
+                  return null;
+                } else if(this.currentEndLineNumber - this.currentStartLineNumber < 2){
+                  this.reinitialize()
+                  this.predictionDelay = 15000;
+                  this.typeOfAction = "NEO-SE-D-LC-X";
+                }else{
+                  this.reinitialize()
+                  return null;
+                }
+
               }
             }
           }else{
-            this.tempSuggestion = "";
-            this.mainSuggestion = "";
-            this.mainListSuggestion = [];
-            this.socketModule.completionProvider.updateSuggestion(this.tempSuggestion);
-
+            this.reinitialize()
             // console.log('============================= No Suggestion Exists =============================')
-
+            // When no suggestion exists in the editor
             if (this.updatedText == "" || !this.updatedText){
 
               // console.log('============================= Text Deleted ==================================')
               this.predictionDelay = 3000;
               
-              if (this.currentStartLineNumber === currentEndtLineNumber){
+              if (this.currentStartLineNumber === this.currentEndLineNumber){
 
                 // console.log("=================== Text Deleted in the Same Line ===========================")
-                if (currentEndCharacterPosition - this.currentStartCharacterPosition > 2){
+                if (this.currentEndCharacterPosition - this.currentStartCharacterPosition > 2){
                   this.predictionDelay = 8000;
                   this.typeOfAction = "NEO-SNE-D-LC-1";
 
@@ -224,18 +230,16 @@ export class VscodeEventsModule {
             }else{
 
               // console.log('============================= Text Updated ==================================')
-              this.predictionDelay = 500;
+              this.predictionDelay = 300;
               this.typeOfAction = "NEO-SNE-A-LC-1";
-              if (this.currentStartLineNumber != currentEndtLineNumber){
+              if (this.updatedText == "\n" || this.updatedText == "\r\n"){
+                this.predictionDelay = 300;
+              } else if(this.updatedText.includes("\n") || this.updatedText.includes("\r\n")){
                 this.predictionDelay = 5000;
                 this.typeOfAction = "NEO-SNE-A-LC-X";
-
               }
             }
           }
-
-          // this.textBeforeCursor = this.normalizeNewlines(this.textBeforeCursor)
-          // this.textAfterCursor = this.normalizeNewlines(this.textAfterCursor)
 
           // Action in case if prediction does not exist and not text is deleted
           if (!this.mainSuggestion){
@@ -257,7 +261,7 @@ export class VscodeEventsModule {
                     this.uniqueIdentifier = uuidv4();
                     this.socketModule.completionProvider.updateSuggestion("");
                     // console.log(getCursorPosition(vscode.window.activeTextEditor))
-
+                    this.socketModule.startTime = performance.now();
                     this.socketModule.emitMessage(this.uniqueIdentifier, 
                       getTextBeforeCursor(vscode.window.activeTextEditor), 
                       getTextAfterCursor(vscode.window.activeTextEditor), 
@@ -335,6 +339,7 @@ export class VscodeEventsModule {
                   this.debounceTimeout = setTimeout(() => {
                       if (vscode.window.activeTextEditor) {
                       this.uniqueIdentifier = uuidv4();
+                      this.socketModule.startTime = performance.now();
                       this.socketModule.emitMessage(this.uniqueIdentifier, 
                         getTextBeforeCursor(vscode.window.activeTextEditor), 
                         getTextAfterCursor(vscode.window.activeTextEditor),
@@ -347,19 +352,13 @@ export class VscodeEventsModule {
               }
             }
           }
+          // console.log(getCursorPosition(vscode.window.activeTextEditor))
         return null;
     } catch (error) {
         return null;  
     } 
   };
-  private areStatesEqual(state1: { startLine: number; startCharacter: number; endLine: number; endCharacter: number }, state2: { startLine: number; startCharacter: number; endLine: number; endCharacter: number }): boolean {
-    return (
-      state1.startLine === state2.startLine &&
-      state1.startCharacter === state2.startCharacter &&
-      state1.endLine === state2.endLine &&
-      state1.endCharacter === state2.endCharacter
-    );
-  }
+
   public getCurrentFileName(editor: vscode.TextEditor | undefined, context: vscode.ExtensionContext) {
     try {
         if (this.debounceTimeout) {
@@ -381,15 +380,6 @@ export class VscodeEventsModule {
     } 
   }
 
-  public handleCommentAction() {
-    // console.log('Comment action detected. Disabling prediction.');
-    this.disablePrediction = true;
-
-    setTimeout(() => {
-      // console.log('Re-enabling prediction.');
-      this.disablePrediction = false;
-    }, 500);
-  }
   // Utility function to normalize newlines
   private normalizeNewlines(text: string): string {
     return text.replace(/\r\n/g, '\n');
