@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 import { io, Socket } from 'socket.io-client';
-import { CompletionProviderModule } from './completionProviderModule';
+import { CompletionProviderModule } from './codeCompletion/completionProviderModule';
 import { SOCKET_API_BASE_URL } from './config';
 import { StatusBarManager } from './StatusBarManager';
 import { versionConfig } from './versionConfig';
 import { v4 as uuidv4 } from 'uuid';
+import { handleAddedSpecialCharacters, findFirstMatch } from "./utilities/codeCompletionUtils/completionUtils";
 
 export class SocketModule {
   public socket: Socket | null = null;
@@ -21,6 +22,9 @@ export class SocketModule {
   public rateLimitExceeded: Boolean = false;
   private rateLimitTimer: NodeJS.Timeout | null = null;
   private isUpdatePopupShown: Boolean = false;
+  public isSuggestionRequired: Boolean = true;
+  private deleteSpecialCharacters = ['()', '{}', '[]', '""', "''"];
+  public startTime: number = performance.now();
   // private statusBarManager = StatusBarManager.getInstance();
 
   constructor(completionProvider: CompletionProviderModule) {
@@ -31,6 +35,8 @@ export class SocketModule {
   }
 
   public connect(appVersion: string): Socket {
+
+    // Connecting with socket server
     if (this.socket) {
       return this.socket;
     }
@@ -41,41 +47,59 @@ export class SocketModule {
     // Route to recieve message for for code completion
     this.socket.on('receive_message', (data: any) => {
 
-
       this.predictionRequestInProgress = false; // Setting up the prediction request is progress to false
       StatusBarManager.updateMessage(`Neo`); // Reseeting Status bar to Neo
-      // console.log("Message List - ", JSON.stringify(data.message_list));
 
-      // Matching the latest unique id with the current recived id.
-      if (data.message && this.tempUniqueIdentifier === data.unique_Id) {
-        this.currentSuggestionId = data.unique_Id; // This is will be used to send the completion message and tracking the completion
+      if (this.isSuggestionRequired){
 
-        // Update and regulate suggestions
-        this.suggestion = data.message;
-        this.socketListSuggestion = data.message_list;
+        // Matching the latest unique id with the current recived id.
+        if (data.message && this.tempUniqueIdentifier === data.unique_Id) {
 
-        // Cheking for the prediction wait text if it is mapping with suggestion
-        if (this.predictionWaitText !== "") {
-          if (this.suggestion.startsWith(this.predictionWaitText)){
+          this.currentSuggestionId = data.unique_Id; // This is will be used to send the completion message and tracking the completion
+          this.suggestion = data.message; // Update and regulate suggestions
+          this.socketListSuggestion = data.message_list;
 
-            // Updating the suggestion with the prediction wait text
-            this.completionProvider.updateSuggestion(this.suggestion.substring(this.predictionWaitText.length));
-            this.chatCompletionMessage("partial_completion", 'prediction_wait_feature', this.predictionWaitText.length);
-            this.predictionWaitText = "";
+          if (this.predictionWaitText) { // Cheking for the prediction wait text if it is mapping with suggestion
+              // console.log("Prediction wait text is present.", this.predictionWaitText);
+              // console.log(this.suggestion.startsWith(this.predictionWaitText))
+
+              if (this.suggestion.startsWith(this.predictionWaitText)){ // Updating the suggestion with the prediction wait text
+                this.completionProvider.updateSuggestion(this.suggestion.substring(this.predictionWaitText.length));
+                this.chatCompletionMessage("partial_completion", 'prediction_wait_feature', this.predictionWaitText.length);
+                this.predictionWaitText = "";
+
+              } else if(findFirstMatch(this.socketListSuggestion, this.suggestion, this.predictionWaitText)){
+                this.suggestion = findFirstMatch(this.socketListSuggestion, this.suggestion, this.predictionWaitText)
+                this.completionProvider.updateSuggestion(this.suggestion.substring(this.predictionWaitText.length));
+                this.predictionWaitText = "";
+                this.chatCompletionMessage("partial_completion", 'prediction_wait_feature', this.predictionWaitText.length);
+
+              } else if(this.deleteSpecialCharacters.includes(this.predictionWaitText)){
+                this.completionProvider.updateSuggestion(handleAddedSpecialCharacters(this.suggestion, this.suggestion, this.predictionWaitText));
+
+              } else{
+                this.suggestion = "";
+                this.socketListSuggestion = [];
+                this.completionProvider.updateSuggestion(this.suggestion);
+
+              }
 
           }else{
-
             this.completionProvider.updateSuggestion(this.suggestion);
           }
-        }else{
-          this.completionProvider.updateSuggestion(this.suggestion);
-        }
-        this.triggerInlineSuggestion();
+          this.triggerInlineSuggestion();
+          console.log("Time take to fetch suggestion: ", performance.now() - this.startTime);
+        } 
+        return null;
+
+      }else{
+        // console.log("Suggestion is not required.");
+        this.isSuggestionRequired = true;
+        return null;
       }
     });
 
-    // Handling completion in case of rate limit exceeded
-    this.socket.on('rate_limit_exceeded', (data: any) => {
+    this.socket.on('rate_limit_exceeded', (data: any) => { // Handling completion in case of rate limit exceeded
 
       StatusBarManager.updateMessage(`Neo`); // Reseeting Status bar to Neo
       this.rateLimitExceeded = true; // Current status is rate limit exceded.
@@ -101,12 +125,12 @@ export class SocketModule {
     // In case of user is using previous bersion of the app
     this.socket.on('update_app_version', (data: any) => {
       if (this.isUpdatePopupShown) { // If popup is already shown then no need to show again
-        console.log("Popup already shown. No need to show again.")
+        // console.log("Popup already shown. No need to show again.")
         return;
       } else {
 
         // Showing a popup to users to update the app
-        console.log("Neo Copilot updated version available. User need to update the app.")
+        // console.log("Neo Copilot updated version available. User need to update the app.")
         const extensionId = data.extension_id;
         const newRequiredVersion = data.latest_version;
         this.promptUpdate(extensionId, newRequiredVersion);}
@@ -118,13 +142,17 @@ export class SocketModule {
 
   // Sending codes to backend for code completion
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string ) {
+    // console.log("Emit Message - ",uuid);
+    this.predictionRequestInProgress = true;
 
+  
     if (this.rateLimitExceeded) { // No action if rate limit is exceded
       this.suggestion = ""; // Setting up the suggestion to empty
       this.socketListSuggestion = []; // Setting up the socket list suggestion to empty
       this.completionProvider.updateSuggestion(""); // Setting up the completion provider suggestion to empty
       return;
     }
+    
     // console.log("Emit Message - ",uuid);
     this.predictionRequestInProgress = true; // Setting up the prediction request is progress to true
     this.suggestion = ""; // Setting up the suggestion to empty
@@ -132,13 +160,12 @@ export class SocketModule {
     this.completionProvider.updateSuggestion(""); // Setting up the completion provider suggestion to empty
     StatusBarManager.updateMessage(`$(loading~spin)`); // Setting up the status bar to loading
 
-    // console.log("prefix - ", JSON.stringify(prefix));
-    // console.log("suffix - ", JSON.stringify(suffix));
-
     this.tempUniqueIdentifier = uuid; // assingning the unique id to the temp unique id
     if (this.socket) { // sending the message to the server
       this.socket.emit('send_message', { prefix, suffix, inputType, uuid, appVersion: this.currentVersion, language});
     }
+  // Delay for 2000 milliseconds (2 seconds)
+
   }
 
   // Sending completion message summary to backend

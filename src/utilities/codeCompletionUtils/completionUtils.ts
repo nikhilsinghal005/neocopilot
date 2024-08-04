@@ -1,17 +1,22 @@
 
 export function isNullOrEmptyOrWhitespace(inputString: string | null | undefined): boolean {
-    return inputString === null || (inputString?.trim() === '');
-  }
-  
-  export function checkFileNameForCodeCompletion(fileName: string | null | undefined): boolean {
+    if (inputString === undefined || inputString === null){
+        return true;
+    }else if (inputString.trim() === '' || inputString.trim().length <= 7){
+        return true;
+    }
+    return false;
+}
+ 
+export function checkFileNameForCodeCompletion(fileName: string | null | undefined): boolean {
     // List of programming language extensions for which code completion is supported
     const supportedExtensions = [
         '.js', '.ts', '.java', '.py', '.c', '.cpp', '.cs', '.rb', '.php', '.html', '.css'
     ];
     return supportedExtensions.some(extension => fileName?.endsWith(extension));
-  }
+}
   
-  export function notSupportedFiles(fileName: string | null | undefined): boolean {
+export function notSupportedFiles(fileName: string | null | undefined): boolean {
     // console.log("fileName", fileName)
     const commonIncludedFileList = ["requirements.txt", "package.json", "package-lock.json", "config.json", ".env"];
     if (fileName === undefined || fileName === null) {
@@ -23,10 +28,10 @@ export function isNullOrEmptyOrWhitespace(inputString: string | null | undefined
     }
     const notSupportedExtensions = ['.csv', '.log', '.json', '.xml', '.md', '.txt', '.sql', '.html', '.xlsx', '.pdf'];
     return notSupportedExtensions.some(extension => fileName.endsWith(extension));
-  }
+}
   
   
-  export function modifySuggestion(mainString: string, tempString: string, sliceLength: number): string {
+export function modifySuggestion(mainString: string, tempString: string, sliceLength: number): string {
     // Function to modify suggestion string
     // This function is used to modify the suggestion string to remove the part of the string
     // that is already typed by the user.
@@ -47,7 +52,7 @@ export function isNullOrEmptyOrWhitespace(inputString: string | null | undefined
     }else{
       return "";
     }
-  }
+}
 
 // Check for special characters and handle accordingly
 export function handleAddedSpecialCharacters(mianString: string, tempString: string, updatedText: string): string {

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { SocketModule } from './socketModule';
+import { SocketModule } from '../socketModule';
 
 export class CompletionProviderModule implements vscode.InlineCompletionItemProvider {
     public suggestion: string;

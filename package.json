@@ -3,7 +3,7 @@
   "name": "neocopilot",
   "displayName": "Neo Copilot",
   "description": "CodeAssist: Unleash the power of intelligent code suggestions with CodeAssist. Boost your productivity and streamline your coding workflow by harnessing the advanced suggestion engine that understands your code like a pro.",
-  "version": "0.100.12",
+  "version": "0.100.13",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -21,6 +21,8 @@
   "keywords": [
     "code-assist",
     "code-completion",
+    "ai-completion",
+    "ai-assistant",
     "python",
     "javascript",
     "typescript",
@@ -32,7 +34,6 @@
     "ruby",
     "go",
     "swift",
-    "kotlin",
     "scala",
     "dart",
     "rust",
@@ -40,9 +41,6 @@
     "sql",
     "html",
     "css",
-    "json",
-    "yaml",
-    "xml",
     "chatgpt",
     "chat"
   ],
