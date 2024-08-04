@@ -1,11 +1,16 @@
 import * as vscode from 'vscode';
-import { io, Socket } from 'socket.io-client';
+import { io, Socket, ManagerOptions, SocketOptions } from 'socket.io-client';
 import { CompletionProviderModule } from './codeCompletion/completionProviderModule';
 import { SOCKET_API_BASE_URL } from './config';
 import { StatusBarManager } from './StatusBarManager';
 import { versionConfig } from './versionConfig';
 import { v4 as uuidv4 } from 'uuid';
 import { handleAddedSpecialCharacters, findFirstMatch } from "./utilities/codeCompletionUtils/completionUtils";
+
+interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {
+  pingInterval?: number;
+  pingTimeout?: number;
+}
 
 export class SocketModule {
   public socket: Socket | null = null;
@@ -40,9 +45,15 @@ export class SocketModule {
     if (this.socket) {
       return this.socket;
     }
-    this.socket = io(SOCKET_API_BASE_URL, {
-      query: { appVersion }
-    });
+    const options: CustomSocketOptions = {
+      query: { appVersion },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      pingInterval: 240000,  // Send a ping every 4 minutes
+      pingTimeout: 60000    // Wait 5 minutes for a pong response
+    };
+    this.socket = io(SOCKET_API_BASE_URL, options);
 
     // Route to recieve message for for code completion
     this.socket.on('receive_message', (data: any) => {
@@ -198,6 +209,7 @@ export class SocketModule {
       });
     }
   }
+
 
   // Disconnecting the socket
   public disconnect() {
