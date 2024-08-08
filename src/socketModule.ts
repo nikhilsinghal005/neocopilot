@@ -8,8 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { handleAddedSpecialCharacters, findFirstMatch } from "./utilities/codeCompletionUtils/completionUtils";
 
 interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {
-  pingInterval?: number;
-  pingTimeout?: number;
+
 }
 
 export class SocketModule {
@@ -47,11 +46,7 @@ export class SocketModule {
     }
     const options: CustomSocketOptions = {
       query: { appVersion },
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      pingInterval: 240000,  // Send a ping every 4 minutes
-      pingTimeout: 60000    // Wait 5 minutes for a pong response
+      reconnection: true
     };
     this.socket = io(SOCKET_API_BASE_URL, options);
 

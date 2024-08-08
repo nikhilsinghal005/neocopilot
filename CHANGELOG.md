@@ -20,3 +20,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Resolved issue in running prediction.
 - Added support for special characters in running prediction.
 - Enhanced suggestions based on the user's position in the text.
+
+## [0.100.14] - 2024-08-04
+
+### Added
+- Resolve quick connection issue
+
+## [0.100.15] - 2024-08-04
+
+### Added
+- Resolve Socket connection issue
