@@ -34,7 +34,7 @@ NeoCopilot is a powerful Visual Studio Code extension that offers inline code co
 
 ## Issues and Feedback
 
-If you encounter any issues or have feedback, please visit our [website](https://www.neocopilot.io).
+If you encounter any issues or have feedback, please visit our [website](https://www.neocopilot.io) or contact us at [support@neocopilot.io](mailto:support@neocopilot.io).
 
 ---
 
