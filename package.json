@@ -3,7 +3,7 @@
   "name": "neocopilot",
   "displayName": "Neo Copilot",
   "description": "CodeAssist: Unleash the power of intelligent code suggestions with CodeAssist. Boost your productivity and streamline your coding workflow by harnessing the advanced suggestion engine that understands your code like a pro.",
-  "version": "0.100.17",
+  "version": "0.100.16",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -80,7 +80,7 @@
     "@typescript-eslint/eslint-plugin": "^5.59.8",
     "@typescript-eslint/parser": "^5.59.8",
     "@vscode/test-electron": "^2.3.2",
-    "esbuild": "^0.16.10",
+    "esbuild": "^0.16.17",
     "esbuild-plugin-copy": "^2.0.1",
     "eslint": "^8.41.0",
     "glob": "^8.1.0",
