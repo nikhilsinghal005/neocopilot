@@ -17,17 +17,17 @@ esbuild.build({
   external: ['vscode'], // Mark 'vscode' as an external module (not to be bundled)
 }).catch(() => process.exit(1));
 
-// Build configuration for the webview part
-esbuild.build({
-  ...commonOptions,
-  entryPoints: ['src/webview/main.ts'], // Path to your webview's main TypeScript file
-  platform: 'browser', // Specifies that the code runs in a browser-like environment
-  target: ['chrome80'], // Target version of Chrome (Electron's version)
-  outfile: 'out/webview/main.js',
-  loader: {
-    '.css': 'css', // Add loader for CSS files
-    '.png': 'file', // Add loader for image files
-    '.jpg': 'file', // Add loader for image files
-    '.svg': 'file'  // Add loader for SVG files
-  }
-}).catch(() => process.exit(1));
+// // Build configuration for the webview part
+// esbuild.build({
+//   ...commonOptions,
+//   entryPoints: ['src/webview/main.ts'], // Path to your webview's main TypeScript file
+//   platform: 'browser', // Specifies that the code runs in a browser-like environment
+//   target: ['chrome80'], // Target version of Chrome (Electron's version)
+//   outfile: 'out/webview/main.js',
+//   loader: {
+//     '.css': 'css', // Add loader for CSS files
+//     '.png': 'file', // Add loader for image files
+//     '.jpg': 'file', // Add loader for image files
+//     '.svg': 'file'  // Add loader for SVG files
+//   }
+// }).catch(() => process.exit(1));

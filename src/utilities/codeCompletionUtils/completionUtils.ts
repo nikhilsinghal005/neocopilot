@@ -2,7 +2,7 @@
 export function isNullOrEmptyOrWhitespace(inputString: string | null | undefined): boolean {
     if (inputString === undefined || inputString === null){
         return true;
-    }else if (inputString.trim() === '' || inputString.trim().length <= 7){
+    }else if (inputString.trim() === '' || inputString.trim().length < 6){
         return true;
     }
     return false;
@@ -29,8 +29,8 @@ export function notSupportedFiles(fileName: string | null | undefined): boolean 
     const notSupportedExtensions = ['.csv', '.log', '.json', '.xml', '.md', '.txt', '.sql', '.html', '.xlsx', '.pdf'];
     return notSupportedExtensions.some(extension => fileName.endsWith(extension));
 }
-  
-  
+
+ 
 export function modifySuggestion(mainString: string, tempString: string, sliceLength: number): string {
     // Function to modify suggestion string
     // This function is used to modify the suggestion string to remove the part of the string
@@ -189,6 +189,17 @@ export function removeSubstringFromEnd(str: string, subStr: string): string {
       return str.substring(0, newLength);
     }
     return str;
+}
+
+export function searchSuggestion(mainListSuggestion: string[], predictionText: string, currentText: string, updatedtext: string): [string, string] { 
+    for (let item of mainListSuggestion) {
+        if ((predictionText + item).startsWith(currentText + updatedtext)) {
+            if ((predictionText + item) !== (currentText + updatedtext)){
+                return [item, (predictionText + item).slice((currentText + updatedtext).length)];
+            }
+        }
+    }
+    return ['', ''];
 }
 
 export function findFirstMatch(mainListSuggestion: string[], mainSuggestion: string, subStr: string): string {
