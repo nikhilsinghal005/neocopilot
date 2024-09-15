@@ -3,7 +3,7 @@
   "name": "neocopilot",
   "displayName": "Neo Copilot",
   "description": "CodeAssist: Unleash the power of intelligent code suggestions with CodeAssist. Boost your productivity and streamline your coding workflow by harnessing the advanced suggestion engine that understands your code like a pro.",
-  "version": "0.100.15",
+  "version": "0.100.17",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -51,6 +51,11 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "uriHandlers": [
+      {
+        "uri": "vscode://neocopilot/token"
+      }
+    ],
     "commands": [
       {
         "command": "disable-code-suggestions",
@@ -90,6 +95,7 @@
     "@vscode/webview-ui-toolkit": "^1.4.0",
     "axios": "^1.7.2",
     "diff": "^5.2.0",
+    "dotenv": "^16.4.5",
     "highlight.js": "^11.9.0",
     "socket.io-client": "^4.7.5",
     "uuid": "^9.0.1",

@@ -1,52 +1,57 @@
-// extension.ts
 import * as vscode from 'vscode';
 import { SocketModule } from './socketModule';
 import { VscodeEventsModule } from './codeCompletion/vscodeEventsModule';
 import { CompletionProviderModule } from './codeCompletion/completionProviderModule';
-import { Socket } from 'socket.io-client';
 import { StatusBarManager } from './StatusBarManager';
-import { versionConfig } from './versionConfig'; // Import the versionConfig module
+import { versionConfig } from './versionConfig';
+import { showLoginNotification } from './utilities/statusBarNotifications/showLoginNotification';
+import { LOGIN_REDIRECT_URL } from './config';
+import { Socket } from 'socket.io-client';
+import { initializeAppFunctions } from './initializeAppFunctions';
+import { AuthManager } from './authManager/authManager';
+import { handleTokenUri } from './authManager/handleTokenUri';
 
 
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const completionProviderModule = new CompletionProviderModule();
   versionConfig.initialize(context);
+  const authManager = new AuthManager(context)
   const socketModule = new SocketModule(completionProviderModule);
   const vscodeEventsModule = new VscodeEventsModule(socketModule);
-  
-  // Check if the user is logged in before initializing the WebSocket connection
-  const isLoggedIn = true //await getIsLoggedIn(context);
-  StatusBarManager.initializeStatusBar();  // Initialize status bar on activation
-  StatusBarManager.updateMessage('Neo');
+  const statusBarManager = new StatusBarManager();
+  StatusBarManager.initializeStatusBar(false, context, vscodeEventsModule);  
 
-  // If User is Logged in it Will connect the Websocket
+  const isLoggedIn = await authManager.verifyAccessToken();
+
   if (isLoggedIn) {
-
-    // To handle when the user changes the active text editor
-    vscode.window.onDidChangeActiveTextEditor(
-      editor => vscodeEventsModule.getCurrentFileName(editor, context), null, context.subscriptions
-    );
-
-    // Handle Document Change
-    vscode.workspace.onDidChangeTextDocument(
-      event => vscodeEventsModule.handleTextChange(event, context), null, context.subscriptions
-    );
-
-    // Register the inline completion item provider
-    vscode.languages.registerInlineCompletionItemProvider(
-      { pattern: '**' },
-      completionProviderModule,
-    );
-    vscode.workspace.getConfiguration().update('editor.quickSuggestions', false);
-
-    // Connect to the WebSocket server
     const currentVersion = context.extension.packageJSON.version;
-    // const socketConnection: Socket = socketModule.connect(currentVersion);
+    const socketConnection: Socket | null = await socketModule.connect(currentVersion, context);
+    
+    if (socketConnection){
+      initializeAppFunctions(vscodeEventsModule, completionProviderModule, context);
+
+    }else{
+      showLoginNotification();
+    }
+
+  } else {
+    showLoginNotification();
   }
+
+  // Register the URI handler
+  vscode.window.registerUriHandler({
+    handleUri: (uri: vscode.Uri) => handleTokenUri(
+      uri, 
+      context, 
+      vscodeEventsModule, 
+      completionProviderModule,
+      socketModule,
+      authManager
+    )
+  });
 }
 
-export function deactivate() {
-  // Disconnect the socket when the extension is deactivated
+export function deactivate(): void {
   const completionProviderModule = new CompletionProviderModule();
   const socketModule = new SocketModule(completionProviderModule);
   socketModule.disconnect();

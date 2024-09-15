@@ -1,3 +1,4 @@
+// Import statements remain the same
 import * as vscode from 'vscode';
 import { io, Socket, ManagerOptions, SocketOptions } from 'socket.io-client';
 import { CompletionProviderModule } from './codeCompletion/completionProviderModule';
@@ -5,212 +6,275 @@ import { SOCKET_API_BASE_URL } from './config';
 import { StatusBarManager } from './StatusBarManager';
 import { versionConfig } from './versionConfig';
 import { v4 as uuidv4 } from 'uuid';
-import { handleAddedSpecialCharacters, findFirstMatch } from "./utilities/codeCompletionUtils/completionUtils";
+import {
+  handleAddedSpecialCharacters,
+  findFirstMatch,
+  searchSuggestion,
+} from "./utilities/codeCompletionUtils/completionUtils";
+import { getTextBeforeCursor } from "./utilities/codeCompletionUtils/editorCodeUtils";
+import { AuthManager } from './authManager/authManager';
 
-interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {
+interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {}
 
+interface UserProfile {
+  email: string;
+  name: string;
+  pictureUrl: string;
 }
 
 export class SocketModule {
   public socket: Socket | null = null;
-  // public socketMainSuggestion: string | undefined;
-  public socketListSuggestion: string[];
-  public suggestion: string;
+  public socketListSuggestion: string[] = [];
+  public suggestion: string = "";
+  private tempSuggestion: string = "";
   public completionProvider: CompletionProviderModule;
   public predictionRequestInProgress = false;
   public predictionWaitText = "";
-  private tempUniqueIdentifier: string;
+  private tempUniqueIdentifier: string = "NA";
   private debounceTimer: NodeJS.Timeout | null = null;
   private currentVersion = versionConfig.getCurrentVersion();
   public currentSuggestionId: string = "";
-  public rateLimitExceeded: Boolean = false;
+  public rateLimitExceeded: boolean = false;
   private rateLimitTimer: NodeJS.Timeout | null = null;
-  private isUpdatePopupShown: Boolean = false;
-  public isSuggestionRequired: Boolean = true;
+  private isUpdatePopupShown: boolean = false;
+  public isSuggestionRequired: boolean = true;
   private deleteSpecialCharacters = ['()', '{}', '[]', '""', "''"];
   public startTime: number = performance.now();
-  // private statusBarManager = StatusBarManager.getInstance();
+  public previousText: string = "";
+  private email: string = "";
+  private pingInterval: NodeJS.Timeout | null = null;
+  private userId: string = "";
 
   constructor(completionProvider: CompletionProviderModule) {
     this.completionProvider = completionProvider;
-    this.suggestion = "";
-    this.socketListSuggestion = [];
-    this.tempUniqueIdentifier = "NA";
   }
 
-  public connect(appVersion: string): Socket {
+  public reinitializeSocket(): void {
+    this.predictionRequestInProgress = false;
+    this.isSuggestionRequired = true;
+    this.suggestion = "";
+    this.socketListSuggestion = [];
+    this.completionProvider.updateSuggestion("");
+  }
 
-    // Connecting with socket server
+  public async connect(appVersion: string, context: vscode.ExtensionContext): Promise<Socket | null> {
     if (this.socket) {
       return this.socket;
     }
-    const options: CustomSocketOptions = {
-      query: { appVersion },
-      reconnection: true
-    };
-    this.socket = io(SOCKET_API_BASE_URL, options);
 
-    // Route to recieve message for for code completion
-    this.socket.on('receive_message', (data: any) => {
+    const authManager = new AuthManager(context);
+    const userProfile = await authManager.getUserProfile();
 
-      this.predictionRequestInProgress = false; // Setting up the prediction request is progress to false
-      StatusBarManager.updateMessage(`Neo`); // Reseeting Status bar to Neo
+    if (userProfile && (await authManager.getAccessToken())) {
+      this.email = userProfile.email;
+      this.userId = userProfile.userId
+    } else {
+      StatusBarManager.initializeLogoutStatusBar(context);
+      authManager.clearTokens();
+      return null;
+    }
 
-      if (this.isSuggestionRequired){
+    this.socket = await createSocketConnection(appVersion, this.email, this.userId, authManager);
 
-        // Matching the latest unique id with the current recived id.
-        if (data.message && this.tempUniqueIdentifier === data.unique_Id) {
-
-          this.currentSuggestionId = data.unique_Id; // This is will be used to send the completion message and tracking the completion
-          this.suggestion = data.message; // Update and regulate suggestions
-          this.socketListSuggestion = data.message_list;
-
-          if (this.predictionWaitText) { // Cheking for the prediction wait text if it is mapping with suggestion
-              // console.log("Prediction wait text is present.", this.predictionWaitText);
-              // console.log(this.suggestion.startsWith(this.predictionWaitText))
-
-              if (this.suggestion.startsWith(this.predictionWaitText)){ // Updating the suggestion with the prediction wait text
-                this.completionProvider.updateSuggestion(this.suggestion.substring(this.predictionWaitText.length));
-                this.chatCompletionMessage("partial_completion", 'prediction_wait_feature', this.predictionWaitText.length);
-                this.predictionWaitText = "";
-
-              } else if(findFirstMatch(this.socketListSuggestion, this.suggestion, this.predictionWaitText)){
-                this.suggestion = findFirstMatch(this.socketListSuggestion, this.suggestion, this.predictionWaitText)
-                this.completionProvider.updateSuggestion(this.suggestion.substring(this.predictionWaitText.length));
-                this.predictionWaitText = "";
-                this.chatCompletionMessage("partial_completion", 'prediction_wait_feature', this.predictionWaitText.length);
-
-              } else if(this.deleteSpecialCharacters.includes(this.predictionWaitText)){
-                this.completionProvider.updateSuggestion(handleAddedSpecialCharacters(this.suggestion, this.suggestion, this.predictionWaitText));
-
-              } else{
-                this.suggestion = "";
-                this.socketListSuggestion = [];
-                this.completionProvider.updateSuggestion(this.suggestion);
-
-              }
-
-          }else{
-            this.completionProvider.updateSuggestion(this.suggestion);
-          }
-          this.triggerInlineSuggestion();
-          console.log("Time take to fetch suggestion: ", performance.now() - this.startTime);
-        } 
-        return null;
-
-      }else{
-        // console.log("Suggestion is not required.");
-        this.isSuggestionRequired = true;
-        return null;
-      }
-    });
-
-    this.socket.on('rate_limit_exceeded', (data: any) => { // Handling completion in case of rate limit exceeded
-
-      StatusBarManager.updateMessage(`Neo`); // Reseeting Status bar to Neo
-      this.rateLimitExceeded = true; // Current status is rate limit exceded.
-      this.predictionRequestInProgress = true; // Setting up the prediction request is progress to true
-      this.suggestion = ""; // Setting up the suggestion to empty
-      this.socketListSuggestion = []; // Setting up the socket list suggestion to empty
-      this.completionProvider.updateSuggestion(""); // Setting up the completion provider suggestion to empty
-
-      // Showing a popup to users to try after 15 minutes
-      vscode.window.showWarningMessage(
-        "Rate limit exceeded. Please try after 15 minutes.",
-        " OK "
-      )   
-      
-      if (this.rateLimitTimer) { // Clearing rate limited time to set to zero
-        clearTimeout(this.rateLimitTimer);
-      }
-      this.rateLimitTimer = setTimeout(() => { // 15 minutes timeout
-        this.rateLimitExceeded = false;
-      }, 15 * 60 * 1000);
-    });
-
-    // In case of user is using previous bersion of the app
-    this.socket.on('update_app_version', (data: any) => {
-      if (this.isUpdatePopupShown) { // If popup is already shown then no need to show again
-        // console.log("Popup already shown. No need to show again.")
-        return;
-      } else {
-
-        // Showing a popup to users to update the app
-        // console.log("Neo Copilot updated version available. User need to update the app.")
-        const extensionId = data.extension_id;
-        const newRequiredVersion = data.latest_version;
-        this.promptUpdate(extensionId, newRequiredVersion);}
-        this.isUpdatePopupShown = true;
-    });
+    // Register event handlers
+    this.registerSocketEventHandlers(context, authManager);
 
     return this.socket;
   }
 
-  // Sending codes to backend for code completion
-  public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string ) {
-    // console.log("Emit Message - ",uuid);
-    this.predictionRequestInProgress = true;
+  private registerSocketEventHandlers(context: vscode.ExtensionContext, authManager: AuthManager) {
+    if (!this.socket) return;
 
-  
-    if (this.rateLimitExceeded) { // No action if rate limit is exceded
-      this.suggestion = ""; // Setting up the suggestion to empty
-      this.socketListSuggestion = []; // Setting up the socket list suggestion to empty
-      this.completionProvider.updateSuggestion(""); // Setting up the completion provider suggestion to empty
-      return;
-    }
+    // Handle successful connection
+    this.socket.on('connect', () => {
+      if (this.pingInterval) {
+        clearInterval(this.pingInterval);
+      }
+      console.info(`%c[${new Date().toLocaleTimeString()}] Neo Copilot: Securely connected with server`, 'color: green;');
+      this.reinitializeSocket();
+
+      // Start ping interval to keep the connection alive
+      this.pingInterval = setInterval(async () => {
+        if (this.socket && this.socket.connected) {
+          const tokenIsVerified = await authManager.verifyAccessToken();
+
+          if (tokenIsVerified) {
+            this.socket.emit('ping');
+            console.info(`%c[${new Date().toLocaleTimeString()}] Neo Copilot: Connection alive`, 'color: green;');
+          } else {
+            this.socket.disconnect();
+            StatusBarManager.registerBeforeLoginCommand(context);
+            authManager.clearTokens();
+            this.socket = null;
+          }
+        }
+      }, 4 * 60 * 1000); // Ping every 4 minutes
+    });
+
+    // Handle disconnection
+    this.socket.on('disconnect', (reason: string) => {
+      if (this.pingInterval) {
+        clearInterval(this.pingInterval);
+      }
+      console.error(`[${new Date().toLocaleTimeString()}] Neo Copilot: disconnected from Server`);
+      this.reinitializeSocket();
+      // No manual reconnection; Socket.IO handles it
+    });
+
+    // Handle connection errors
+    this.socket.on('connect_error', async (err) => {
+      console.error(`[${new Date().toLocaleTimeString()}] Neo Copilot: Socket connection error`);
+
+      if (err.message.includes('Authentication error')) {
+        await sleep(40000)
+        const tokenIsVerified = await authManager.verifyAccessToken();
     
-    // console.log("Emit Message - ",uuid);
-    this.predictionRequestInProgress = true; // Setting up the prediction request is progress to true
-    this.suggestion = ""; // Setting up the suggestion to empty
-    this.socketListSuggestion = []; // Setting up the socket list suggestion to empty
-    this.completionProvider.updateSuggestion(""); // Setting up the completion provider suggestion to empty
-    StatusBarManager.updateMessage(`$(loading~spin)`); // Setting up the status bar to loading
+        if (tokenIsVerified) {
+          // Disconnect the current socket
+          if (this.socket) {
+            this.socket.off(); // Remove event listeners
+            this.socket.disconnect();
+            this.socket = null;
+          }
 
-    this.tempUniqueIdentifier = uuid; // assingning the unique id to the temp unique id
-    if (this.socket) { // sending the message to the server
-      this.socket.emit('send_message', { prefix, suffix, inputType, uuid, appVersion: this.currentVersion, language});
-    }
-  // Delay for 2000 milliseconds (2 seconds)
+          // Create a new socket with the updated token
+          this.socket = await createSocketConnection(this.currentVersion, this.email, this.userId, authManager);
+    
+          // Register event handlers
+          this.registerSocketEventHandlers(context, authManager);
+        } else {
+          // Token refresh failed; prompt user to log in again
+          StatusBarManager.initializeLogoutStatusBar(context);
+          authManager.clearTokens();
+          if (this.socket) {
+            this.socket.io.opts.autoConnect = false; // Stop automatic reconnections
+            this.socket.disconnect();
+          }
+          this.socket = null;
+        }
+      }
+    });
+    
 
+    // Handle receiving messages
+    this.socket.on('receive_message', (data: any) => {
+      try {
+        this.predictionRequestInProgress = false;
+        StatusBarManager.updateMessage(`$(check) Neo Copilot`);
+        console.info(`%cNeo Copilot: prediction completion time: ${(performance.now() - this.startTime).toFixed(2)} milliseconds`, 'color: green;');
+        if (this.isSuggestionRequired) {
+          this.predictionHandleFunction(data);
+        } else {
+          this.completionProvider.updateSuggestion("");
+          this.triggerInlineSuggestion();
+          this.isSuggestionRequired = true;
+        }
+      } catch (error) {
+        this.customInformationMessage('socket_module:receive_message', JSON.stringify(error));
+      }
+    });
+
+    // Handle rate limit exceeded
+    this.socket.on('rate_limit_exceeded', () => {
+      StatusBarManager.updateMessage(`$(check) Neo Copilot`);
+      this.reinitializeSocket();
+
+      vscode.window.showWarningMessage("Rate limit exceeded. Please try after 15 minutes.", "OK");
+
+      if (this.rateLimitTimer) {
+        clearTimeout(this.rateLimitTimer);
+      }
+
+      this.rateLimitTimer = setTimeout(() => {
+        this.rateLimitExceeded = false;
+      }, 15 * 60 * 1000); // 15 minutes
+    });
+
+    // Handle app version updates
+    this.socket.on('update_app_version', (data: any) => {
+      if (this.isUpdatePopupShown) {
+        return;
+      } else {
+        const extensionId = data.extension_id;
+        const newRequiredVersion = data.latest_version;
+        this.promptUpdate(extensionId, newRequiredVersion);
+        this.isUpdatePopupShown = true;
+      }
+    });
+
+    // Add any other necessary event handlers here
   }
 
-  // Sending completion message summary to backend
-  public chatCompletionMessage(completion_type: string, completion_comment: string, completion_size: number) {
-    if (this.rateLimitExceeded) { // No action if rate limit is exceded
+  public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string) {
+    this.predictionRequestInProgress = true;
+
+    if (this.rateLimitExceeded) {
+      this.reinitializeSocket();
       return;
     }
-    // Sending Completion report to backend
+
+    this.suggestion = "";
+    this.socketListSuggestion = [];
+    this.completionProvider.updateSuggestion("");
+    StatusBarManager.updateMessage(`$(loading~spin) Neo Copilot`);
+    this.tempUniqueIdentifier = uuid;
+
+    if (this.socket) {
+      const timestamp = new Date().toISOString();
+      this.socket.emit('send_message', {
+        prefix,
+        suffix,
+        inputType,
+        uuid,
+        appVersion: this.currentVersion,
+        language,
+        timestamp,
+        userEmail: this.email,
+      });
+    }
+    this.previousText = prefix;
+  }
+
+  public chatCompletionMessage(completion_type: string, completion_comment: string, completion_size: number) {
+    if (this.rateLimitExceeded) {
+      return;
+    }
+
     if (this.socket) {
       this.socket.emit('completion_accepted', {
         uuid: this.currentSuggestionId,
         completion_type,
         completion_comment,
         completion_size,
+        userEmail: this.email,
       });
     }
   }
 
-  // Sending miscellaneous information to backend
-  public customInformationMessage(infomration_type: string, information_comment: string) {
-    if (this.rateLimitExceeded) { // No action if rate limit is exceded
+  public customInformationMessage(information_type: string, information_comment: string) {
+    if (this.rateLimitExceeded) {
       return;
     }
-    // Sending Completion report to backend
+
     if (this.socket) {
       this.socket.emit('custom_information', {
         uuid: uuidv4(),
-        infomration_type,
+        information_type,
         information_comment,
+        userEmail: this.email,
       });
     }
   }
 
-
-  // Disconnecting the socket
   public disconnect() {
     if (this.socket) {
+      this.socket.off(); // Remove all event listeners
       this.socket.disconnect();
       this.socket = null;
+    }
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
     }
   }
 
@@ -224,24 +288,96 @@ export class SocketModule {
       if (editor) {
         vscode.commands.executeCommand('editor.action.inlineSuggest.hide');
         vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
-      } else {
       }
     }, 10);
   }
 
   private promptUpdate(extensionId: string, newRequiredVersion: string) {
-    vscode.window.showWarningMessage(
-      `You are using an outdated version of this extension. Please update to the latest version (${newRequiredVersion}).`,
-      'Update Now'
-    ).then((selection: string | undefined) => { // Explicitly type the parameter
-      if (selection === 'Update Now') {
-        this.customInformationMessage('update_app_button_clicked', `User clicked on update button to update the app to ${newRequiredVersion}`);
-        this.openExtensionInMarketplace(extensionId);
-      }
-    });
+    vscode.window
+      .showWarningMessage(
+        `You are using an outdated version of this extension. Please update to the latest version (${newRequiredVersion}).`,
+        'Update Now'
+      )
+      .then((selection: string | undefined) => {
+        if (selection === 'Update Now') {
+          this.customInformationMessage('update_app_button_clicked', `User clicked on update button to update the app to ${newRequiredVersion}`);
+          this.openExtensionInMarketplace(extensionId);
+        }
+      });
   }
 
   private openExtensionInMarketplace(extensionId: string) {
     vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`vscode:extension/${extensionId}`));
   }
+
+  private predictionHandleFunction(predictionReceived: any): void {
+    if (predictionReceived.message && this.tempUniqueIdentifier === predictionReceived.unique_Id) {
+      if (getTextBeforeCursor(vscode.window.activeTextEditor) === this.previousText + this.predictionWaitText) {
+        this.currentSuggestionId = predictionReceived.unique_Id;
+        this.suggestion = predictionReceived.message;
+        this.socketListSuggestion = predictionReceived.message_list;
+
+        if (this.predictionWaitText) {
+          if (this.suggestion.startsWith(this.predictionWaitText)) {
+            this.completionProvider.updateSuggestion(this.suggestion.substring(this.predictionWaitText.length));
+            this.chatCompletionMessage("partial_completion", 'prediction_wait_feature', this.predictionWaitText.length);
+            this.predictionWaitText = "";
+          } else if (findFirstMatch(this.socketListSuggestion, this.suggestion, this.predictionWaitText)) {
+            [this.suggestion, this.tempSuggestion] = searchSuggestion(
+              this.socketListSuggestion,
+              this.previousText,
+              getTextBeforeCursor(vscode.window.activeTextEditor),
+              this.predictionWaitText
+            );
+            this.completionProvider.updateSuggestion(this.tempSuggestion);
+            this.predictionWaitText = "";
+            this.chatCompletionMessage("partial_completion", 'prediction_wait_feature', this.predictionWaitText.length);
+          } else if (this.deleteSpecialCharacters.includes(this.predictionWaitText)) {
+            this.completionProvider.updateSuggestion(
+              handleAddedSpecialCharacters(this.suggestion, this.suggestion, this.predictionWaitText)
+            );
+          } else {
+            this.suggestion = "";
+            this.socketListSuggestion = [];
+            this.completionProvider.updateSuggestion(this.suggestion);
+          }
+        } else {
+          this.completionProvider.updateSuggestion(this.suggestion);
+        }
+      } else {
+        // Cursor position changed; do nothing
+      }
+
+      this.triggerInlineSuggestion();
+    }
+  }
+}
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Helper function to create the socket connection
+async function createSocketConnection(appVersion: string, email: string, userId: string, authManager: any): Promise<Socket> {
+  const options = {
+    query: {
+      appVersion: appVersion,
+      userEmail: email,
+      userId: userId
+    },
+    transports: ['websocket', 'polling'], // Allow both transports
+    credentials: true,
+    reconnection: true,
+    secure: true,
+    reconnectionAttempts: 10000,
+    reconnectionDelay: 10000,
+    reconnectionDelayMax: 10000,
+    timeout: 30000,
+    extraHeaders: {
+      Authorization: `Bearer ${await authManager.getAccessToken()}`,
+    },
+  };
+
+  // Create and return the socket connection
+  const socket = io(SOCKET_API_BASE_URL, options);
+  return socket;
 }
