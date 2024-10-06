@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/config.ts","./src/main.tsx","./src/vite-env.d.ts","./src/@types/vscode-codicons.d.ts","./src/components/chat.tsx","./src/components/login.tsx","./vite.config.ts"],"version":"5.6.2"}
