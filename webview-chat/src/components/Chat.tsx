@@ -56,14 +56,10 @@ const Chat: React.FC<ChatProps> = ({ vscode }) => {
 
   // Handle incoming messages from the VS Code extension
   useEffect(() => {
-    console.log("Chat Component: Setting up message event listener");
-
     const handleMessage = (event: MessageEvent) => {
-      console.log("Chat Component: Received a message event:", event.data);
-
       if (event.data.command === 'receive_chat_message') {
         const { data } = event.data;
-        console.log("Chat Component: Processing 'receive_chat_message' with data:", data);
+        // console.log("Chat Component: Processing 'receive_chat_message' with data:", data);
 
         // Accumulate the response text
         accumulatedResponseRef.current += data.response;
@@ -81,7 +77,6 @@ const Chat: React.FC<ChatProps> = ({ vscode }) => {
           setMessages((prevMessages) => [...prevMessages, receivedMessage]);
           accumulatedResponseRef.current = ''; // Clear the accumulator
           setIsTyping(false); // Typing indicator off since the message is complete
-          console.log("Chat Component: Added received message to state:", receivedMessage);
         }
       } else {
         console.log("Chat Component: Received unknown command:", event.data);
@@ -93,7 +88,6 @@ const Chat: React.FC<ChatProps> = ({ vscode }) => {
 
     // Clean up event listener
     return () => {
-      console.log("Chat Component: Removing message event listener");
       window.removeEventListener('message', handleMessage);
     };
   }, []); // Empty dependency array to add the listener only once

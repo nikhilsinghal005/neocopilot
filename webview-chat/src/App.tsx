@@ -21,7 +21,6 @@ const App: React.FC = () => {
     // Listen for messages from the VS Code extension
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
-      console.log('React app received message:', message);
       if (message.command === 'authStatus') {
         console.log("Nikhil")
         setIsLoggedIn(message.isLoggedIn);

@@ -18,28 +18,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     private readonly _extensionUri: vscode.Uri,
     private readonly _context: vscode.ExtensionContext,
     private readonly _authManager: AuthManager
-
   ) {
     // Initialize the SocketModule
     this.socketModule = SocketModule.getInstance();
-
-    // Listen for messages from the Socket.io server
-    this.socketModule.socket?.on('receive_chat_response', (data: any) => {
-      console.log("====================")
-      this.activePanels.forEach(panel => {
-        panel.webview.postMessage({
-          command: 'receive_chat_message',
-          data: {
-            id: "39rh3ohr9832hrofjwhdoi3u08r",
-            timestamp: new Date().toISOString(),
-            current: "How are You!",
-            complete: true
-          }
-        });
-      });
-    });
   }
-
   public static getInstance(
     extensionUri: vscode.Uri,
     context: vscode.ExtensionContext,
@@ -50,7 +32,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
     return AiChatPanel.instance;
   }
-
   public async resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
@@ -63,6 +44,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     webviewView.onDidDispose(() => {
       this.activePanels = this.activePanels.filter(panel => panel !== webviewView);
     });
+
     // Allow scripts in the webview
     webviewView.webview.options = {
       enableScripts: true,
@@ -75,16 +57,15 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     // Listen for messages from the webview
     webviewView.webview.onDidReceiveMessage(async (message: any) => {
-      console.log('Extension received message:', message);
       switch (message.command) {
         case 'send_chat_message':
           // Validate and sanitize the incoming message
-          // const sanitizedMessage = this.sanitizeMessage(message.data);
-          if (message.data) {
+          const sanitizedMessage = this.sanitizeMessage(message.data);
+          if (sanitizedMessage) {
             // Forward the message to the backend server via Socket.io
             this.socketModule.sendChatMessage(
               uuidv4(),
-              message.data.text
+              sanitizedMessage.text
             );
           }
           break;
@@ -95,19 +76,28 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         case 'ready':
           // Webview signals it's ready; send authentication status
           const isLoggedIn = await this._authManager.verifyAccessToken();
-          console.log('Sending authStatus:', isLoggedIn);
           this.sendAuthStatus(isLoggedIn);
-          this.activePanels.forEach(panel => {
-            panel.webview.postMessage({
-              command: 'receive_chat_message',
-              data: {
-                id: "39rh3ohr9832hrofjwhdoi3u08r",
-                timestamp: new Date().toISOString(),
-                current: "How are You!",
-                complete: true
-              }
+
+          if (isLoggedIn) {
+            // Get Socket Module
+            this.socketModule = SocketModule.getInstance();
+            this.socketModule.socket?.on('receive_chat_response', (data: any) => {
+              this.forwardMessageToWebviews(data);
             });
-          });
+
+            // Send a test message with the correct structure
+            this.activePanels.forEach(panel => {
+              panel.webview.postMessage({
+                command: 'receive_chat_message',
+                data: {
+                  response: "Welcome to the AI Chat Panel!",
+                  unique_id: uuidv4(),
+                  complete: true
+                }
+              });
+            });
+          }
+
           break;
         default:
           vscode.window.showInformationMessage(`Unknown command: ${message.command}`);
@@ -159,22 +149,19 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
    * Forwards incoming chat messages from the backend to all active webviews.
    * @param data - The chat message data received from the backend.
    */
-  private forwardMessageToWebviews(data: any): void {
-    console.log("Forwarding message to webviews:", data);  
-    console.log('Webview is ready, sending message:', data);
-  
+  public forwardMessageToWebviews(data: any): void {
+    // console.log("Forwarding message to webviews:", data);
     this.activePanels.forEach(panel => {
       panel.webview.postMessage({
         command: 'receive_chat_message',
         data: {
-          response: data.text,
-          unique_id: data.id,
+          response: data.response,
+          unique_id: data.unique_id,
           complete: data.complete
         }
       });
     });
   }
-  
 
   private getHtmlForWebview(webview: vscode.Webview): string {
     const scriptUri = webview.asWebviewUri(
