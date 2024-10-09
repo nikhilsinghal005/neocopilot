@@ -1,4 +1,4 @@
-// webview-chat/src/App.tsx
+// src/App.tsx
 
 import React, { useState, useEffect } from 'react';
 import Login from './pages/Login';
@@ -6,9 +6,15 @@ import Chat from './pages/Chat';
 
 declare const acquireVsCodeApi: () => {
   postMessage: (msg: any) => void;
+  getState: () => any;
+  setState: (state: any) => void;
 };
 
-const vscodeApi = acquireVsCodeApi(); // Acquire once at the top level
+const vscodeApi = acquireVsCodeApi() as {
+  postMessage: (msg: any) => void;
+  getState: () => any;
+  setState: (state: any) => void;
+};
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -22,7 +28,6 @@ const App: React.FC = () => {
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
       if (message.command === 'authStatus') {
-        console.log("Nikhil")
         setIsLoggedIn(message.isLoggedIn);
       }
     };

@@ -30,8 +30,9 @@ export function initializeAppFunctions(
   vscode.workspace.getConfiguration().update('editor.quickSuggestions', false);
   const currentVersion = context.extension.packageJSON.version;
 
-  const aiChatPanelProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager);
-  aiChatPanelProvider.sendAuthStatus(true);
+  const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
+  primaryViewProvider.sendAuthStatus(true);
+  const secondaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.secondaryViewType);
 }
 
 export function initializeNonLoginRequiredAppFunctions(
@@ -41,12 +42,19 @@ export function initializeNonLoginRequiredAppFunctions(
   authManager: AuthManager,
   context: vscode.ExtensionContext
 ): void {
-  console.info("%cNeo Copilot: Initializing functinalities", 'color: green;')
-  const aiChatPanelProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager);
+  console.info("%cNeo Copilot: Initializing functionalities", 'color: green;');
+  const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
-      AiChatPanel.viewType,
-      aiChatPanelProvider
+      AiChatPanel.primaryViewType,
+      primaryViewProvider
+    )
+  );
+  const secondaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.secondaryViewType);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      AiChatPanel.secondaryViewType,
+      secondaryViewProvider
     )
   );
 }

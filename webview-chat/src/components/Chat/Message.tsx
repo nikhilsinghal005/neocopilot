@@ -7,10 +7,12 @@ interface MessageProps {
   message: Message;
 }
 
-const MessageComponent: React.FC<MessageProps> = ({ message }) => {
+const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   return (
     <div
-      className={`message flex ${message.messageType === 'user' ? 'justify-end' : 'justify-start'} items-start mb-3`}
+      className={`message flex ${
+        message.messageType === 'user' ? 'justify-end' : 'justify-start'
+      } items-start mb-3`}
     >
       {message.messageType !== 'user' && (
         <span className="codicon codicon-person text-gray-400 mr-2"></span>
@@ -36,6 +38,6 @@ const MessageComponent: React.FC<MessageProps> = ({ message }) => {
       )}
     </div>
   );
-};
+});
 
 export default MessageComponent;

@@ -7,31 +7,49 @@ import { Message } from './types/messageTypes';
 import { v4 as uuidv4 } from 'uuid';
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
-  public static readonly viewType = 'aiChatPanel';
-  private static instance: AiChatPanel;
+  public static readonly primaryViewType = 'aiChatPanelPrimary';
+  public static readonly secondaryViewType = 'aiChatPanelSecondary';
+  private static primaryInstance: AiChatPanel;
+  private static secondaryInstance: AiChatPanel;
 
   // Store active webviews
   private activePanels: vscode.WebviewView[] = [];
   private socketModule: SocketModule;
+  private isInPrimary: boolean = true;
+
+  // Flags to prevent multiple listeners
+  private socketListenerAdded: boolean = false;
+  private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
     private readonly _context: vscode.ExtensionContext,
-    private readonly _authManager: AuthManager
+    private readonly _authManager: AuthManager,
+    private readonly viewType: string
   ) {
     // Initialize the SocketModule
     this.socketModule = SocketModule.getInstance();
   }
+
   public static getInstance(
     extensionUri: vscode.Uri,
     context: vscode.ExtensionContext,
-    authManager: AuthManager
+    authManager: AuthManager,
+    viewType: string
   ): AiChatPanel {
-    if (!AiChatPanel.instance) {
-      AiChatPanel.instance = new AiChatPanel(extensionUri, context, authManager);
+    if (viewType === AiChatPanel.primaryViewType) {
+      if (!AiChatPanel.primaryInstance) {
+        AiChatPanel.primaryInstance = new AiChatPanel(extensionUri, context, authManager, viewType);
+      }
+      return AiChatPanel.primaryInstance;
+    } else {
+      if (!AiChatPanel.secondaryInstance) {
+        AiChatPanel.secondaryInstance = new AiChatPanel(extensionUri, context, authManager, viewType);
+      }
+      return AiChatPanel.secondaryInstance;
     }
-    return AiChatPanel.instance;
   }
+
   public async resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
@@ -55,54 +73,84 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
-    // Listen for messages from the webview
-    webviewView.webview.onDidReceiveMessage(async (message: any) => {
-      switch (message.command) {
-        case 'send_chat_message':
-          // Validate and sanitize the incoming message
-          const sanitizedMessage = this.sanitizeMessage(message.data);
-          if (sanitizedMessage) {
-            // Forward the message to the backend server via Socket.io
-            this.socketModule.sendChatMessage(
-              uuidv4(),
-              sanitizedMessage.text
-            );
-          }
-          break;
-        case 'login':
-          // Handle the login command and open the URL
-          vscode.env.openExternal(vscode.Uri.parse(message.url));
-          break;
-        case 'ready':
-          // Webview signals it's ready; send authentication status
-          const isLoggedIn = await this._authManager.verifyAccessToken();
-          this.sendAuthStatus(isLoggedIn);
+    // Prevent adding multiple listeners to the same webview
+    if (!this.webviewListeners.has(webviewView)) {
+      this.webviewListeners.add(webviewView);
 
-          if (isLoggedIn) {
-            // Get Socket Module
-            this.socketModule = SocketModule.getInstance();
-            this.socketModule.socket?.on('receive_chat_response', (data: any) => {
-              this.forwardMessageToWebviews(data);
-            });
+      // Listen for messages from the webview
+      webviewView.webview.onDidReceiveMessage(async (message: any) => {
+        switch (message.command) {
+          case 'send_chat_message':
+            // Validate and sanitize the incoming message
+            const sanitizedMessage = this.sanitizeMessage(message.data);
+            if (sanitizedMessage) {
+              // Forward the message to the backend server via Socket.io
+              this.socketModule.sendChatMessage(
+                uuidv4(),
+                sanitizedMessage.text
+              );
+            }
+            break;
+          case 'login':
+            // Handle the login command and open the URL
+            vscode.env.openExternal(vscode.Uri.parse(message.url));
+            break;
+          case 'ready':
+            // Webview signals it's ready; send authentication status
+            const isLoggedIn = await this._authManager.verifyAccessToken();
+            this.sendAuthStatus(isLoggedIn);
 
-            // Send a test message with the correct structure
-            this.activePanels.forEach(panel => {
-              panel.webview.postMessage({
-                command: 'receive_chat_message',
-                data: {
-                  response: "Welcome to the AI Chat Panel!",
-                  unique_id: uuidv4(),
-                  complete: true
-                }
+            if (isLoggedIn) {
+              // Get Socket Module
+              this.socketModule = SocketModule.getInstance();
+
+              // Add socket listener only once
+              if (!this.socketListenerAdded) {
+                this.socketModule.socket?.on('receive_chat_response', (data: any) => {
+                  this.forwardMessageToWebviews(data);
+                });
+                this.socketListenerAdded = true;
+              }
+
+              // Send a test message with the correct structure
+              this.activePanels.forEach(panel => {
+                panel.webview.postMessage({
+                  command: 'receive_chat_message',
+                  data: {
+                    response: "Welcome to the AI Chat Panel!",
+                    unique_id: uuidv4(),
+                    complete: true
+                  }
+                });
               });
-            });
-          }
+            }
+            break;
+          case 'toggle_side':
+            this.toggleSide();
+            break;
+          default:
+            vscode.window.showInformationMessage(`Unknown command: ${message.command}`);
+        }
+      });
+    }
+  }
 
-          break;
-        default:
-          vscode.window.showInformationMessage(`Unknown command: ${message.command}`);
-      }
-    });
+  private async toggleSide() {
+    this.isInPrimary = !this.isInPrimary;
+    const targetViewType = this.isInPrimary ? AiChatPanel.primaryViewType : AiChatPanel.secondaryViewType;
+
+    // Unregister from current container
+    const currentContainerId = this.isInPrimary ? 'codebuddy-secondary' : 'codebuddy';
+    const targetContainerId = this.isInPrimary ? 'codebuddy' : 'codebuddy-secondary';
+
+    // Hide current view
+    vscode.commands.executeCommand('workbench.view.extension.' + currentContainerId);
+
+    // Show target view
+    vscode.commands.executeCommand('workbench.view.extension.' + targetContainerId);
+
+    // Inform user
+    vscode.window.showInformationMessage(`AI Chat Panel moved to the ${this.isInPrimary ? 'left' : 'right'} sidebar.`);
   }
 
   /**
@@ -150,7 +198,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
    * @param data - The chat message data received from the backend.
    */
   public forwardMessageToWebviews(data: any): void {
-    // console.log("Forwarding message to webviews:", data);
+    console.log("Forwarding message to webviews:", data.response);
     this.activePanels.forEach(panel => {
       panel.webview.postMessage({
         command: 'receive_chat_message',
