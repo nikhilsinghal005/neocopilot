@@ -1,8 +1,8 @@
 // webview-chat/src/App.tsx
 
 import React, { useState, useEffect } from 'react';
-import Login from './components/Login';
-import Chat from './components/Chat';
+import Login from './pages/Login';
+import Chat from './pages/Chat';
 
 declare const acquireVsCodeApi: () => {
   postMessage: (msg: any) => void;
