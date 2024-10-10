@@ -1,9 +1,7 @@
-// src/components/Chat/MessageRenderer.tsx
 import React, { useEffect } from 'react';
 import Prism from 'prismjs';
 import { Remarkable } from 'remarkable';
 import 'prismjs/themes/prism-tomorrow.css'; // Use the dark theme
-// You can also try 'prism-okaidia.css' or another dark theme
 
 // Import required languages
 import 'prismjs/components/prism-python';
@@ -37,7 +35,9 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
     Prism.highlightAll();
   }, [text]);
 
-  return <div dangerouslySetInnerHTML={{ __html: renderedContent }} />;
+  return (
+    <div className="prose max-w-full text-sm leading-6" dangerouslySetInnerHTML={{ __html: renderedContent }} />
+  );
 };
 
 export default MessageRenderer;

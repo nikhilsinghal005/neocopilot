@@ -1,4 +1,3 @@
-// src/components/Chat/Message.tsx
 import React from 'react';
 import { Message } from '../../types/Message';
 import MessageRenderer from './MessageRenderer';
@@ -12,20 +11,22 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     <div
       className={`message flex ${
         message.messageType === 'user' ? 'justify-end' : 'justify-start'
-      } items-start mb-3`}
+      } items-start mb-2 w-full`}
     >
       {message.messageType !== 'user' && (
-        <span className="codicon codicon-person text-gray-400 mr-2"></span>
+        <div className="flex items-center mr-1">
+          <span className="codicon codicon-person text-gray-400"></span>
+        </div>
       )}
       <div
-        className={`p-3 rounded-lg max-w-full break-words shadow-md ${
+        className={`p-2 rounded-md max-w-[93%] break-words shadow-md ${
           message.messageType === 'user'
-            ? 'bg-gray-700 text-white'
+            ? 'bg-blue-600 text-white'
             : 'bg-gray-800 text-gray-200'
         }`}
       >
-        <span className="block text-xs font-semibold mb-1 opacity-75">
-          {message.messageType === 'user' ? 'You' : 'LLM'} ·{' '}
+        <span className="block text-xs font-semibold mb-2 opacity-75">
+          {message.messageType === 'user' ? 'You' : 'NEO'} ·{' '}
           {new Date(message.timestamp).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
@@ -34,7 +35,9 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
         <MessageRenderer text={message.text} />
       </div>
       {message.messageType === 'user' && (
-        <span className="codicon codicon-check text-gray-400 ml-2"></span>
+        <div className="flex items-center ml-1">
+          <span className="codicon codicon-check text-gray-400"></span>
+        </div>
       )}
     </div>
   );

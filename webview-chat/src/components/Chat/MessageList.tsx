@@ -1,4 +1,3 @@
-// src/components/Chat/MessageList.tsx
 import React, { useRef, useEffect } from 'react';
 import { Message } from '../../types/Message';
 import MessageComponent from './Message';
@@ -16,7 +15,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   }, [messages]);
 
   return (
-    <div className="messages-container flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+    <div className="messages-container flex-1 overflow-y-auto p-0 bg-vscode-editor-background">
       {messages.map((message) => (
         <MessageComponent key={message.id} message={message} />
       ))}

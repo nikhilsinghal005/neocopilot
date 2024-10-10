@@ -13,18 +13,31 @@ interface ChatContainerProps {
   handleSendMessage: () => void;
 }
 
-const ChatContainer: React.FC<ChatContainerProps> = ({ messages, input, setInput, isTyping, handleSendMessage }) => {
+const ChatContainer: React.FC<ChatContainerProps> = ({
+  messages,
+  input,
+  setInput,
+  isTyping,
+  handleSendMessage,
+}) => {
   return (
-    <div className="chat-container flex flex-col h-full w-full p-0 bg-vscode-editor-background text-vscode-editor-foreground">
+    <div className="chat-page h-screen w-full flex flex-col">
+
       {/* Messages Container */}
-      <div className="messages-container flex-1 overflow-y-auto p-4">
+      <div className="messages-container fixed top-0 left-0 right-0 bottom-[80px] overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2">
+      {/* This container will take the full height minus 80px */}
         <MessageList messages={messages} />
         {isTyping && <TypingIndicator />}
       </div>
+      <div className="divider-line fixed bottom-[80px] w-full h-[1px] bg-gray-600"></div>
 
       {/* Input Container */}
-      <div className="input-container p-4 bg-[#1e1e1e]">
-        <InputBar input={input} setInput={setInput} handleSendMessage={handleSendMessage} />
+      <div className="input-container fixed left-0 right-0 bottom-0 h-[80px] bg-vscode-editor-background pl-0 pr-0 shadow-md flex items-center">
+        <InputBar
+          input={input}
+          setInput={setInput}
+          handleSendMessage={handleSendMessage}
+        />
       </div>
     </div>
   );

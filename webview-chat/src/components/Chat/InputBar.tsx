@@ -1,5 +1,5 @@
 import React from 'react';
-import { VSCodeButton, VSCodeTextField, VSCodeTextArea } from '@vscode/webview-ui-toolkit/react';
+import { VSCodeButton, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
 
 interface InputBarProps {
   input: string;
@@ -10,7 +10,10 @@ interface InputBarProps {
 const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage }) => {
   return (
     <div className="chat-wrapper relative w-full h-full">
-      <div className="input-container fixed bottom-0 left-0 right-0 flex items-center gap-2 z-10 p-0 bg-[#1e1e1e]">
+      <div className="input-container flex items-center gap-0 z-10 pl-1 pr-1 bg-vscode-editor-background h-full justify-center">
+        <div className="additional-items flex items-center gap-2">
+          {/* Add future buttons or elements here */}
+        </div>
         <VSCodeTextField
           type="text"
           value={input}
@@ -21,8 +24,8 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage 
               handleSendMessage();
             }
           }}
+          className="flex-grow" // New Tailwind class to manage width
           style={{
-            width: '100%',
             height: 'var(--input-height)',
             '--input-height': '52',
           } as any}
@@ -38,6 +41,10 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage 
             </VSCodeButton>
           </section>
         </VSCodeTextField>
+        {/* Placeholder for buttons or icons on the right */}
+        <div className="additional-items flex items-center gap-2">
+          {/* Add future buttons or elements here */}
+        </div>
       </div>
     </div>
   );
