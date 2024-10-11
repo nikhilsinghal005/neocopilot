@@ -1,9 +1,9 @@
-// src/pages/Chat.tsx
 import React, { useState, useEffect } from 'react';
 import ChatContainer from '../components/Chat/ChatContainer';
 import { useChatListener } from '../hooks/useChatListener';
 import { Message } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
+import { useChatContext } from '../context/ChatContext';
 
 interface ChatProps {
   vscode: {
@@ -14,19 +14,21 @@ interface ChatProps {
 }
 
 const Chat: React.FC<ChatProps> = ({ vscode }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { messages, setMessages } = useChatContext();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  // Retrieve messages from VS Code state on mount
   useEffect(() => {
     const savedMessages = vscode.getState ? vscode.getState() : null;
     if (savedMessages) {
       setMessages(savedMessages);
     }
-  }, [vscode]);
+  }, [vscode, setMessages]);
 
-  // Custom hook to handle incoming messages
+  useEffect(() => {
+    vscode.setState(messages);
+  }, [messages, vscode]);
+
   useChatListener(setMessages, setIsTyping);
 
   const handleSendMessage = () => {
@@ -43,9 +45,6 @@ const Chat: React.FC<ChatProps> = ({ vscode }) => {
     setMessages(updatedMessages);
     setInput('');
     setIsTyping(true);
-
-    // Save messages to state
-    vscode.setState(updatedMessages);
 
     vscode.postMessage({
       command: 'send_chat_message',

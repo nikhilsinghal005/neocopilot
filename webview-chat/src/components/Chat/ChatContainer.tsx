@@ -21,11 +21,9 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
   handleSendMessage,
 }) => {
   return (
-    <div className="chat-page h-screen w-full flex flex-col">
-
+    <div className="chat-page flex flex-col flex-grow w-full h-full">
       {/* Messages Container */}
-      <div className="messages-container fixed top-0 left-0 right-0 bottom-[80px] overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2">
-      {/* This container will take the full height minus 80px */}
+      <div className="messages-container fixed top-0 left-0 right-0 bottom-[80px] top-[40px] overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2">
         <MessageList messages={messages} />
         {isTyping && <TypingIndicator />}
       </div>
