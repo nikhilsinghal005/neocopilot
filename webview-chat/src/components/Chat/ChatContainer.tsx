@@ -1,12 +1,10 @@
-// src/components/Chat/ChatContainer.tsx
 import React from 'react';
-import { Message } from '../../types/Message';
 import MessageList from './MessageList';
 import TypingIndicator from './TypingIndicator';
 import InputBar from './InputBar';
+import { useChatContext } from '../../context/ChatContext';
 
 interface ChatContainerProps {
-  messages: Message[];
   input: string;
   setInput: (input: string) => void;
   isTyping: boolean;
@@ -14,16 +12,17 @@ interface ChatContainerProps {
 }
 
 const ChatContainer: React.FC<ChatContainerProps> = ({
-  messages,
   input,
   setInput,
   isTyping,
   handleSendMessage,
 }) => {
+  const { messages } = useChatContext();
+
   return (
     <div className="chat-page flex flex-col flex-grow w-full h-full">
       {/* Messages Container */}
-      <div className="messages-container fixed top-0 left-0 right-0 bottom-[80px] top-[40px] overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2">
+      <div className="messages-container fixed left-0 right-0 bottom-[80px] top-[40px] overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2">
         <MessageList messages={messages} />
         {isTyping && <TypingIndicator />}
       </div>
@@ -35,6 +34,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
           input={input}
           setInput={setInput}
           handleSendMessage={handleSendMessage}
+          isTyping={isTyping} // Pass isTyping prop
         />
       </div>
     </div>

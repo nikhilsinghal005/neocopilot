@@ -32,7 +32,7 @@ const Chat: React.FC<ChatProps> = ({ vscode }) => {
   useChatListener(setMessages, setIsTyping);
 
   const handleSendMessage = () => {
-    if (input.trim() === '') return;
+    if (input.trim() === '' || isTyping) return; // Prevent sending if isTyping is true
 
     const newMessage: Message = {
       id: uuidv4(),
@@ -54,7 +54,6 @@ const Chat: React.FC<ChatProps> = ({ vscode }) => {
 
   return (
     <ChatContainer
-      messages={messages}
       input={input}
       setInput={setInput}
       isTyping={isTyping}

@@ -49,7 +49,7 @@ export const useChatListener = (
 
         // Once the response is complete, reset and update typing state
         if (data.complete) {
-          setIsTyping(false);
+          setIsTyping(false); // Ensure isTyping is set to false when complete
 
           // Delay the reset to ensure the last state update occurs
           setTimeout(() => {
