@@ -62,6 +62,11 @@
           "id": "codebuddy",
           "title": "NeoChat",
           "icon": "media/icon.svg"
+        },
+        {
+          "id": "codebuddy-secondary",
+          "title": "NeoChat",
+          "icon": "media/icon.svg"
         }
       ]
     },
@@ -69,11 +74,19 @@
       "codebuddy": [
         {
           "type": "webview",
-          "id": "aiChatPanel",
+          "id": "aiChatPanelPrimary",
+          "name": "AI Chat Panel"
+        }
+      ],
+      "codebuddy-secondary": [
+        {
+          "type": "webview",
+          "id": "aiChatPanelSecondary",
           "name": "AI Chat Panel"
         }
       ]
     },
+
     "commands": [
       {
         "command": "disable-code-suggestions",
