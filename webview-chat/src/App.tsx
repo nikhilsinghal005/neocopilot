@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Chat from './pages/Chat';
 import Tabs from './pages/Tabs';
 import { ChatProvider } from './context/ChatContext';
+import About from './pages/About';
 
 declare const acquireVsCodeApi: () => {
   postMessage: (msg: any) => void;
@@ -44,8 +45,8 @@ const App: React.FC = () => {
       content: <Chat vscode={vscodeApi} />,
     },
     {
-      label: 'Settings',
-      content: <div>Settings Content</div>,
+      label: 'About',
+      content: <About />,
     },
     // You can add more tabs here
   ];

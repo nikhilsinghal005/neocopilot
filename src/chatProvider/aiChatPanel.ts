@@ -112,17 +112,17 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 this.socketListenerAdded = true;
               }
 
-              // Send a test message with the correct structure
-              this.activePanels.forEach(panel => {
-                panel.webview.postMessage({
-                  command: 'receive_chat_message',
-                  data: {
-                    response: "Welcome to the AI Chat Panel!",
-                    unique_id: uuidv4(),
-                    complete: true
-                  }
-                });
-              });
+              // // Send a test message with the correct structure
+              // this.activePanels.forEach(panel => {
+              //   panel.webview.postMessage({
+              //     command: 'receive_chat_message',
+              //     data: {
+              //       response: "Welcome to the AI Chat Panel!",
+              //       unique_id: uuidv4(),
+              //       complete: true
+              //     }
+              //   });
+              // });
             }
             break;
           case 'toggle_side':

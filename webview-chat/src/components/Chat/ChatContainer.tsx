@@ -3,6 +3,7 @@ import MessageList from './MessageList';
 import TypingIndicator from './TypingIndicator';
 import InputBar from './InputBar';
 import { useChatContext } from '../../context/ChatContext';
+import NewChatPanel from './NewChatPanel';
 
 interface ChatContainerProps {
   input: string;
@@ -21,11 +22,20 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
 
   return (
     <div className="chat-page flex flex-col flex-grow w-full h-full">
+      {/* Conditional rendering for NewChatPanel */}
+      {messages.length === 0 ? (
+        <NewChatPanel />
+      ) : (
+        <>
       {/* Messages Container */}
       <div className="messages-container fixed left-0 right-0 bottom-[80px] top-[40px] overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2">
         <MessageList messages={messages} />
         {isTyping && <TypingIndicator />}
       </div>
+      </>)
+      }
+
+      {/* Divider Line */}
       <div className="divider-line fixed bottom-[80px] w-full h-[1px] bg-gray-600"></div>
 
       {/* Input Container */}

@@ -1,0 +1,25 @@
+/* custom-overrides.css */
+
+/* Remove padding and margin from <pre> elements with language classes */
+/* Remove padding and margin from <pre> elements with language classes */
+pre[class*="language-"] {
+    padding: 0 !important;
+    margin: 0 !important;
+    background-color: var(--vscode-chat-message-incoming); /* Use a CSS variable for VS Code-like background */
+    background: var(--vscode-chat-message-incoming); /* Ensures compatibility with fallback */
+}
+
+  
+  /* Remove padding from <code> elements with language classes */
+  /* code[class*="language-"] {
+    padding: 0 !important;
+  } */
+  
+  /* Optional: Adjust background if needed */
+  /* pre[class*="language-"],
+  code[class*="language-"] {
+    background: none !important;
+  } */
+  
+  /* Optional: Adjust other styles as necessary */
+  

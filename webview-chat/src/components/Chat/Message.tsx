@@ -21,8 +21,8 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
       <div
         className={`p-2 rounded-md max-w-[93%] break-words shadow-md ${
           message.messageType === 'user'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-800 text-gray-200'
+            ? 'bg-vscode-chat-message-outgoing text-white'
+            : 'bg-vscode-chat-message-incoming text-gray-200'
         }`}
       >
         <span className="block text-xs font-semibold mb-2 opacity-75">
