@@ -1,3 +1,4 @@
+// src/components/Chat/ChatContainer.tsx
 import React from 'react';
 import MessageList from './MessageList';
 import TypingIndicator from './TypingIndicator';

@@ -1,6 +1,4 @@
-// src/pages/Tabs.tsx
 import React, { useState } from 'react';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import ChatControls from '../components/Chat/ChatControls';
 
 interface TabProps {
@@ -13,7 +11,7 @@ interface TabProps {
 const Tabs: React.FC<TabProps> = ({ tabs }) => {
     const [activeTab, setActiveTab] = useState(0);
     const isChatTabActive = activeTab === 0;
-  
+
     return (
       <div className="w-full h-full flex flex-col bg-vscode-editor-background">
         {/* Fixed Tab Header */}
@@ -37,14 +35,22 @@ const Tabs: React.FC<TabProps> = ({ tabs }) => {
           {/* Conditional Buttons (shown only on Chat tab) */}
           {isChatTabActive && <ChatControls />}
         </div>
-  
-        {/* Tab Content Below the Fixed Header */}
-        <div className="mt-[40px] flex-grow overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground">
-          {tabs[activeTab].content}
+
+        {/* Render all tab content but hide inactive ones */}
+        <div className="flex-grow overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground">
+          {tabs.map((tab, index) => (
+            <div
+              key={index}
+              className={`mt-[40px] ${
+                index === activeTab ? 'block' : 'hidden'
+              }`} // Control visibility instead of unmounting
+            >
+              {tab.content}
+            </div>
+          ))}
         </div>
       </div>
     );
   };
-  
+
   export default Tabs;
-  
