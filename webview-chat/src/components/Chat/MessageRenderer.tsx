@@ -20,6 +20,12 @@ interface CodeProps {
 }
 
 const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
+  // Function to check if the text contains code blocks
+  const containsCodeBlock = (markdownText: string): boolean => {
+    const codeBlockRegex = /```[\s\S]*?```/;
+    return codeBlockRegex.test(markdownText);
+  };
+
   const handleCopyToClipboard = (code: string) => {
     console.log('Code to copy:', code);
     navigator.clipboard
@@ -104,6 +110,13 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
     }
   };
 
+  // Decide whether to use ReactMarkdown or just render the text
+  if (!containsCodeBlock(text)) {
+    // If the text doesn't contain code blocks, render it as plain text
+    return <div className="prose max-w-full text-sm leading-6">{text}</div>;
+  }
+
+  // If the text contains code blocks, render as before
   return (
     <div className="prose max-w-full text-sm leading-6">
       <ReactMarkdown

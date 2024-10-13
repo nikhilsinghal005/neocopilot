@@ -32,7 +32,7 @@ export function initializeAppFunctions(
 
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   primaryViewProvider.sendAuthStatus(true);
-  const secondaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.secondaryViewType);
+  // const secondaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.secondaryViewType);
 }
 
 export function initializeNonLoginRequiredAppFunctions(
@@ -50,11 +50,11 @@ export function initializeNonLoginRequiredAppFunctions(
       primaryViewProvider
     )
   );
-  const secondaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.secondaryViewType);
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
-      AiChatPanel.secondaryViewType,
-      secondaryViewProvider
-    )
-  );
+  // const secondaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.secondaryViewType);
+  // context.subscriptions.push(
+  //   vscode.window.registerWebviewViewProvider(
+  //     AiChatPanel.secondaryViewType,
+  //     secondaryViewProvider
+  //   )
+  // );
 }
