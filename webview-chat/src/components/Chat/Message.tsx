@@ -25,7 +25,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
             : 'bg-vscode-chat-message-incoming text-gray-200'
         }`}
       >
-        <span className="block text-base font-semibold mb-2 opacity-75">
+        <span className="block text-sm font-semibold mb-2 opacity-75">
           {message.messageType === 'user' ? 'You' : 'NEO'} ·{' '}
           {new Date(message.timestamp).toLocaleTimeString([], {
             hour: '2-digit',
