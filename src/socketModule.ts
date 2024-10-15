@@ -456,7 +456,7 @@ async function createSocketConnection(appVersion: string, email: string, userId:
     // reconnectionAttempts: 10000,
     // reconnectionDelay: 10000,
     // reconnectionDelayMax: 10000,
-    timeout: 30000,
+    // timeout: 10000,
     extraHeaders: {
       Authorization: `Bearer ${await authManager.getAccessToken()}`,
     },
