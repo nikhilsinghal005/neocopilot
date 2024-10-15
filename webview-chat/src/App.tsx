@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useState, useEffect } from 'react';
 import Login from './pages/Login';
 import Chat from './pages/Chat';
@@ -18,20 +17,45 @@ const vscodeApi = acquireVsCodeApi() as {
   setState: (state: any) => void;
 };
 
+// Utility function to check session expiration
+const isSessionValid = () => {
+  const sessionData = sessionStorage.getItem('isLoggedIn');
+  if (sessionData) {
+    const { value, expiry } = JSON.parse(sessionData);
+    return value && Date.now() < expiry;
+  }
+  return false;
+};
+
+// Utility function to set session data with expiry time (8 hours)
+const setSessionData = (value: boolean) => {
+  const expiry = Date.now() + 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+  const sessionData = JSON.stringify({ value, expiry });
+  sessionStorage.setItem('isLoggedIn', sessionData);
+};
+
 const App: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(isSessionValid());
 
   useEffect(() => {
+    // Notify VS Code extension that the app is ready
     vscodeApi.postMessage({ command: 'ready' });
     console.log('React app sent: ready');
 
+    // Handle messages from VS Code extension
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
       if (message.command === 'authStatus') {
         setIsLoggedIn(message.isLoggedIn);
+
+        // Store login status in session storage with expiry of 8 hours
+        if (message.isLoggedIn) {
+          setSessionData(message.isLoggedIn);
+        }
       }
     };
 
+    // Listen for messages from the VS Code extension
     window.addEventListener('message', handleMessage);
 
     return () => {
@@ -57,7 +81,6 @@ const App: React.FC = () => {
         {isLoggedIn ? <Tabs tabs={tabContent} /> : <Login vscode={vscodeApi} />}
       </div>
     </ChatProvider>
-
   );
 };
 
