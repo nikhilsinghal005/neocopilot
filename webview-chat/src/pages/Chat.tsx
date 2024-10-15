@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ChatContainer from '../components/Chat/ChatContainer';
 import { useChatListener } from '../hooks/useChatListener';
-import { Message } from '../types/Message';
+import { Message, MessageOuput } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 import { useChatContext } from '../context/ChatContext';
 
@@ -32,9 +32,9 @@ const Chat: React.FC<ChatProps> = ({ vscode }) => {
   useChatListener(setMessages, setIsTyping);
 
   const handleSendMessage = () => {
-    if (input.trim() === '' || isTyping) return; // Prevent sending if isTyping is true
+    if (input.trim() === '' || isTyping) return;
 
-    const newMessage: Message = {
+    const newMessage: MessageOuput = {
       id: uuidv4(),
       timestamp: new Date().toISOString(),
       messageType: 'user',
