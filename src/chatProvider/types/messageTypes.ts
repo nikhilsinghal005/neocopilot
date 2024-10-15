@@ -8,3 +8,9 @@ export interface Message {
   messageType: MessageType;
   text: string;
 }
+
+export interface MessageResponse {
+  unique_id: string; // Unique identifier (UUID)
+  complete: Boolean;
+  response: string;
+}

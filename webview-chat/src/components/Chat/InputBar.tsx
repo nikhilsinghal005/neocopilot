@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { VSCodeButton, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
+import { VSCodeButton, VSCodeTextArea } from '@vscode/webview-ui-toolkit/react';
 
 interface InputBarProps {
   input: string;
@@ -23,41 +23,44 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
 
   return (
     <div className="chat-wrapper relative w-full h-full">
-      <div className="input-container flex items-center gap-0 z-10 pl-1 pr-1 bg-vscode-editor-background h-full justify-center">
+      <div className="input-container flex flex-col gap-0 z-10 p-1 bg-vscode-editor-foreground h-full justify-center">
+        {/* Text Area */}
         <div className="additional-items flex items-center gap-2">
           {/* Add future buttons or elements here */}
         </div>
-        <VSCodeTextField
-          type="text"
+        <VSCodeTextArea
           value={input}
-          onInput={(e) => setInput((e.target as HTMLInputElement).value)}
+          onInput={(e) => setInput((e.target as HTMLTextAreaElement).value)}
           placeholder="Type your message..."
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault(); // Prevent adding a new line
               handleClick();
             }
           }}
-          className="flex-grow"
-          style={{
-            height: 'var(--input-height)',
-            '--input-height': '52',
-          } as any}
-        >
-          <section slot="end" style={{ display: 'flex', alignItems: 'center' }}>
-            <VSCodeButton
-              onClick={handleClick}
-              appearance="icon"
-              aria-label="Send Message"
-            >
-              <span className="codicon codicon-send"></span>
-            </VSCodeButton>
-          </section>
-        </VSCodeTextField>
+          className="w-full"
+          // style={{
+          //   minHeight: '52px', // Set a minimum height
+          //   backgroundColor: '#1e1e1e', // Set to match input background
+          //   resize: 'none', // Remove resize handle
+          //   borderRadius: '0px' // Add or adjust border radius
+          // } as React.CSSProperties}
+        />
 
-        <div className="additional-items flex items-center gap-2">
-          {/* Add future buttons or elements here */}
+        {/* Send Button */}
+        <div className="flex justify-end bg-[#1e1e1e] p-0"> {/* Adjusted to match text area styling */}
+          <VSCodeButton
+            onClick={handleClick}
+            appearance="icon"
+            aria-label="Send Message"
+            disabled={isTyping}
+            className="text-white rounded-none" 
+          >
+            <span className="codicon codicon-send"></span>
+          </VSCodeButton>
         </div>
       </div>
+
       {/* Warning message displayed below the input field */}
       {warningMessage && (
         <div className="text-red-500 text-sm mt-1">

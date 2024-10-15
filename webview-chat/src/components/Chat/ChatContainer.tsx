@@ -29,7 +29,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       ) : (
         <>
       {/* Messages Container */}
-      <div className="messages-container fixed left-0 right-0 bottom-[80px] top-[40px] overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2">
+      <div className="messages-container fixed left-0 right-0 bottom-[100px] top-[40px] overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2">
         <MessageList messages={messages} />
         {isTyping && <TypingIndicator />}
       </div>
@@ -37,10 +37,10 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       }
 
       {/* Divider Line */}
-      <div className="divider-line fixed bottom-[80px] w-full h-[1px] bg-gray-600"></div>
+      <div className="divider-line fixed bottom-[100px] left-0 right-0 w-full h-[1px] bg-gray-600 m-0 p-0"></div>
 
       {/* Input Container */}
-      <div className="input-container fixed left-0 right-0 bottom-0 h-[80px] bg-vscode-editor-background pl-0 pr-0 shadow-md flex items-center">
+      <div className="input-container fixed left-0 right-0 bottom-0 h-[100px] bg-vscode-editor-background pl-0 pr-0 shadow-md flex items-center">
         <InputBar
           input={input}
           setInput={setInput}
