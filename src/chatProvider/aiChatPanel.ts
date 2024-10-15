@@ -3,8 +3,9 @@
 import * as vscode from 'vscode';
 import { AuthManager } from '../authManager/authManager';
 import { SocketModule } from '../socketModule';
-import { Message } from './types/messageTypes';
+import { Message, MessageResponse } from './types/messageTypes';
 import { v4 as uuidv4 } from 'uuid';
+import { getNonce } from '../utilities/chatUtilities';
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
   public static readonly primaryViewType = 'aiChatPanelPrimary';
@@ -27,7 +28,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     private readonly _authManager: AuthManager,
     private readonly viewType: string
   ) {
-    // Initialize the SocketModule
     this.socketModule = SocketModule.getInstance();
   }
 
@@ -55,6 +55,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ) {
+
+    console.log("Web View Started")
     // Add the webview to the activePanels list when it's created
     this.activePanels.push(webviewView);
 
@@ -81,13 +83,14 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       webviewView.webview.onDidReceiveMessage(async (message: any) => {
         switch (message.command) {
           case 'send_chat_message':
-            // Validate and sanitize the incoming message
+            // send normal chat message
             const sanitizedMessage = this.sanitizeMessage(message.data);
             if (sanitizedMessage) {
-              // Forward the message to the backend server via Socket.io
               this.socketModule.sendChatMessage(
-                uuidv4(),
-                sanitizedMessage.text
+                  uuidv4(),
+                  sanitizedMessage.timestamp,
+                  sanitizedMessage.messageType,
+                  sanitizedMessage.text
               );
             }
             break;
@@ -95,38 +98,26 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             // Handle the login command and open the URL
             vscode.env.openExternal(vscode.Uri.parse(message.url));
             break;
+
           case 'ready':
             // Webview signals it's ready; send authentication status
-            const isLoggedIn = await this._authManager.verifyAccessToken();
-            this.sendAuthStatus(isLoggedIn);
-
-            if (isLoggedIn) {
-              // Get Socket Module
-              this.socketModule = SocketModule.getInstance();
-
-              // Add socket listener only once
-              if (!this.socketListenerAdded) {
-                this.socketModule.socket?.on('receive_chat_response', (data: any) => {
-                  this.forwardMessageToWebviews(data);
-                });
-                this.socketListenerAdded = true;
+            const isAlreadyLoggedIn = this._context.workspaceState.get('isLoggedIn', false);
+            if (!isAlreadyLoggedIn){
+              const isLoggedIn = await this._authManager.verifyAccessToken();
+              this.sendAuthStatus(isLoggedIn);
+  
+              if (isLoggedIn) {
+                this.socketModule = SocketModule.getInstance();
+                if (!this.socketListenerAdded) {
+                  this.socketModule.socket?.on('receive_chat_response', (data: MessageResponse) => {
+                    this.forwardMessageToWebviews(data);
+                  });
+                  this.socketListenerAdded = true;
+                }
               }
-
-              // // Send a test message with the correct structure
-              // this.activePanels.forEach(panel => {
-              //   panel.webview.postMessage({
-              //     command: 'receive_chat_message',
-              //     data: {
-              //       response: "Welcome to the AI Chat Panel!",
-              //       unique_id: uuidv4(),
-              //       complete: true
-              //     }
-              //   });
-              // });
             }
-            break;
-          case 'toggle_side':
-            this.toggleSide();
+
+
             break;
           default:
             vscode.window.showInformationMessage(`Unknown command: ${message.command}`);
@@ -135,50 +126,28 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
 
-  private async toggleSide() {
-    this.isInPrimary = !this.isInPrimary;
-    const targetViewType = this.isInPrimary ? AiChatPanel.primaryViewType : AiChatPanel.secondaryViewType;
-
-    // Unregister from current container
-    const currentContainerId = this.isInPrimary ? 'codebuddy-secondary' : 'codebuddy';
-    const targetContainerId = this.isInPrimary ? 'codebuddy' : 'codebuddy-secondary';
-
-    // Hide current view
-    vscode.commands.executeCommand('workbench.view.extension.' + currentContainerId);
-
-    // Show target view
-    vscode.commands.executeCommand('workbench.view.extension.' + targetContainerId);
-
-    // Inform user
-    vscode.window.showInformationMessage(`AI Chat Panel moved to the ${this.isInPrimary ? 'left' : 'right'} sidebar.`);
-  }
-
   /**
    * Sanitizes incoming messages to prevent security vulnerabilities.
    * @param data - The message data to sanitize.
    * @returns The sanitized message or null if invalid.
    */
-  private sanitizeMessage(data: any): Message | null {
-    if (
-      !data ||
-      typeof data.id !== 'string' ||
-      typeof data.timestamp !== 'string' ||
-      (data.messageType !== 'user' && data.messageType !== 'system') ||
-      typeof data.text !== 'string'
-    ) {
-      console.warn('Invalid message format:', data);
+  private sanitizeMessage(data: Message): Message | null {
+    try {
+      console.log("Data Received from Chat UI", data);
+      console.info("User chat requested");
+        const sanitized: Message = {
+        id: data.id.trim(),
+        timestamp: new Date(data.timestamp).toISOString(),
+        messageType: data.messageType,
+        text: data.text.trim(),
+      };
+  
+      return sanitized;
+    } catch (error) {
+      console.log("Message Sanatisation Failed:", error);
+      console.error("Message Sanatisation Failed");
       return null;
     }
-
-    // Additional sanitization can be performed here if necessary
-    const sanitized: Message = {
-      id: data.id.trim(),
-      timestamp: new Date(data.timestamp).toISOString(),
-      messageType: data.messageType,
-      text: data.text.trim(),
-    };
-
-    return sanitized;
   }
 
   /**
@@ -187,6 +156,9 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
    */
   public sendAuthStatus(isLoggedIn: boolean): void {
     console.log(`Sending authStatus (${isLoggedIn}) to ${this.activePanels.length} panel(s).`);
+
+    // Save the logged-in status in workspace state
+    this._context.workspaceState.update('isLoggedIn', isLoggedIn);
 
     this.activePanels.forEach(panel => {
       panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
@@ -197,17 +169,21 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
    * Forwards incoming chat messages from the backend to all active webviews.
    * @param data - The chat message data received from the backend.
    */
-  public forwardMessageToWebviews(data: any): void {
-    console.log("Forwarding message to webviews:", data.response);
+  public forwardMessageToWebviews(data: MessageResponse): void {
     this.activePanels.forEach(panel => {
-      panel.webview.postMessage({
-        command: 'receive_chat_message',
-        data: {
-          response: data.response,
-          unique_id: data.unique_id,
-          complete: data.complete
-        }
-      });
+      try {
+        panel.webview.postMessage({
+          command: 'receive_chat_message',
+          data: {
+            response: data.response,
+            unique_id: data.unique_id,
+            complete: data.complete
+          }
+        });
+      } catch (error) {
+        console.log("Failed to post message to webview:", error);
+        console.error("Failed to post message to webview");
+      }
     });
   }
 
@@ -244,7 +220,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     content="default-src 'none'; 
          img-src ${webview.cspSource} https: data:; 
          font-src  ${webview.cspSource}; 
-         style-src ${webview.cspSource}; 
+         style-src ${webview.cspSource} 'unsafe-inline' https://*.vscode-cdn.net; 
          script-src 'nonce-${nonce}' 'strict-dynamic';"
   />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -257,14 +233,4 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 </body>
 </html>`;
   }
-}
-
-function getNonce() {
-  let text = '';
-  const possible =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
 }

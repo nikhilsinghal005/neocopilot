@@ -31,8 +31,7 @@ export function initializeAppFunctions(
   const currentVersion = context.extension.packageJSON.version;
 
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
-  primaryViewProvider.sendAuthStatus(true);
-  // const secondaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.secondaryViewType);
+
 }
 
 export function initializeNonLoginRequiredAppFunctions(

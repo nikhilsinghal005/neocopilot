@@ -271,7 +271,7 @@ export class SocketModule {
     }
   }
 
-  public sendChatMessage(unique_id: string, input_message: string) {
+  public sendChatMessage(unique_id: string, timestamp: string, messageType: string, input_message:string) {
     this.predictionRequestInProgress = true;
     if (this.rateLimitExceeded) {
       this.reinitializeSocket();
@@ -279,10 +279,11 @@ export class SocketModule {
     }
     // StatusBarManager.updateMessage(`$(loading~spin) Neo Copilot`);
     if (this.socket) {
-      const timestamp = new Date().toISOString();
       this.socket.emit('generate_chat_response', {
         unique_id,
         input_message,
+        timestamp,
+        messageType,
         appVersion: this.currentVersion,
         userEmail: this.email
       });
