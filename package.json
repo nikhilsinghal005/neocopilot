@@ -70,7 +70,8 @@
         {
           "type": "webview",
           "id": "aiChatPanelPrimary",
-          "name": "AI Chat Panel"
+          "name": "AI Chat Panel",
+          "retention": true
         }
       ]
     },

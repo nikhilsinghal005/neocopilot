@@ -13,7 +13,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   private static primaryInstance: AiChatPanel;
   private static secondaryInstance: AiChatPanel;
 
-  // Store active webviews
+  // Store active (visible) webviews
   private activePanels: vscode.WebviewView[] = [];
   private socketModule: SocketModule;
   private isInPrimary: boolean = true;
@@ -21,6 +21,9 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   // Flags to prevent multiple listeners
   private socketListenerAdded: boolean = false;
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
+
+  // Message Queue to store incoming messages when no webviews are active
+  private messageQueue: MessageResponse[] = [];
 
   constructor(
     private readonly _extensionUri: vscode.Uri,
@@ -55,14 +58,47 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ) {
+    console.log("Webview View is being resolved.");
 
-    console.log("Web View Started")
-    // Add the webview to the activePanels list when it's created
-    this.activePanels.push(webviewView);
+    // Add the webview to activePanels if it's initially visible
+    if (webviewView.visible) {
+      this.activePanels.push(webviewView);
+      console.log(`Webview added to activePanels. Active panels count: ${this.activePanels.length}`);
+    }
 
-    // Remove the webview from the activePanels list when it's disposed
+    // Handle visibility changes
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        console.log("Webview is now visible.");
+        // Add to activePanels if not already present
+        if (!this.activePanels.includes(webviewView)) {
+          this.activePanels.push(webviewView);
+          console.log(`Webview added to activePanels. Active panels count: ${this.activePanels.length}`);
+        }
+
+        // // Send any queued messages
+        // if (this.messageQueue.length > 0) {
+        //   console.log(`Sending ${this.messageQueue.length} queued message(s) to the webview.`);
+        //   this.messageQueue.forEach(data => {
+        //     this.postMessageToWebview(webviewView, data);
+        //   });
+        //   // Clear the queue after sending
+        //   this.messageQueue = [];
+        //   console.log("Message queue cleared.");
+        // }
+      } else {
+        console.log("Webview is now hidden.");
+        // Remove from activePanels
+        this.activePanels = this.activePanels.filter(panel => panel !== webviewView);
+        console.log(`Webview removed from activePanels. Active panels count: ${this.activePanels.length}`);
+      }
+    });
+
+    // Remove the webview from the activePanels list when it's disposed (if it ever gets disposed)
     webviewView.onDidDispose(() => {
+      console.log("Webview disposed.");
       this.activePanels = this.activePanels.filter(panel => panel !== webviewView);
+      console.log(`Active panels after disposal: ${this.activePanels.length}`);
     });
 
     // Allow scripts in the webview
@@ -81,16 +117,17 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
       // Listen for messages from the webview
       webviewView.webview.onDidReceiveMessage(async (message: any) => {
+        console.log("Received message from webview:", message);
         switch (message.command) {
           case 'send_chat_message':
             // send normal chat message
             const sanitizedMessage = this.sanitizeMessage(message.data);
             if (sanitizedMessage) {
               this.socketModule.sendChatMessage(
-                  uuidv4(),
-                  sanitizedMessage.timestamp,
-                  sanitizedMessage.messageType,
-                  sanitizedMessage.text
+                uuidv4(),
+                sanitizedMessage.timestamp,
+                sanitizedMessage.messageType,
+                sanitizedMessage.text
               );
             }
             break;
@@ -100,12 +137,13 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             break;
 
           case 'ready':
+            console.log("Received 'ready' message from webview.");
             // Webview signals it's ready; send authentication status
             const isAlreadyLoggedIn = this._context.workspaceState.get('isLoggedIn', false);
-            if (!isAlreadyLoggedIn){
+            if (!isAlreadyLoggedIn) {
               const isLoggedIn = await this._authManager.verifyAccessToken();
               this.sendAuthStatus(isLoggedIn);
-  
+
               if (isLoggedIn) {
                 this.socketModule = SocketModule.getInstance();
                 if (!this.socketListenerAdded) {
@@ -117,12 +155,33 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               }
             }
 
+            // Send any queued messages
+            if (this.messageQueue.length > 0) {
+              console.log(`Sending ${this.messageQueue.length} queued message(s) to the webview.`);
+              this.messageQueue.forEach(data => {
+                this.postMessageToWebview(webviewView, data);
+              });
+              // Clear the queue after sending
+              this.messageQueue = [];
+              console.log("Message queue cleared.");
+            }
 
             break;
           default:
             vscode.window.showInformationMessage(`Unknown command: ${message.command}`);
         }
       });
+    }
+
+    // Initial sending of queued messages if the webview is visible
+    if (this.messageQueue.length > 0 && webviewView.visible) {
+      console.log(`Sending ${this.messageQueue.length} queued message(s) to the webview.`);
+      this.messageQueue.forEach(data => {
+        this.postMessageToWebview(webviewView, data);
+      });
+      // Clear the queue after sending
+      this.messageQueue = [];
+      console.log("Message queue cleared.");
     }
   }
 
@@ -135,17 +194,17 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     try {
       console.log("Data Received from Chat UI", data);
       console.info("User chat requested");
-        const sanitized: Message = {
+      const sanitized: Message = {
         id: data.id.trim(),
         timestamp: new Date(data.timestamp).toISOString(),
         messageType: data.messageType,
         text: data.text.trim(),
       };
-  
+
       return sanitized;
     } catch (error) {
-      console.log("Message Sanatisation Failed:", error);
-      console.error("Message Sanatisation Failed");
+      console.log("Message Sanitization Failed:", error);
+      console.error("Message Sanitization Failed");
       return null;
     }
   }
@@ -167,26 +226,74 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
   /**
    * Forwards incoming chat messages from the backend to all active webviews.
+   * If no webviews are active, the message is queued.
    * @param data - The chat message data received from the backend.
    */
   public forwardMessageToWebviews(data: MessageResponse): void {
-    this.activePanels.forEach(panel => {
-      try {
-        panel.webview.postMessage({
-          command: 'receive_chat_message',
-          data: {
-            response: data.response,
-            unique_id: data.unique_id,
-            complete: data.complete
-          }
+    // console.log(`forwardMessageToWebviews called. Active panels count: ${this.activePanels.length}`);
+    
+    if (this.activePanels.length > 0) {
+      if (this.messageQueue.length > 0) {
+        console.log("Count of messsages Available", this.messageQueue.length)
+        this.messageQueue.forEach(q_data => {
+          this.postMessageToWebview(this.activePanels[0], q_data);
         });
-      } catch (error) {
-        console.log("Failed to post message to webview:", error);
-        console.error("Failed to post message to webview");
+      // After sending all queued messages, clear the queue
+      this.messageQueue = [];
+      console.log("Cleared the message queue after sending queued messages.");
       }
-    });
+
+      this.activePanels.forEach(panel => {
+        try {
+          // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
+          panel.webview.postMessage({
+            command: 'receive_chat_message',
+            data: {
+              response: data.response,
+              unique_id: data.unique_id,
+              complete: data.complete
+            }
+          });
+        } catch (error) {
+          console.log("Failed to post message to webview:", error);
+          console.error("Failed to post message to webview");
+        }
+      });
+    } else {
+      // No active (visible) webviews, enqueue the message
+      // console.log("No active webviews. Queuing message.");
+      this.messageQueue.push(data);
+      // console.log(`Message queued. Queue length: ${this.messageQueue.length}`);
+    }
   }
 
+  /**
+   * Helper method to post a message to a specific webview.
+   * @param webviewView - The webview to post the message to.
+   * @param data - The message data to send.
+   */
+  private postMessageToWebview(webviewView: vscode.WebviewView, data: MessageResponse): void {
+    try {
+      // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
+      webviewView.webview.postMessage({
+        command: 'receive_chat_message',
+        data: {
+          response: data.response,
+          unique_id: data.unique_id,
+          complete: data.complete
+        }
+      });
+    } catch (error) {
+      console.log("Failed to post queued message to webview:", error);
+      console.error("Failed to post queued message to webview");
+    }
+  }
+
+  /**
+   * Generates the HTML content for the webview.
+   * @param webview - The webview instance.
+   * @returns The HTML string.
+   */
   private getHtmlForWebview(webview: vscode.Webview): string {
     const scriptUri = webview.asWebviewUri(
       vscode.Uri.joinPath(
