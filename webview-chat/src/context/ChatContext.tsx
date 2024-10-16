@@ -1,3 +1,4 @@
+// webview-chat/src/context/ChatContext.tsx
 import React, { createContext, useState, useContext } from 'react';
 import { Message } from '../types/Message';
 

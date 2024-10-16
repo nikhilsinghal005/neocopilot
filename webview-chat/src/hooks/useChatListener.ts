@@ -1,17 +1,29 @@
+// webview-chat/src/hooks/useChatListener.tsx
 import { useEffect, useRef } from 'react';
+import { useChatContext } from '../context/ChatContext';
 import { Message } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 
-export const useChatListener = (
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-  setIsTyping: React.Dispatch<React.SetStateAction<boolean>>
-) => {
+export const useChatListener = () => {
+  const { setMessages, isTyping, setIsTyping } = useChatContext();
   const accumulatedResponseRef = useRef<string>('');
   const messageInProgressRef = useRef<Message | null>(null);
+  const isTypingRef = useRef<boolean>(isTyping); // Keep track of the latest isTyping value
+
+  // Update isTypingRef whenever isTyping changes
+  useEffect(() => {
+    isTypingRef.current = isTyping;
+  }, [isTyping]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.command === 'receive_chat_message') {
+        // If isTyping is false, ignore incoming messages
+        if (!isTypingRef.current) {
+          console.log("Recived but not working")
+          return;
+        }
+
         const { data } = event.data;
         // Accumulate partial responses
         accumulatedResponseRef.current += data.response;
@@ -82,5 +94,5 @@ export const useChatListener = (
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [setMessages, setIsTyping]);
+  }, [setMessages, setIsTyping]); // Note: isTyping is not included here
 };

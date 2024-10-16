@@ -1,5 +1,7 @@
+// webview-chat/src/components/Chat/InputBar.tsx
 import React, { useState } from 'react';
 import { VSCodeButton, VSCodeTextArea } from '@vscode/webview-ui-toolkit/react';
+import { useChatContext } from '../../context/ChatContext';
 
 interface InputBarProps {
   input: string;
@@ -8,8 +10,9 @@ interface InputBarProps {
   isTyping: boolean;
 }
 
-const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage, isTyping }) => {
+const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage }) => {
   const [warningMessage, setWarningMessage] = useState('');
+  const { isTyping } = useChatContext();
 
   const handleClick = () => {
     if (isTyping) {
@@ -39,16 +42,10 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
             }
           }}
           className="w-full"
-          // style={{
-          //   minHeight: '52px', // Set a minimum height
-          //   backgroundColor: '#1e1e1e', // Set to match input background
-          //   resize: 'none', // Remove resize handle
-          //   borderRadius: '0px' // Add or adjust border radius
-          // } as React.CSSProperties}
         />
 
         {/* Send Button */}
-        <div className="flex justify-end bg-[#1e1e1e] p-0"> {/* Adjusted to match text area styling */}
+        <div className="flex justify-end bg-[#1e1e1e] p-0">
           <VSCodeButton
             onClick={handleClick}
             appearance="icon"
