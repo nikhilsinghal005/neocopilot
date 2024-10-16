@@ -272,6 +272,7 @@ export class SocketModule {
   }
 
   public sendChatMessage(unique_id: string, timestamp: string, messageType: string, input_message:string) {
+    console.log("Message to scoket from backend")
     this.predictionRequestInProgress = true;
     if (this.rateLimitExceeded) {
       this.reinitializeSocket();

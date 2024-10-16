@@ -121,15 +121,31 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         switch (message.command) {
           case 'send_chat_message':
             // send normal chat message
-            const sanitizedMessage = this.sanitizeMessage(message.data);
-            if (sanitizedMessage) {
-              this.socketModule.sendChatMessage(
-                uuidv4(),
-                sanitizedMessage.timestamp,
-                sanitizedMessage.messageType,
-                sanitizedMessage.text
-              );
+            if (this.socketModule.socket?.connected===true){
+              const sanitizedMessage = this.sanitizeMessage(message.data);
+              if (sanitizedMessage) {
+                this.socketModule.sendChatMessage(
+                  uuidv4(),
+                  sanitizedMessage.timestamp,
+                  sanitizedMessage.messageType,
+                  sanitizedMessage.text
+                );
+              }
+            }else{
+              this.socketModule = SocketModule.getInstance();
+              const sanitizedMessage = this.sanitizeMessage(message.data);
+              if (sanitizedMessage) {
+                this.socketModule.sendChatMessage(
+                  uuidv4(),
+                  sanitizedMessage.timestamp,
+                  sanitizedMessage.messageType,
+                  sanitizedMessage.text
+                );
+              }
             }
+            
+
+
             break;
           case 'login':
             // Handle the login command and open the URL
@@ -148,6 +164,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 this.socketModule = SocketModule.getInstance();
                 if (!this.socketListenerAdded) {
                   this.socketModule.socket?.on('receive_chat_response', (data: MessageResponse) => {
+                    console.log("Response recived from backend")
                     this.forwardMessageToWebviews(data);
                   });
                   this.socketListenerAdded = true;
@@ -192,8 +209,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
    */
   private sanitizeMessage(data: Message): Message | null {
     try {
-      console.log("Data Received from Chat UI", data);
-      console.info("User chat requested");
+      console.info("Sanatizing user requested chat");
       const sanitized: Message = {
         id: data.id.trim(),
         timestamp: new Date(data.timestamp).toISOString(),
