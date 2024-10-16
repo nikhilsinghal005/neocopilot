@@ -4,6 +4,8 @@ import { Message } from '../types/Message';
 interface ChatContextProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  isTyping: boolean;
+  setIsTyping: React.Dispatch<React.SetStateAction<boolean>>;
   clearMessages: () => void;
 }
 
@@ -19,13 +21,14 @@ export const useChatContext = (): ChatContextProps => {
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isTyping, setIsTyping] = useState<boolean>(false);
 
   const clearMessages = () => {
     setMessages([]);
   };
 
   return (
-    <ChatContext.Provider value={{ messages, setMessages, clearMessages }}>
+    <ChatContext.Provider value={{ messages, setMessages, isTyping, setIsTyping, clearMessages }}>
       {children}
     </ChatContext.Provider>
   );

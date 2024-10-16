@@ -3,18 +3,22 @@ import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
 
 const ChatControls: React.FC = () => {
-  const { clearMessages } = useChatContext();
+  const { clearMessages, setIsTyping } = useChatContext();
+
+  const handleRefreshClick = () => {
+    clearMessages();
+    setIsTyping(false);
+  };
 
   return (
     <div className="flex space-x-2 pr-4">
       <VSCodeButton
-        onClick={clearMessages}
+        onClick={handleRefreshClick}
         appearance="icon"
         aria-label="Refresh Chat"
       >
         <span className="codicon codicon-refresh"></span>
       </VSCodeButton>
-      {/* You can add more buttons here in the future */}
     </div>
   );
 };
