@@ -147,7 +147,7 @@ export class SocketModule {
       console.error(`[${new Date().toLocaleTimeString()}] Neo Copilot: Socket connection error`);
 
       if (err.message.includes('Authentication error')) {
-        await sleep(20000)
+        await sleep(5000)
         const tokenIsVerified = await authManager.verifyAccessToken();
     
         if (tokenIsVerified) {

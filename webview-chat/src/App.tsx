@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Chat from './pages/Chat';
 import Tabs from './pages/Tabs';
 import { ChatProvider } from './context/ChatContext';
+import { VscodeProvider } from './context/VscodeContext'; // Import the VscodeProvider
 import About from './pages/About';
 
 declare const acquireVsCodeApi: () => {
@@ -17,7 +18,6 @@ const vscodeApi = acquireVsCodeApi() as {
   setState: (state: any) => void;
 };
 
-// Utility function to check session expiration
 const isSessionValid = () => {
   const sessionData = sessionStorage.getItem('isLoggedIn');
   if (sessionData) {
@@ -27,7 +27,6 @@ const isSessionValid = () => {
   return false;
 };
 
-// Utility function to set session data with expiry time (8 hours)
 const setSessionData = (value: boolean) => {
   const expiry = Date.now() + 8 * 60 * 60 * 1000; // 8 hours in milliseconds
   const sessionData = JSON.stringify({ value, expiry });
@@ -38,24 +37,20 @@ const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(isSessionValid());
 
   useEffect(() => {
-    // Notify VS Code extension that the app is ready
     vscodeApi.postMessage({ command: 'ready' });
     console.log('React app sent: ready');
 
-    // Handle messages from VS Code extension
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
       if (message.command === 'authStatus') {
         setIsLoggedIn(message.isLoggedIn);
 
-        // Store login status in session storage with expiry of 8 hours
         if (message.isLoggedIn) {
           setSessionData(message.isLoggedIn);
         }
       }
     };
 
-    // Listen for messages from the VS Code extension
     window.addEventListener('message', handleMessage);
 
     return () => {
@@ -66,21 +61,22 @@ const App: React.FC = () => {
   const tabContent = [
     {
       label: 'Chat',
-      content: <Chat vscode={vscodeApi} />,
+      content: <Chat />,
     },
     {
       label: 'About',
       content: <About />,
     },
-    // You can add more tabs here
   ];
 
   return (
-    <ChatProvider>
-      <div className="App h-full flex items-center justify-center overflow-hidden">
-        {isLoggedIn ? <Tabs tabs={tabContent} /> : <Login vscode={vscodeApi} />}
-      </div>
-    </ChatProvider>
+    <VscodeProvider vscode={vscodeApi}>
+      <ChatProvider>
+        <div className="App h-full flex items-center justify-center overflow-hidden">
+          {isLoggedIn ? <Tabs tabs={tabContent} /> : <Login vscode={vscodeApi} />}
+        </div>
+      </ChatProvider>
+    </VscodeProvider>
   );
 };
 

@@ -132,7 +132,13 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 );
               }
             }else{
+              console.log("Socketmodule was Not Connected")
               this.socketModule = SocketModule.getInstance();
+              this.socketModule.socket?.on('receive_chat_response', (data: MessageResponse) => {
+                console.log("Response recived from backend")
+                this.forwardMessageToWebviews(data);
+              });
+              this.socketListenerAdded = true;
               const sanitizedMessage = this.sanitizeMessage(message.data);
               if (sanitizedMessage) {
                 this.socketModule.sendChatMessage(
@@ -151,7 +157,11 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             // Handle the login command and open the URL
             vscode.env.openExternal(vscode.Uri.parse(message.url));
             break;
-
+          case 'toggleSidebar':
+              // Add the code to toggle the panel's location
+              console.log("panel change")
+              await this.togglePanelLocation();
+              break;
           case 'ready':
             console.log("Received 'ready' message from webview.");
             // Webview signals it's ready; send authentication status
@@ -201,6 +211,55 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       console.log("Message queue cleared.");
     }
   }
+
+  private async togglePanelLocation(): Promise<void> {
+
+    console.log("Using Function Location", getCurrentPanelLocation())
+    // await this._context.workspaceState.update('currentPanelLocation', 'primary');
+    const currentLocation = this._context.workspaceState.get('currentPanelLocation', 'primary');
+    console.log(`Current Panel Location: ${currentLocation}`);
+
+    if (currentLocation === 'primary') {
+        // Close the primary sidebar if it's open
+        // console.log("Closing the primary sidebar...");
+        // await vscode.commands.executeCommand('workbench.action.closeSidebar'); // Close current sidebar
+
+        // Attempt to open the secondary sidebar
+        console.log("Attempting to open the secondary sidebar...");
+        try {
+            await vscode.commands.executeCommand('workbench.action.focusAuxiliaryBar');
+            await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
+            const desiredOption = "New Secondary Side Bar Entry";
+            await vscode.env.clipboard.writeText(desiredOption);
+            await vscode.commands.executeCommand('workbench.action.moveFocusedView');
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await vscode.commands.executeCommand('editor.action.clipboardPasteAction');
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
+
+            // // Update the workspace state
+            await this._context.workspaceState.update('currentPanelLocation', 'secondary');
+        } catch (error) {
+          // await vscode.commands.executeCommand('workbench.action.focusAuxiliaryBar');
+            console.error("Failed to move webview to the secondary sidebar:", error);
+        }
+    } else {
+        console.log("Switching to the primary sidebar...");
+        try {
+          const desiredOption = "New Side Bar Entry";
+          await vscode.env.clipboard.writeText(desiredOption);
+          await vscode.commands.executeCommand('workbench.action.moveFocusedView');
+          await new Promise(resolve => setTimeout(resolve, 200));
+          await vscode.commands.executeCommand('editor.action.clipboardPasteAction');
+          await new Promise(resolve => setTimeout(resolve, 200));
+          await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
+          await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
+        } catch (error) {
+            console.error("Failed to open the primary sidebar:", error);
+        }
+    }
+}
+
 
   /**
    * Sanitizes incoming messages to prevent security vulnerabilities.
@@ -356,4 +415,46 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 </body>
 </html>`;
   }
+}
+
+
+async function getCurrentPanelLocation(): Promise<string> {
+    try {
+        // First, try to focus on the webview in the primary sidebar
+        let isInPrimary = false;
+        try {
+            await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
+            isInPrimary = true;
+        } catch {
+            isInPrimary = false;
+        }
+        
+        if (isInPrimary) {
+            console.log("Webview is in the Primary Sidebar.");
+            return "primary";
+        }
+
+        // If it's not in the primary sidebar, try the secondary sidebar
+        await vscode.commands.executeCommand('workbench.action.focusAuxiliaryBar'); // Focus the secondary sidebar
+        let isInSecondary = false;
+        try {
+            await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
+            isInSecondary = true;
+        } catch {
+            isInSecondary = false;
+        }
+        
+        if (isInSecondary) {
+            console.log("Webview is in the Secondary Sidebar.");
+            return "secondary";
+        }
+
+        // Lastly, if it's not in the primary or secondary sidebar, assume it's elsewhere or not visible
+        console.log("Webview is not in a known sidebar. It might be hidden or in another panel.");
+        return "unknown";
+
+    } catch (error) {
+        console.error("Error determining the panel location:", error);
+        return "unknown";
+    }
 }

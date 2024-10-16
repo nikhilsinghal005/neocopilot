@@ -1,19 +1,24 @@
+// webview-chat/src/pages/Chat.tsx
 import React, { useState, useEffect } from 'react';
 import ChatContainer from '../components/Chat/ChatContainer';
+import ChatControls from '../components/Chat/ChatControls'; // Import ChatControls
 import { useChatListener } from '../hooks/useChatListener';
-import { Message, MessageOuput } from '../types/Message';
+import { MessageOuput } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 import { useChatContext } from '../context/ChatContext';
+import { useVscode } from '../context/VscodeContext';
 
-interface ChatProps {
-  vscode: {
-    postMessage: (msg: any) => void;
-    getState: () => any;
-    setState: (state: any) => void;
-  };
-}
+// interface ChatProps {
+//   vscode: {
+//     postMessage: (msg: any) => void;
+//     getState: () => any;
+//     setState: (state: any) => void;
+//   };
+// }
 
-const Chat: React.FC<ChatProps> = ({ vscode }) => {
+const Chat: React.FC = () => {
+  const vscode = useVscode(); // Consume vscode from context
+
   const { messages, setMessages } = useChatContext();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -53,12 +58,14 @@ const Chat: React.FC<ChatProps> = ({ vscode }) => {
   };
 
   return (
-    <ChatContainer
-      input={input}
-      setInput={setInput}
-      isTyping={isTyping}
-      handleSendMessage={handleSendMessage}
-    />
+    <div>
+      <ChatContainer
+        input={input}
+        setInput={setInput}
+        isTyping={isTyping}
+        handleSendMessage={handleSendMessage}
+      />
+    </div>
   );
 };
 
