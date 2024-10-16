@@ -14,13 +14,15 @@ const commonOptions = {
 function buildReactApp() {
   try {
     console.log('Building React app...');
-    execSync('npm run build', {
-      cwd: path.resolve(__dirname, 'webview-chat'), // Path to your React app directory
-      stdio: 'inherit', // Inherit stdio so output is displayed in the console
+    execSync('npx vite build', {
+      cwd: path.resolve(__dirname, 'webview-chat'),
+      stdio: 'inherit',
     });
     console.log('React app build complete.');
   } catch (error) {
-    console.error('Error building React app:', error);
+    console.error('Error building React app:', error.message);
+    console.error('stdout:', error.stdout?.toString());
+    console.error('stderr:', error.stderr?.toString());
     process.exit(1);
   }
 }
