@@ -1,3 +1,4 @@
+//webview-chat/src/components/Chat/Message.tsx
 import React from 'react';
 import { Message } from '../../types/Message';
 import MessageRenderer from './MessageRenderer';

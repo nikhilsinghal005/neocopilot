@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { VSCodeButton, VSCodeTextArea } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
+// import xss from 'xss';
 
 interface InputBarProps {
   input: string;
@@ -14,13 +15,23 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage 
   const [warningMessage, setWarningMessage] = useState('');
   const { isTyping } = useChatContext();
 
+  // Utility function to sanitize input to prevent code execution
+  const sanitizeInput = (input: string): string => {
+    // Encode special HTML characters to prevent code execution
+    return input.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  };
+  
+
   const handleClick = () => {
     if (isTyping) {
-      // Display a warning message if a message is still being processed
       setWarningMessage('Please wait, the assistant is still responding.');
-      setTimeout(() => setWarningMessage(''), 3000); // Clear warning after 3 seconds
+      setTimeout(() => setWarningMessage(''), 3000);
       return;
     }
+
+    const sanitizedInput = sanitizeInput(input);
+    setInput(sanitizedInput);
+    console.log(sanitizedInput)
     handleSendMessage();
   };
 
@@ -37,7 +48,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage 
           placeholder="Type your message..."
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault(); // Prevent adding a new line
+              e.preventDefault();
               handleClick();
             }
           }}
@@ -51,7 +62,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage 
             appearance="icon"
             aria-label="Send Message"
             disabled={isTyping}
-            className="text-white rounded-none" 
+            className="text-white rounded-none"
           >
             <span className="codicon codicon-send"></span>
           </VSCodeButton>

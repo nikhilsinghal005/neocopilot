@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
 import rehypePrism from 'rehype-prism-plus';
 import 'prismjs/themes/prism-tomorrow.css';
 import './custom-overrides.css';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import '@vscode/codicons/dist/codicon.css';
+import remarkGfm from 'remark-gfm';
 
 interface MessageRendererProps {
   text: string;
@@ -41,7 +41,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
   }: CodeProps) => {
     try {
       const match = /language-(\w+)/.exec(className || '');
-      const language = match ? match[1] : null; // No defaulting to plaintext
+      const language = match ? match[1] : null;
 
       // Handle inline code (surrounded by single backticks)
       if (inline) {
@@ -103,37 +103,31 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
         );
       }
 
-      // If the language is not detected and it's not inline, treat it as regular text
+      // If no language detected and not inline, treat it as regular text
       return <span>{children}</span>;
-      
+
     } catch (error) {
       console.log('Error rendering Markdown: ', error);
-      console.error('Error rendering Markdown');
-      return <div>Error rendering code block</div>; // Graceful fallback UI
+      console.error('Error rendering Markdown', error);
+      return <div>Error rendering code block</div>;
     }
   };
 
-  // Decide whether to use ReactMarkdown or just render the text
-  try {
-    return (
-      <div className="prose max-w-full text-sm leading-6">
-        <ReactMarkdown
-          children={text}
-          rehypePlugins={[
-            rehypeRaw,
-            [rehypePrism, { ignoreMissing: true }],
-          ]}
-          components={{
-            code: renderCodeBlock, // Inline or block-level code
-          }}
-        />
-      </div>
-    );
-  } catch (error) {
-    console.log('Error rendering Markdown: ', error);
-    console.error('Error rendering Markdown');
-    return <div>Error rendering content</div>;
-  }
+  return (
+    <div className="prose max-w-full text-sm leading-6">
+      <ReactMarkdown
+        children={text}
+        // skipHtml={true}
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[
+          [rehypePrism, { ignoreMissing: true }],
+        ]}
+        components={{
+          code: renderCodeBlock,
+        }}
+      />
+    </div>
+  );
 };
 
 export default MessageRenderer;
