@@ -10,15 +10,12 @@ import { PanelManager } from './panelManager'
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
   public static readonly primaryViewType = 'aiChatPanelPrimary';
-  public static readonly secondaryViewType = 'aiChatPanelSecondary';
   private static primaryInstance: AiChatPanel;
-  private static secondaryInstance: AiChatPanel;
 
   // Store active (visible) webviews
   private activePanels: vscode.WebviewView[] = [];
   private socketModule: SocketModule;
   private panelManager: PanelManager;
-  private isInPrimary: boolean = true;
 
   // Flags to prevent multiple listeners
   private socketListenerAdded: boolean = false;
@@ -44,17 +41,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     authManager: AuthManager,
     viewType: string
   ): AiChatPanel {
-    if (viewType === AiChatPanel.primaryViewType) {
-      if (!AiChatPanel.primaryInstance) {
-        AiChatPanel.primaryInstance = new AiChatPanel(extensionUri, context, authManager, viewType);
-      }
-      return AiChatPanel.primaryInstance;
-    } else {
-      if (!AiChatPanel.secondaryInstance) {
-        AiChatPanel.secondaryInstance = new AiChatPanel(extensionUri, context, authManager, viewType);
-      }
-      return AiChatPanel.secondaryInstance;
+    if (!AiChatPanel.primaryInstance) {
+      AiChatPanel.primaryInstance = new AiChatPanel(extensionUri, context, authManager, viewType);
     }
+    return AiChatPanel.primaryInstance;
   }
 
   public async resolveWebviewView(
@@ -79,17 +69,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           this.activePanels.push(webviewView);
           console.log(`Webview added to activePanels. Active panels count: ${this.activePanels.length}`);
         }
-
-        // // Send any queued messages
-        // if (this.messageQueue.length > 0) {
-        //   console.log(`Sending ${this.messageQueue.length} queued message(s) to the webview.`);
-        //   this.messageQueue.forEach(data => {
-        //     this.postMessageToWebview(webviewView, data);
-        //   });
-        //   // Clear the queue after sending
-        //   this.messageQueue = [];
-        //   console.log("Message queue cleared.");
-        // }
       } else {
         console.log("Webview is now hidden.");
         // Remove from activePanels
@@ -360,11 +339,14 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   <meta charset="UTF-8">
   <meta
     http-equiv="Content-Security-Policy"
-    content="default-src 'none'; 
-         img-src ${webview.cspSource} https: data:; 
-         font-src  ${webview.cspSource}; 
-         style-src ${webview.cspSource} 'unsafe-inline' https://*.vscode-cdn.net; 
-         script-src 'nonce-${nonce}' 'strict-dynamic';"
+    content="
+      default-src 'none'; 
+      img-src ${webview.cspSource} https: data:; 
+      font-src ${webview.cspSource}; 
+      style-src ${webview.cspSource} 'unsafe-inline' https://*.vscode-cdn.net; 
+      frame-src 'none';
+      script-src 'nonce-${nonce}' 'strict-dynamic';
+    "
   />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" type="text/css" href="${styleUri}">
