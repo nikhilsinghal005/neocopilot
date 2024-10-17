@@ -3,9 +3,8 @@ import ReactMarkdown from 'react-markdown';
 import rehypePrism from 'rehype-prism-plus';
 import 'prismjs/themes/prism-tomorrow.css';
 import './custom-overrides.css';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
-import '@vscode/codicons/dist/codicon.css';
 import remarkGfm from 'remark-gfm';
+import CodeButton from '../Common/CodeButton';
 
 interface MessageRendererProps {
   text: string;
@@ -74,22 +73,34 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
 
         const codeContent = extractText(children).trim();
 
-        const handleClick = () => {
+        const handleCopyClick = () => {
           handleCopyToClipboard(codeContent);
+        };
+
+        const handleInsertClick = () => {
+          console.log('Insert action clicked for:', codeContent);
+          // Insert action logic can be implemented here
         };
 
         return (
           <div className="my-4 p-0">
-            {/* Header for the code block with language label and copy button */}
+            {/* Header for the code block with language label and copy/insert buttons */}
             <div className="flex justify-between items-center bg-gray-900 text-gray-100 px-4 py-2 rounded-t-md">
               <span className="text-xs font-semibold uppercase">{language}</span>
-              <VSCodeButton
-                onClick={handleClick}
-                appearance="icon"
-                aria-label="Copy code to clipboard"
-              >
-                <span className="codicon codicon-copy"></span>
-              </VSCodeButton>
+              <div className="flex">
+                {/* Reusable CodeButton for Insert */}
+                <CodeButton
+                  onClick={handleInsertClick}
+                  ariaLabel="Insert code"
+                  icon="codicon-arrow-right"
+                />
+                {/* Reusable CodeButton for Copy */}
+                <CodeButton
+                  onClick={handleCopyClick}
+                  ariaLabel="Copy code to clipboard"
+                  icon="codicon-copy"
+                />
+              </div>
             </div>
             {/* Code snippet wrapper */}
             <div className="rounded-b-md overflow-auto bg-gray-800 !p-0 !m-0">
@@ -108,7 +119,6 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
 
     } catch (error) {
       console.log('Error rendering Markdown: ', error);
-      console.error('Error rendering Markdown', error);
       return <div>Error rendering code block</div>;
     }
   };
