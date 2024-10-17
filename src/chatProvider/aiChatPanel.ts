@@ -32,7 +32,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   ) {
     this.socketModule = SocketModule.getInstance();
     this.panelManager = new PanelManager(this._context);
-
   }
 
   public static getInstance(
@@ -105,38 +104,16 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         switch (message.command) {
           case 'send_chat_message':
             // send normal chat message
-            if (this.socketModule.socket?.connected===true){
-              const sanitizedMessage = this.sanitizeMessage(message.data);
-              if (sanitizedMessage) {
-                console.log("---------------- ", sanitizedMessage.text)
-                this.socketModule.sendChatMessage(
-                  uuidv4(),
-                  sanitizedMessage.timestamp,
-                  sanitizedMessage.messageType,
-                  sanitizedMessage.text
-                );
-              }
-            }else{
-              console.log("Socketmodule was Not Connected")
-              this.socketModule = SocketModule.getInstance();
-              this.socketModule.socket?.on('receive_chat_response', (data: MessageResponse) => {
-                // console.log("Response recived from backend")
-                this.forwardMessageToWebviews(data);
-              });
-              this.socketListenerAdded = true;
-              const sanitizedMessage = this.sanitizeMessage(message.data);
-              if (sanitizedMessage) {
-                this.socketModule.sendChatMessage(
-                  uuidv4(),
-                  sanitizedMessage.timestamp,
-                  sanitizedMessage.messageType,
-                  sanitizedMessage.text
-                );
-              }
+            const sanitizedMessage = this.sanitizeMessage(message.data);
+            if (sanitizedMessage) {
+              console.log("---------------- ", sanitizedMessage.text)
+              this.socketModule.sendChatMessage(
+                uuidv4(),
+                sanitizedMessage.timestamp,
+                sanitizedMessage.messageType,
+                sanitizedMessage.text
+              );
             }
-            
-
-
             break;
           case 'login':
             // Handle the login command and open the URL
@@ -157,14 +134,16 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
               if (isLoggedIn) {
                 this.socketModule = SocketModule.getInstance();
-                if (!this.socketListenerAdded) {
-                  this.socketModule.socket?.on('receive_chat_response', (data: MessageResponse) => {
-                    // console.log("Response recived from backend")
-                    this.forwardMessageToWebviews(data);
-                  });
-                  this.socketListenerAdded = true;
-                }
+              // Add the socket listener for receiving messages
+              this.attachSocketListeners();
+
+              // Re-register socket event listeners on reconnection
+              this.socketModule.socket?.on('connect', () => {
+                console.log("Socket reconnected. Re-attaching listeners.");
+                this.attachSocketListeners();
+              });
               }
+
             }
 
             // Send any queued messages
@@ -196,6 +175,18 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       console.log("Message queue cleared.");
     }
   }
+
+  private attachSocketListeners(): void {
+    if (this.socketModule.socket?.listeners('receive_chat_response').length === 0) {
+      console.log("Adding 'receive_chat_response' listener.");
+      this.socketModule.socket?.on('receive_chat_response', (data: MessageResponse) => {
+        this.forwardMessageToWebviews(data);
+      });
+    } else {
+      console.log("'receive_chat_response' listener already exists.");
+    }
+  }
+  
 
   private async togglePanelLocation(): Promise<void> {
     this.panelManager.togglePanelLocationChange()
