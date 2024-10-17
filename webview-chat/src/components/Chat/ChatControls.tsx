@@ -1,4 +1,3 @@
-// webview-chat/src/components/Chat/ChatControls.tsx
 import React from 'react';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
@@ -6,7 +5,7 @@ import { useVscode } from '../../context/VscodeContext';
 
 const ChatControls: React.FC = () => {
   const vscode = useVscode(); // Consume vscode from context
-  const { clearMessages, setIsTyping } = useChatContext();
+  const { clearMessages, setIsTyping, isTyping } = useChatContext();
 
   const handleRefreshClick = () => {
     clearMessages();
@@ -14,6 +13,12 @@ const ChatControls: React.FC = () => {
   };
 
   const handleToggleClick = () => {
+    if (isTyping) {
+      console.log("Please wait for the message to finish.");
+      alert("Please wait for the message to finish."); // Optionally, show an alert instead of console log
+      return;
+    }
+    
     console.log("VS Code API in ChatControls:", vscode);
     vscode.postMessage({
       command: 'toggleSidebar',
@@ -35,6 +40,7 @@ const ChatControls: React.FC = () => {
         onClick={handleToggleClick}
         appearance="icon"
         aria-label="Toggle Sidebar"
+        disabled={isTyping} // Disable the button when typing
       >
         <span className="codicon codicon-arrow-swap"></span>
       </VSCodeButton>
