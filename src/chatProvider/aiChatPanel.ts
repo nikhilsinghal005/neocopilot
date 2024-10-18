@@ -7,6 +7,7 @@ import { Message, MessageResponse } from './types/messageTypes';
 import { v4 as uuidv4 } from 'uuid';
 import { getNonce } from '../utilities/chatUtilities';
 import { PanelManager } from './panelManager'
+import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
   public static readonly primaryViewType = 'aiChatPanelPrimary';
@@ -16,9 +17,9 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   private activePanels: vscode.WebviewView[] = [];
   private socketModule: SocketModule;
   private panelManager: PanelManager;
+  private codeInsertionManager: CodeInsertionManager;
 
   // Flags to prevent multiple listeners
-  private socketListenerAdded: boolean = false;
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
 
   // Message Queue to store incoming messages when no webviews are active
@@ -32,6 +33,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   ) {
     this.socketModule = SocketModule.getInstance();
     this.panelManager = new PanelManager(this._context);
+    this.codeInsertionManager = CodeInsertionManager.getInstance(this._context);
+
   }
 
   public static getInstance(
@@ -123,6 +126,30 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               // Add the code to toggle the panel's location
               console.log("panel change")
               await this.togglePanelLocation();
+              break;
+          case 'insertCodeSnippet':
+              console.log("insertCodeSnippet")
+              console.log(message.data.code)
+              if (message.data.location === "terminal") {
+                this.codeInsertionManager.insertTextIntoTerminal(
+                  message.data.code
+                )
+              } else if (message.data.location === "editor") {
+                this.codeInsertionManager.insertTextUsingSnippetAtCursorWithoutDecoration(
+                  message.data.code,
+                  "12345"
+                )
+              }
+              break;
+          case 'insertCodeSnippetAtCursor':
+              console.log("insertCodeSnippetAtCursor")
+              // this.codeInsertionManager.insertTextUsingSnippetAtCursorWithoutDecoration(
+              //   message.data,
+              //   "12345"
+              // )
+              this.codeInsertionManager.insertTextIntoTerminal(
+                message.data
+              )
               break;
           case 'ready':
             console.log("Received 'ready' message from webview.");

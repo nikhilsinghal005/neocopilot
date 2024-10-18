@@ -5,6 +5,7 @@ import 'prismjs/themes/prism-tomorrow.css';
 import './custom-overrides.css';
 import remarkGfm from 'remark-gfm';
 import CodeButton from '../Common/CodeButton';
+import { useVscode } from '../../context/VscodeContext';
 
 interface MessageRendererProps {
   text: string;
@@ -15,10 +16,21 @@ interface CodeProps {
   inline?: boolean;
   className?: string;
   children?: React.ReactNode;
-  [key: string]: any; // To accept any additional props
+  [key: string]: any;
 }
 
 const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
+  const vscode = useVscode();
+  const handleInsertToEditorTerminal = (code: string, location: string) => {
+    console.log("VS Code API in ChatControls:", vscode);
+    vscode.postMessage({
+      command: 'insertCodeSnippet',
+      data: {
+        code,
+        location,
+      },
+    });
+  };
 
   const handleCopyToClipboard = (code: string) => {
     navigator.clipboard
@@ -70,30 +82,43 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
             return '';
           }
         };
-
+  
         const codeContent = extractText(children).trim();
-
+  
         const handleCopyClick = () => {
           handleCopyToClipboard(codeContent);
         };
-
+  
         const handleInsertClick = () => {
           console.log('Insert action clicked for:', codeContent);
-          // Insert action logic can be implemented here
+          handleInsertToEditorTerminal(codeContent, 'editor');
         };
-
+  
+        const handleTButtonClick = () => {
+          handleInsertToEditorTerminal(codeContent, 'terminal');
+        };
+  
         return (
           <div className="my-4 p-0">
             {/* Header for the code block with language label and copy/insert buttons */}
             <div className="flex justify-between items-center bg-gray-900 text-gray-100 px-4 py-2 rounded-t-md">
               <span className="text-xs font-semibold uppercase">{language}</span>
               <div className="flex">
-                {/* Reusable CodeButton for Insert */}
-                <CodeButton
-                  onClick={handleInsertClick}
-                  ariaLabel="Insert code"
-                  icon="codicon-arrow-right"
-                />
+                {language === 'bash' ? (
+                  // Render "T" button for Bash language
+                  <CodeButton
+                    onClick={handleTButtonClick}
+                    ariaLabel="Custom T action"
+                    icon="codicon-terminal"
+                  />
+                ) : (
+                  // Render Insert button for other languages
+                  <CodeButton
+                    onClick={handleInsertClick}
+                    ariaLabel="Insert code"
+                    icon="codicon-arrow-right"
+                  />
+                )}
                 {/* Reusable CodeButton for Copy */}
                 <CodeButton
                   onClick={handleCopyClick}

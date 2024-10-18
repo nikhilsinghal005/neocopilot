@@ -9,6 +9,8 @@ interface Insertion {
 }
 
 export class CodeInsertionManager {
+  private static instance: CodeInsertionManager | null = null; // Singleton instance
+
   private disposables: vscode.Disposable[] = [];
   private insertions: Map<string, Insertion> = new Map();
   private codeLensProvider: CodeInsertionCodeLensProvider;
@@ -24,6 +26,14 @@ export class CodeInsertionManager {
 
     // Register Commands
     this.registerCommands(context);
+  }
+
+  // Static method to get the singleton instance
+  public static getInstance(context: vscode.ExtensionContext): CodeInsertionManager {
+    if (!CodeInsertionManager.instance) {
+      CodeInsertionManager.instance = new CodeInsertionManager(context); // Create a new instance if it doesn't exist
+    }
+    return CodeInsertionManager.instance; // Return the existing instance
   }
 
   /**
@@ -264,6 +274,120 @@ export class CodeInsertionManager {
         });
     }
 
+    public insertTextUsingSnippetAtCursorWithoutDecoration(
+      newText: string,
+      id: string
+    ): void {
+      const editor = vscode.window.activeTextEditor;
+      
+      // Check if there is an active editor
+      if (!editor) {
+        vscode.window.showInformationMessage('No active editor found.');
+        return;
+      }
+    
+      // Get the current position of the cursor in the editor
+      const position = editor.selection.active;
+    
+      // Prepare the snippet by escaping $ symbols (needed for VSCode Snippets)
+      const snippetText = newText.replace(/\$/g, '\\$'); // Escape $ symbols in snippet
+      const snippet = new vscode.SnippetString(snippetText);
+    
+      // Insert the snippet at the current cursor position
+      editor.insertSnippet(snippet, position).then((success) => {
+        if (success) {
+          // Snippet inserted successfully, store any relevant information if needed
+          console.log('Snippet inserted successfully.');
+          
+          // Optionally, handle post-insertion logic here
+          // For example, you could track the insertion range if needed
+        } else {
+          vscode.window.showErrorMessage('Failed to insert snippet.');
+        }
+      });
+    }
+    
+    public insertTextIntoTerminal(newText: string): void {
+      // Check if there is an active terminal
+      let terminal = vscode.window.activeTerminal;
+      if (!terminal) {
+        // If no terminal is active, create a new terminal
+        terminal = vscode.window.createTerminal('Code Snippet Terminal');
+        vscode.window.showInformationMessage('No active terminal found. Created a new terminal.');
+      }
+    
+      // Escape special characters in the newText (like $ symbols) if necessary
+      const terminalText = newText.replace(/\$/g, '\\$'); // Escape $ symbols if needed for terminal
+    
+      // Send the newText to the terminal
+      terminal.show(); // Ensure the terminal is visible
+      terminal.sendText(terminalText, true); // Send text and execute it
+    
+      // Optionally log or handle post-insertion logic
+      console.log('Text sent to terminal successfully.');
+    }
+    
+    public insertTextUsingSnippetAtCursor(
+      newText: string,
+      id: string
+    ): void {
+      const editor = vscode.window.activeTextEditor;
+      
+      // Check if there is an active editor
+      if (!editor) {
+        vscode.window.showInformationMessage('No active editor found.');
+        return;
+      }
+    
+      // Get the current position of the cursor in the editor
+      const position = editor.selection.active;
+    
+      // Prepare the snippet by escaping $ symbols (needed for VSCode Snippets)
+      const snippetText = newText.replace(/\$/g, '\\$'); // Escape $ symbols in snippet
+      const snippet = new vscode.SnippetString(snippetText);
+    
+      // Insert the snippet at the current cursor position
+      editor.insertSnippet(snippet, position).then((success) => {
+        if (success) {
+          // Calculate the range of the inserted snippet
+          const lines = newText.split('\n').length;
+          const lastLineLength = newText.split('\n').pop()?.length || 0;
+          const endPosition = new vscode.Position(position.line + lines - 1, lastLineLength);
+          const range = new vscode.Range(position, endPosition);
+    
+          // Create a decoration to highlight the inserted code
+          const lineDecorationType = vscode.window.createTextEditorDecorationType({
+            isWholeLine: true, // Highlight the entire line
+            backgroundColor: 'rgba(38, 236, 71, 0.15)', // Light green background to highlight lines
+            borderWidth: '1px',
+            borderStyle: 'solid',
+            borderColor: 'rgba(38, 236, 71, 0.5)', // Optional: Add border to make it stand out
+          });
+    
+          // Apply the line decorations
+          editor.setDecorations(lineDecorationType, [range]);
+    
+          // Create a range for CodeLens (optional, depending on your need)
+          const codeLensPosition = new vscode.Position(range.start.line, 0);
+          const codeLensRange = new vscode.Range(codeLensPosition, codeLensPosition);
+    
+          // Store insertion information for future reference
+          const insertion: Insertion = {
+            id,
+            range,
+            decorationType: lineDecorationType,
+            codeLensRange,
+          };
+    
+          // Update insertion information
+          this.insertions.set(id, insertion);
+          this.codeLensProvider.refresh();
+        } else {
+          vscode.window.showErrorMessage('Failed to insert snippet.');
+        }
+      });
+    }
+    
     public insertTextUsingSnippetLocation(
       newText: string,
       id: string,
@@ -340,3 +464,5 @@ export class CodeInsertionManager {
       );
     }
 }
+
+

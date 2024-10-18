@@ -82,7 +82,7 @@ export class SocketModule {
     if (this.socket) {
       return this.socket;
     }
-    this.codeInsertionManager = new CodeInsertionManager(context);
+    this.codeInsertionManager = CodeInsertionManager.getInstance(context);
     const authManager = new AuthManager(context);
     const userProfile = await authManager.getUserProfile();
 
