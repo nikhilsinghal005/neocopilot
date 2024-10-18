@@ -167,10 +167,5 @@
     "vscode-languageclient": "^8.1.0",
     "vscode-languageserver": "^8.1.0",
     "weather-js": "^2.0.0"
-  },
-  "files": [
-    "out/**/*",
-    "src/languageServer/**/*",
-    "!**/*.ts"
-  ]
+  }
 }
