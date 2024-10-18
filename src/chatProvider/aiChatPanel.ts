@@ -154,8 +154,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           case 'ready':
             console.log("Received 'ready' message from webview.");
             // Webview signals it's ready; send authentication status
-            const isAlreadyLoggedIn = this._context.workspaceState.get('isLoggedIn', false);
-            if (!isAlreadyLoggedIn) {
               const isLoggedIn = await this._authManager.verifyAccessToken();
               this.sendAuthStatus(isLoggedIn);
 
@@ -171,7 +169,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               });
               }
 
-            }
 
             // Send any queued messages
             if (this.messageQueue.length > 0) {
