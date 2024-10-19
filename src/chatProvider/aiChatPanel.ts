@@ -103,22 +103,32 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
       // Listen for messages from the webview
       webviewView.webview.onDidReceiveMessage(async (message: any) => {
+
         console.log("Received message from webview:", message);
         switch (message.command) {
           case 'send_chat_message':
 
-            console.log("Length of listeners", this.socketModule.socket?.listeners('receive_chat_response').length)
-            // send normal chat message
             const sanitizedMessage = this.sanitizeMessage(message.data);
             if (sanitizedMessage) {
-              console.log("---------------- ", sanitizedMessage.text)
-              this.socketModule.sendChatMessage(
-                uuidv4(),
-                sanitizedMessage.timestamp,
-                sanitizedMessage.messageType,
-                sanitizedMessage.text
-              );
+              this.attemptSocketConnection(sanitizedMessage)
             }
+
+            if (this.socketModule.socket?.connected) {
+              this.attachSocketListeners()
+              if (sanitizedMessage) {
+                console.log("---------------- ", sanitizedMessage.text)
+                this.socketModule.sendChatMessage(
+                  uuidv4(),
+                  sanitizedMessage.timestamp,
+                  sanitizedMessage.messageType,
+                  sanitizedMessage.text
+                );
+              }
+            }else{
+
+
+            }
+
             break;
           case 'login':
             // Handle the login command and open the URL
@@ -191,6 +201,33 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       // Clear the queue after sending
       this.messageQueue = [];
       console.log("Message queue cleared.");
+    }
+  }
+
+  private attemptSocketConnection(message: Message, retries = 3) {
+    if (this.socketModule.socket?.connected) {
+      this.attachSocketListeners();
+      this.socketModule.sendChatMessage(
+        uuidv4(),
+        message.timestamp,
+        message.messageType,
+        message.text
+        );
+    } else if (retries > 0) {
+      console.log(`Attempting to reconnect... (${4 - retries}/3)`);
+      
+      setTimeout(() => {
+        this.attemptSocketConnection(message, retries - 1);
+      }, 5000);
+    } else {
+      console.log("Failed to reconnect.");
+      this.forwardMessageToWebviews(
+        {
+          unique_id: uuidv4(),
+          response: "Please check your internet connection. or try again",
+          complete: false
+        }
+      )
     }
   }
 
