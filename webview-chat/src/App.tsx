@@ -75,7 +75,7 @@ const App: React.FC = () => {
     // Set an interval to check the session status periodically
     const sessionCheckInterval = setInterval(() => {
       checkSessionAndRevalidate();
-    }, 60 * 1000); // Check every 1 minute for testing
+    }, 60 * 60 * 1000); // Check every 1 minute for testing
 
     return () => {
       window.removeEventListener('message', handleMessage);

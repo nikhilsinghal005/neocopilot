@@ -106,6 +106,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         console.log("Received message from webview:", message);
         switch (message.command) {
           case 'send_chat_message':
+
+            console.log("Length of listeners", this.socketModule.socket?.listeners('receive_chat_response').length)
             // send normal chat message
             const sanitizedMessage = this.sanitizeMessage(message.data);
             if (sanitizedMessage) {
@@ -141,18 +143,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 )
               }
               break;
-          case 'insertCodeSnippetAtCursor':
-              console.log("insertCodeSnippetAtCursor")
-              // this.codeInsertionManager.insertTextUsingSnippetAtCursorWithoutDecoration(
-              //   message.data,
-              //   "12345"
-              // )
-              this.codeInsertionManager.insertTextIntoTerminal(
-                message.data
-              )
-              break;
+
           case 'ready':
             console.log("Received 'ready' message from webview.");
+
             // Webview signals it's ready; send authentication status
               const isLoggedIn = await this._authManager.verifyAccessToken();
               this.sendAuthStatus(isLoggedIn);
