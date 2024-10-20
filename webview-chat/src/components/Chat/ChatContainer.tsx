@@ -19,22 +19,25 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
   isTyping,
   handleSendMessage,
 }) => {
-  const { messages } = useChatContext();
+  const { chatSession } = useChatContext(); // Access chatSession from the context
+
+  // Ensure that chatSession and chatSession.messages are defined
+  const hasMessages = chatSession && Array.isArray(chatSession.messages) && chatSession.messages.length > 0;
 
   return (
     <div className="chat-page flex flex-col flex-grow w-full h-full">
       {/* Conditional rendering for NewChatPanel */}
-      {messages.length === 0 ? (
+      {!hasMessages ? (
         <NewChatPanel />
       ) : (
         <>
-      {/* Messages Container */}
-      <div className="messages-container fixed left-0 right-0 bottom-[100px] top-[40px] overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2">
-        <MessageList messages={messages} />
-        {isTyping && <TypingIndicator />}
-      </div>
-      </>)
-      }
+          {/* Messages Container */}
+          <div className="messages-container fixed left-0 right-0 bottom-[100px] top-[40px] overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2">
+            <MessageList chatSession={chatSession} />
+            {isTyping && <TypingIndicator />}
+          </div>
+        </>
+      )}
 
       {/* Divider Line */}
       <div className="divider-line fixed bottom-[100px] left-0 right-0 w-full h-[1px] bg-gray-600 m-0 p-0"></div>
