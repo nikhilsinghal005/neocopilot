@@ -5,10 +5,10 @@ import { useVscode } from '../../context/VscodeContext';
 
 const ChatControls: React.FC = () => {
   const vscode = useVscode(); // Consume vscode from context
-  const { clearMessages, setIsTyping, isTyping } = useChatContext();
+  const { clearChatSession, setIsTyping, isTyping } = useChatContext();
 
   const handleRefreshClick = () => {
-    clearMessages();
+    clearChatSession();
     setIsTyping(false);
   };
 

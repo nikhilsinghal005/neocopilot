@@ -14,6 +14,7 @@ import {
 import { getTextBeforeCursor } from "./utilities/codeCompletionUtils/editorCodeUtils";
 import { AuthManager } from './authManager/authManager';
 import { CodeInsertionManager } from './codeInsertions/CodeInsertionManager';
+import { ChatSession, MessageInput} from './chatProvider/types/messageTypes';
 
 interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {}
 
@@ -271,22 +272,20 @@ export class SocketModule {
     }
   }
 
-  public sendChatMessage(unique_id: string, timestamp: string, messageType: string, input_message:string) {
+  public sendChatMessage(chat: ChatSession) {
     console.log("Message to scoket from backend")
     this.predictionRequestInProgress = true;
-    if (this.rateLimitExceeded) {
-      this.reinitializeSocket();
-      return;
-    }
-    // StatusBarManager.updateMessage(`$(loading~spin) Neo Copilot`);
+    // const messageList: MessageInput = chat.messages;
+    // const timestamp = new Date().toISOString();
+    // const messageType = chat.messageType;
     if (this.socket) {
       this.socket.emit('generate_chat_response', {
-        unique_id,
-        input_message,
-        timestamp,
-        messageType,
+        chatId: chat.chatId,
+        timestamp: chat.timestamp,
+        messageList: chat.messages,
         appVersion: this.currentVersion,
-        userEmail: this.email
+        userEmail: this.email,
+        uniqueId: uuidv4()
       });
     }
   }

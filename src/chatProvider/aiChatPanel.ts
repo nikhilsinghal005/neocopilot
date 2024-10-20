@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { AuthManager } from '../authManager/authManager';
 import { SocketModule } from '../socketModule';
-import { Message, MessageResponse } from './types/messageTypes';
+import { ChatSession, MessageResponse, MessageInput, MessageResponseFromBackEnd } from './types/messageTypes';
 import { v4 as uuidv4 } from 'uuid';
 import { getNonce } from '../utilities/chatUtilities';
 import { PanelManager } from './panelManager'
@@ -103,22 +103,17 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
       // Listen for messages from the webview
       webviewView.webview.onDidReceiveMessage(async (message: any) => {
+
         console.log("Received message from webview:", message);
         switch (message.command) {
           case 'send_chat_message':
-
-            console.log("Length of listeners", this.socketModule.socket?.listeners('receive_chat_response').length)
-            // send normal chat message
-            const sanitizedMessage = this.sanitizeMessage(message.data);
-            if (sanitizedMessage) {
-              console.log("---------------- ", sanitizedMessage.text)
-              this.socketModule.sendChatMessage(
-                uuidv4(),
-                sanitizedMessage.timestamp,
-                sanitizedMessage.messageType,
-                sanitizedMessage.text
-              );
-            }
+            console.log("Message recived from react app", message.data)
+            console.log("Chat id for Messages", message.data.chatId)
+            const inputChat: ChatSession = message.data
+            // const chatId: string = message.data.chatId
+            // const sanitizedMessage = this.sanitizeMessage(message.data.messages.slice(-1)[0]);
+            console.log("Chat id for Messages", message.data.messages.slice(-1)[0])
+            this.attemptSocketConnection(inputChat)
             break;
           case 'login':
             // Handle the login command and open the URL
@@ -194,10 +189,35 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
 
+  private attemptSocketConnection(inputChat: ChatSession, retries = 3) {
+    if (this.socketModule.socket?.connected) {
+      this.attachSocketListeners();
+      this.socketModule.sendChatMessage(
+        inputChat
+        );
+    } else if (retries > 0) {
+      console.log(`Attempting to reconnect... (${4 - retries}/3)`);
+      
+      setTimeout(() => {
+        this.attemptSocketConnection(inputChat, retries - 1);
+      }, 5000);
+    } else {
+      console.log("Failed to reconnect.");
+      this.forwardMessageToWebviews(
+        { 
+          chatId: inputChat.chatId,
+          id: uuidv4(),
+          response: "Please check your internet connection. or try again",
+          isComplete: false
+        }
+      )
+    }
+  }
+
   private attachSocketListeners(): void {
     if (this.socketModule.socket?.listeners('receive_chat_response').length === 0) {
       console.log("Adding 'receive_chat_response' listener.");
-      this.socketModule.socket?.on('receive_chat_response', (data: MessageResponse) => {
+      this.socketModule.socket?.on('receive_chat_response', (data: MessageResponseFromBackEnd) => {
         this.forwardMessageToWebviews(data);
       });
     } else {
@@ -215,14 +235,14 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
    * @param data - The message data to sanitize.
    * @returns The sanitized message or null if invalid.
    */
-  private sanitizeMessage(data: Message): Message | null {
+  private sanitizeMessage(data: MessageInput): MessageInput | null {
     try {
-      console.info("Sanatizing user requested chat");
-      const sanitized: Message = {
-        id: data.id.trim(),
-        timestamp: new Date(data.timestamp).toISOString(),
+      console.info("Sanatizing user requested chat", data);
+      const sanitized: MessageInput = {
+        id: uuidv4(),
+        timestamp: data.timestamp,
         messageType: data.messageType,
-        text: data.text.trim(),
+        text: data.text,
       };
 
       return sanitized;
@@ -253,7 +273,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
    * If no webviews are active, the message is queued.
    * @param data - The chat message data received from the backend.
    */
-  public forwardMessageToWebviews(data: MessageResponse): void {
+  public forwardMessageToWebviews(data: MessageResponseFromBackEnd): void {
     // console.log(`forwardMessageToWebviews called. Active panels count: ${this.activePanels.length}`);
     
     if (this.activePanels.length > 0) {
@@ -273,9 +293,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           panel.webview.postMessage({
             command: 'receive_chat_message',
             data: {
+              chatId: data.chatId,
               response: data.response,
-              unique_id: data.unique_id,
-              complete: data.complete
+              id: data.id,
+              isComplete: data.isComplete
             }
           });
         } catch (error) {
@@ -302,9 +323,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       webviewView.webview.postMessage({
         command: 'receive_chat_message',
         data: {
+          chatId: data.chatId,
           response: data.response,
-          unique_id: data.unique_id,
-          complete: data.complete
+          unique_id: data.id,
+          isComplete: data.isComplete
         }
       });
     } catch (error) {
