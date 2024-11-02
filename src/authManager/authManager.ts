@@ -17,13 +17,13 @@ export class AuthManager {
 
   // Store the access token securely
   public async storeAccessToken(token: string): Promise<void> {
-    // console.log("NeoCopilot: Stored a-controls locally")
+    console.log("NeoCopilot: Stored a-controls locally")
     await this.context.secrets.store('accessToken', token);
   }
 
    // Store the refresh token securely
    public async storeRefreshToken(token: string): Promise<void> {
-    // console.log("NeoCopilot: Stored r-controls locally")
+    console.log("NeoCopilot: Stored r-controls locally")
     await this.context.secrets.store('refreshToken', token);
   }
 
@@ -47,7 +47,7 @@ export class AuthManager {
   public async storeUserProfile(userProfile: UserProfile): Promise<void> {
       const userInfo = JSON.stringify(userProfile);
       await this.context.secrets.store('userProfile', userInfo);
-      // console.log('Neo Copilot: User profile stored successfully.');
+      console.log('Neo Copilot: User profile stored successfully.');
   }
 
   // Retrieve the user profile
@@ -121,15 +121,14 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
   }
 
   // Refresh the access token by calling the backend API
-  public async refreshAccessToken(retryCount: number = 3): Promise<string | null> {
+  public async refreshAccessToken(retryCount: number = 10000): Promise<string | null> { // High retry count for refresh attempts
     try {
       const refreshToken = await this.getRefreshToken();
       if (!refreshToken) {
-        console.error('Neo Copilot: User verification failed');
-        await this.clearTokens();
+        console.error('Neo Copilot: No refresh token found.');
         return null;
       }
-
+  
       const response = await fetch(FULL_TOKEN_REFRESH_URL, {
         method: 'POST',
         headers: {
@@ -137,45 +136,54 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
         },
         body: JSON.stringify({ refresh_token: refreshToken }),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok && data.access_token) {
         await this.storeAccessToken(data.access_token);
-        // console.log('Neo Copilot: Token refreshed successfully.');
+        console.log('Neo Copilot: Token refreshed successfully.');
         return data.access_token;
       } else {
-
-        if (response.status === 401) {
-          // Refresh token is invalid or expired
+        // Check for 401 or 403 status codes to trigger logout
+        if (response.status === 401 || response.status === 403) {
           console.error('Neo Copilot: Unable to verify user');
           await this.clearTokens();
-          return null;
-        } else if (response.status === 500 && retryCount > 0) {
+          return null; // Logout case, return null
+        } else if (response.status === 500 || response.status >= 500) {
           // Retry on server errors
           console.warn('Neo Copilot: Unable to verify user, retrying...');
           await sleep(5000);
           return this.refreshAccessToken(retryCount - 1);
         } else {
-          // Other errors
-          await this.clearTokens();
-          return null;
+          // For all other errors (non 401/403), retry but do not log out
+          console.warn('Neo Copilot: Temporary issue, retrying...');
+          await sleep(5000);
+          return this.refreshAccessToken(retryCount - 1);
         }
       }
-
-    } catch (error) {
-      // console.error('Neo Copilot: Error during token refresh.', error);
-
+    } catch (error: any) {
       if (isTemporaryError(error) && retryCount > 0) {
-        console.warn('Neo Copilot: Temporary issue detected, retrying authentication after delay.');
-        await sleep(5000);
+        console.warn('Neo Copilot: Temporary network issue detected, retrying...');
+        await sleep(5000); // Wait before retrying
+        return this.refreshAccessToken(retryCount);
+      }
+  
+      // Check if the error has a response property and a status code
+      const status = error?.response?.status;
+  
+      // Log out only if the error is related to unauthorized or forbidden access (401 or 403)
+      if (status === 401 || status === 403) {
+        console.error('Neo Copilot: Unauthorized or forbidden, logging out.');
+        await this.clearTokens();
+        return null; // Only log out on 401 or 403
+      } else {
+        // For all other errors, just retry indefinitely without logging out
+        console.error('Neo Copilot: Error during token refresh, retrying...');
+        await sleep(5000); // Retry after delay
         return this.refreshAccessToken(retryCount - 1);
       }
-
-      await this.clearTokens();
-      return null;
     }
-  }
+  }  
 
   // Internal method to check token validity
   private async checkTokenValidity(token: string): Promise<boolean> {
@@ -221,7 +229,7 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
 
       if (response.ok) {
         const data = await response.json();
-        // console.log('Neo Copilot: User info fetched successfully.',);
+        console.log('Neo Copilot: User info fetched successfully.',);
         return {
           email: data.email,
           name: data.name,
