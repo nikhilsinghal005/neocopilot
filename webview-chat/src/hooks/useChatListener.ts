@@ -1,127 +1,121 @@
-// webview-chat/src/hooks/useChatListener.tsx
 import { useEffect, useRef } from 'react';
 import { useChatContext } from '../context/ChatContext';
 import { MessageStore, MessageInput, ChatSession } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 
 export const useChatListener = () => {
-  const { chatSession, setChatSession, isTyping, setIsTyping, addMessage } = useChatContext();
+  const { chatSession, setChatSession, isTyping, setIsTyping } = useChatContext();
   const accumulatedResponseRef = useRef<string>('');
   const messageInProgressRef = useRef<MessageStore | null>(null);
-  const isTypingRef = useRef<boolean>(isTyping); // Keep track of the latest isTyping value
-  const chatSessionRef = useRef<ChatSession>(chatSession); // Keep track of the latest chatSession
+  const isTypingRef = useRef<boolean>(isTyping);
+  const chatSessionRef = useRef<ChatSession | null>(chatSession);
 
-  // Update isTypingRef whenever isTyping changes
-  useEffect(() => {
-    isTypingRef.current = isTyping;
-  }, [isTyping]);
-
-  // Update chatSessionRef whenever chatSession changes
-  useEffect(() => {
-    chatSessionRef.current = chatSession;
-  }, [chatSession]);
+  // Sync refs with current state
+  useEffect(() => { isTypingRef.current = isTyping; }, [isTyping]);
+  useEffect(() => { chatSessionRef.current = chatSession; }, [chatSession]);
 
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+    const handleIncomingMessage = (event: MessageEvent) => {
       if (event.data.command === 'receive_chat_message') {
-        const { data }: { data: MessageInput } = event.data;
-
-        // Check if the incoming message's chatId matches the current chat session's chatId
-        if (chatSessionRef.current && data.chatId !== chatSessionRef.current.chatId) {
-          console.log(`Received message for a different chat session. Ignoring. chatSession.chatId: ${chatSessionRef.current.chatId}`);
-          
-          // Explicitly reset the accumulator and messageInProgress when chatId doesn't match
-          accumulatedResponseRef.current = '';
-          messageInProgressRef.current = null;
-          
-          return;
-        }
-
-        if (!isTypingRef.current) {
-          console.log("Received but not processing because typing is false");
-          return;
-        }
-
-        // Accumulate partial responses
-        accumulatedResponseRef.current += data.response;
-
-        // If this is the first chunk, create a new message object
-        if (!messageInProgressRef.current) {
-          messageInProgressRef.current = {
-            id: data.id !== 'unknown' ? data.id : uuidv4(),
-            timestamp: new Date().toISOString(),
-            messageType: 'system',
-            text: accumulatedResponseRef.current,
-            isComplete: data.isComplete,
-          };
-        } else {
-          // Update the text by appending the new data and update isComplete flag
-          messageInProgressRef.current.text += data.response;
-          messageInProgressRef.current.isComplete = data.isComplete;
-        }
-
-        // Ensure messageInProgressRef.current is not null
-        if (!messageInProgressRef.current) {
-          return;
-        }
-
-        setChatSession((prevSession) => {
-          if (!prevSession) {
-            return {
-              chatId: data.chatId,
-              timestamp: new Date().toISOString(),
-              chatName: 'New Chat',
-              messages: [messageInProgressRef.current!],
-            };
-          }
-
-          const existingMessage = prevSession.messages.find(
-            (msg) => msg.id === messageInProgressRef.current!.id
-          );
-
-          // If the message exists, update it
-          if (existingMessage) {
-            if (existingMessage.isComplete) {
-              return prevSession;
-            }
-
-            const updatedMessages = prevSession.messages.map((msg) =>
-              msg.id === messageInProgressRef.current!.id
-                ? {
-                    ...msg,
-                    text: msg.text + data.response,
-                    isComplete: data.isComplete,
-                  }
-                : msg
-            );
-
-            return { ...prevSession, messages: updatedMessages };
-          }
-
-          // If the message doesn't exist, add it to the session
-          return {
-            ...prevSession,
-            messages: [...prevSession.messages, { ...messageInProgressRef.current! }],
-          };
-        });
-
-        // Once the response is complete, reset and update typing state
-        if (data.isComplete) {
-          setIsTyping(false);
-
-          setTimeout(() => {
-            accumulatedResponseRef.current = ''; 
-            messageInProgressRef.current = null;
-          }, 0);
-        }
+        processMessage(event.data);
       }
     };
 
-    window.addEventListener('message', handleMessage);
+    const processMessage = (eventData: { data: MessageInput }) => {
+      const { data } = eventData;
+      try {
+        if (!isValidMessage(data)) return;
 
-    return () => {
-      window.removeEventListener('message', handleMessage);
+        accumulateResponse(data);
+        updateSessionWithMessage(data);
+
+        if (data.isComplete) finalizeMessage();
+      } catch (error) {
+        console.error("Error updating chat message in useChatListener:", error);
+      }
     };
-  }, [setChatSession, setIsTyping]);
 
+    const isValidMessage = (data: MessageInput) => {
+      if (!chatSessionRef.current?.chatId) {
+        console.warn("No valid chatId found; ignoring message.");
+        return false;
+      }
+      if (data.chatId !== chatSessionRef.current.chatId) {
+        console.warn(`Message chatId mismatch: expected ${chatSessionRef.current.chatId}, received ${data.chatId}`);
+        resetMessageProgress();
+        return false;
+      }
+      if (!isTypingRef.current) {
+        console.warn("Received message ignored because typing is false.");
+        return false;
+      }
+      return true;
+    };
+
+    const accumulateResponse = (data: MessageInput) => {
+      accumulatedResponseRef.current += data.response;
+
+      if (!messageInProgressRef.current) {
+        messageInProgressRef.current = {
+          id: data.id !== 'unknown' ? data.id : uuidv4(),
+          timestamp: new Date().toISOString(),
+          messageType: 'system',
+          text: accumulatedResponseRef.current,
+          isComplete: data.isComplete,
+        };
+      } else {
+        messageInProgressRef.current.text += data.response;
+        messageInProgressRef.current.isComplete = data.isComplete;
+      }
+    };
+
+    const updateSessionWithMessage = (data: MessageInput) => {
+      setChatSession((prevSession) => {
+        if (!prevSession) return createNewSession(data.chatId);
+
+        const existingMessage = prevSession.messages.find(
+          (msg) => msg.id === messageInProgressRef.current!.id
+        );
+
+        const updatedMessages = existingMessage
+          ? updateExistingMessage(prevSession, data)
+          : [...prevSession.messages, { ...messageInProgressRef.current! }];
+
+        return { ...prevSession, messages: updatedMessages };
+      });
+    };
+
+    const createNewSession = (chatId: string): ChatSession => ({
+      chatId,
+      timestamp: new Date().toISOString(),
+      chatName: 'New Chat',
+      createdAt: new Date().toISOString(),
+      messages: [messageInProgressRef.current!],
+    });
+
+    const updateExistingMessage = (prevSession: ChatSession, data: MessageInput) => {
+      return prevSession.messages.map((msg) =>
+        msg.id === messageInProgressRef.current!.id
+          ? {
+              ...msg,
+              text: msg.text + data.response,
+              isComplete: data.isComplete,
+            }
+          : msg
+      );
+    };
+
+    const resetMessageProgress = () => {
+      accumulatedResponseRef.current = '';
+      messageInProgressRef.current = null;
+    };
+
+    const finalizeMessage = () => {
+      setIsTyping(false);
+      setTimeout(resetMessageProgress, 0);
+    };
+
+    window.addEventListener('message', handleIncomingMessage);
+    return () => window.removeEventListener('message', handleIncomingMessage);
+  }, [setChatSession, setIsTyping]);
 };

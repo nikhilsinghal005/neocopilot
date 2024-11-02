@@ -32,6 +32,7 @@
     timestamp: string;
     chatName: string;
     messages: MessageStore[];
+    createdAt: string;
   };
 
   export type ChatListType = {

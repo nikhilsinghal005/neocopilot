@@ -208,7 +208,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           chatId: inputChat.chatId,
           id: uuidv4(),
           response: "Please check your internet connection. or try again",
-          isComplete: false
+          isComplete: true
         }
       )
     }

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Message } from '../../types/Message';
+import { MessageStore } from '../../types/Message';
 import MessageRenderer from './MessageRenderer';
 
 interface MessageProps {
-  message: Message;
+  message: MessageStore;
 }
 
 const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
