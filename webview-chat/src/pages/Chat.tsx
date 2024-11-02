@@ -1,9 +1,8 @@
 // src/pages/Chat.tsx
 import React, { useState, useEffect } from 'react';
 import ChatContainer from '../components/Chat/ChatContainer';
-import ChatControls from '../components/Chat/ChatControls';
 import { useChatListener } from '../hooks/useChatListener';
-import { MessageStore, ChatSession, ChatData } from '../types/Message';
+import { MessageStore } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 import { useChatContext } from '../context/ChatContext';
 import { useVscode } from '../context/VscodeContext';
@@ -32,39 +31,33 @@ const Chat: React.FC = () => {
 
   const handleSendMessage = () => {
     if (input.trim() === '' || isTyping) return;
-  
+
     const newMessage: MessageStore = {
       id: uuidv4(),
       timestamp: new Date().toISOString(),
       messageType: 'user',
       text: input.trim(),
     };
-  
+
     setChatSession((prevSession) => {
-  
       // Prevent duplicate messages based on ID
       const messageExists = prevSession.messages.some(msg => msg.id === newMessage.id);
       if (messageExists) return prevSession;
-  
+
       const updatedMessages = [...(prevSession.messages || []), newMessage];
-      const updatedChatSession: ChatSession = {
-        ...prevSession,
-        messages: updatedMessages,
-      };
-  
+      const updatedChatSession = { ...prevSession, messages: updatedMessages };
+
       vscode.postMessage({
         command: 'send_chat_message',
         data: updatedChatSession,
       });
-      console.log("Data send from previous session", updatedChatSession)
 
       return updatedChatSession;
     });
-  
+
     setInput('');
     setIsTyping(true);
   };
-  
 
   return (
     <div>

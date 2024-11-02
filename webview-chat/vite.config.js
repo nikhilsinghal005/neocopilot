@@ -1,7 +1,7 @@
-// webview-chat/vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+
 export default defineConfig({
     base: './',
     plugins: [react()],
@@ -12,7 +12,12 @@ export default defineConfig({
             output: {
                 entryFileNames: 'assets/index.js',
                 assetFileNames: 'assets/[name][extname]',
+                format: 'es', // Ensure ES module format
             },
+        external: [
+            'prismjs/themes/prism-nord.css',
+            'prime-themes/themes/prism-nord.css'
+        ]
         },
     },
 });
