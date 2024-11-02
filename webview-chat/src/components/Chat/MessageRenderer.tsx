@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypePrism from 'rehype-prism-plus';
-import 'prismjs/themes/prism-tomorrow.css';
+import './prism-nord.css';
 import './custom-overrides.css';
 import remarkGfm from 'remark-gfm';
 import CodeButton from '../Common/CodeButton';
@@ -101,7 +101,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
         return (
           <div className="my-4 p-0">
             {/* Header for the code block with language label and copy/insert buttons */}
-            <div className="flex justify-between items-center bg-gray-900 text-gray-100 px-4 py-2 rounded-t-md">
+            <div className="flex justify-between items-center bg-gray-900 text-gray-100 px-4 py-1 rounded-t-md">
               <span className="text-xs font-semibold uppercase">{language}</span>
               <div className="flex">
                 {language === 'bash' ? (

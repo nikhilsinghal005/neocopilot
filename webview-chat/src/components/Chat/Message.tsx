@@ -10,9 +10,9 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   return (
     <>
       {/* Divider line after each message */}
-      <div className="divider-line w-full h-[1px] bg-gray-600 m-0 p-0 py-2 bg-opacity-0"></div>
-      <div className="divider-line w-full h-[2px] bg-gray-600 m-0 p-0"></div>
-      <div className="divider-line w-full h-[1px] bg-gray-600 m-0 p-0 py-2 bg-opacity-0"></div>
+      <div className="divider-line w-full h-[1px] bg-gray-600 m-0 p-0 py-1 bg-opacity-0"></div>
+      {/* <div className="divider-line max-w-[98%] h-[1px] bg-gray-300 m-0 p-0 mx-auto"></div> */}
+      <div className="divider-line w-full h-[1px] bg-gray-600 m-0 p-0 py-1 bg-opacity-0"></div>
 
       <div
         className={`message flex ${
@@ -51,7 +51,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
         {message.messageType === 'user' && (
           <div className="flex items-center ml-1 mt-1">
             <span 
-            className="codicon codicon-account text-gray-400"
+            className="codicon codicon-account text-gray-400 mr-1"
             style={{ fontSize: '14px' }}
             ></span>
           </div>
