@@ -6,7 +6,7 @@ import { isNullOrEmptyOrWhitespace } from "../utilities/codeCompletionUtils/comp
 import { getDeletedText } from "../utilities/codeCompletionUtils/completionUtils";
 import { v4 as uuidv4 } from 'uuid';
 import { DeletionHandler } from '../codeCompletion/handleActions/deleteActionHandler';
-import { UpdateHandler } from '../codeCompletion/handleActions/updateActionhandler';
+import { UpdateHandler } from '../codeCompletion/handleActions/updateActionHandler';
 
 export class SuggestionManager {
   private socketModule: SocketModule;
