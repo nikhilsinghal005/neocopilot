@@ -282,7 +282,7 @@ export class SocketModule {
       this.socket.emit('generate_chat_response', {
         chatId: chat.chatId,
         timestamp: chat.timestamp,
-        messageList: chat.messages,
+        messageList: chat.messages.slice(-6),
         appVersion: this.currentVersion,
         userEmail: this.email,
         uniqueId: uuidv4()
