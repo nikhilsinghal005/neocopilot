@@ -122,7 +122,7 @@ export class SocketModule {
 
           if (tokenIsVerified) {
             this.socket.emit('ping');
-            console.info(`%c[${new Date().toLocaleTimeString()}] Neo Copilot: Connection alive`, 'color: green;');
+            // console.info(`%c[${new Date().toLocaleTimeString()}] Neo Copilot: Connection alive`, 'color: green;');
           } else {
             this.socket.disconnect();
             StatusBarManager.registerBeforeLoginCommand(context);

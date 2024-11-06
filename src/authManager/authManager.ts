@@ -97,7 +97,7 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
       }
 
       // If token is valid, return success
-      console.info('%cNeo Copilot: User verification successful', 'color: green;' );
+      // console.info('%cNeo Copilot: User verification successful', 'color: green;' );
       return true;
 
     } catch (error) {
@@ -180,7 +180,7 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
       } else {
         // For all other errors, just retry indefinitely without logging out
         console.error('Neo Copilot: Error during token refresh, retrying...');
-        if (retryCount == 10 || retryCount == 100) {
+        if (retryCount == 5 || retryCount == 10 || retryCount == 100) {
           // Show a Vscode Information message if the retry count is 10 or 100
           vscode.window.showInformationMessage('Temporary network issue detected, Please check you internet. retrying...');
         }
