@@ -69,16 +69,15 @@ export class AuthManager {
 // Verify the access token by calling the API
 public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
   let retries = 0;
+  let token = await this.getAccessToken();
+  if (!token) {
+    console.error('Neo Copilot: No access token found.');
+    await this.clearTokens();
+    return false;
+  }
 
   while (retries < maxRetries) {
     try {
-      let token = await this.getAccessToken();
-      if (!token) {
-        // console.error('Neo Copilot: No access token found.');
-        await this.clearTokens();
-        return false;
-      }
-
       let isValid = await this.checkTokenValidity(token);
       if (!isValid) {
         console.error('Neo Copilot: User verification failed');
@@ -93,20 +92,22 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
       // If token is still invalid after attempting refresh, no retries; clear tokens
       if (!isValid) {
         console.error('Neo Copilot: User verification failed');
-        await this.clearTokens();
+        // await this.clearTokens();
         return false;
       }
 
       // If token is valid, return success
-      console.info('%cNeo Copilot: User verification successful', 'color: green;' );
+      // console.info('%cNeo Copilot: User verification successful', 'color: green;' );
       return true;
 
     } catch (error) {
       retries++;
       console.error('Neo Copilot: User verification failed');
+      console.log(error, 'Neo Copilot: User verification failed');
 
       // Retry only for network issues or temporary failures
       if (retries >= maxRetries || !isTemporaryError(error)) {
+        console.log("Unknwon Error", error)
         console.error('Neo Copilot: User verification failed');
         await this.clearTokens();
         return false;
@@ -179,6 +180,10 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
       } else {
         // For all other errors, just retry indefinitely without logging out
         console.error('Neo Copilot: Error during token refresh, retrying...');
+        if (retryCount == 5 || retryCount == 10 || retryCount == 100) {
+          // Show a Vscode Information message if the retry count is 10 or 100
+          vscode.window.showInformationMessage('Temporary network issue detected, Please check you internet. retrying...');
+        }
         await sleep(5000); // Retry after delay
         return this.refreshAccessToken(retryCount - 1);
       }
@@ -249,6 +254,7 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
 
   // Clear the access and refresh tokens
   public async clearTokens(): Promise<void> {
+    console.log('Neo Copilot: Clearing tokens')
     console.info("%cNeo Copilot: User logged out", 'color: green;')
     await this.context.secrets.store('accessToken', '');
     await this.context.secrets.store('refreshToken', '');

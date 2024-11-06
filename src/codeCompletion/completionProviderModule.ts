@@ -17,9 +17,7 @@ export class CompletionProviderModule implements vscode.InlineCompletionItemProv
         this.suggestion = suggestion;
         vscode.commands.executeCommand('editor.action.inlineSuggest.hide');
       }
-
     }
-    
 
     public async provideInlineCompletionItems (document: vscode.TextDocument, position: vscode.Position, context: vscode.InlineCompletionContext, token: vscode.CancellationToken) {
       if (this.suggestion !== undefined && this.suggestion!=="") {

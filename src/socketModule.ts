@@ -122,7 +122,7 @@ export class SocketModule {
 
           if (tokenIsVerified) {
             this.socket.emit('ping');
-            console.info(`%c[${new Date().toLocaleTimeString()}] Neo Copilot: Connection alive`, 'color: green;');
+            // console.info(`%c[${new Date().toLocaleTimeString()}] Neo Copilot: Connection alive`, 'color: green;');
           } else {
             this.socket.disconnect();
             StatusBarManager.registerBeforeLoginCommand(context);
@@ -291,6 +291,7 @@ export class SocketModule {
   }
 
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string) {
+    console.log("Sending Message for Completion")
     this.predictionRequestInProgress = true;
 
     if (this.rateLimitExceeded) {
@@ -318,6 +319,8 @@ export class SocketModule {
       });
     }
     this.previousText = prefix;
+    console.log("Sending Message for Completion", uuid)
+
   }
 
   public chatCompletionMessage(completion_type: string, completion_comment: string, completion_size: number) {
@@ -396,6 +399,8 @@ export class SocketModule {
   }
 
   private predictionHandleFunction(predictionReceived: any): void {
+    console.log("Recieved Message for Completion", predictionReceived.unique_Id)
+    console.log("Recieved Message for Completion", predictionReceived.message_list)
     if (predictionReceived.message && this.tempUniqueIdentifier === predictionReceived.unique_Id) {
       if (getTextBeforeCursor(vscode.window.activeTextEditor) === this.previousText + this.predictionWaitText) {
         this.currentSuggestionId = predictionReceived.unique_Id;
