@@ -45,10 +45,10 @@ export const useChatListener = () => {
         resetMessageProgress();
         return false;
       }
-      if (!isTypingRef.current) {
-        console.warn("Received message ignored because typing is false.");
-        return false;
-      }
+      // if (!isTypingRef.current) {
+      //   console.warn("Received message ignored because typing is false.");
+      //   return false;
+      // }
       return true;
     };
 
@@ -63,24 +63,54 @@ export const useChatListener = () => {
           text: accumulatedResponseRef.current,
           isComplete: data.isComplete,
         };
+        console.log("Created new messageInProgress:", messageInProgressRef.current);
       } else {
         messageInProgressRef.current.text += data.response;
         messageInProgressRef.current.isComplete = data.isComplete;
+        console.log("Updated messageInProgress:", messageInProgressRef.current);
       }
     };
 
     const updateSessionWithMessage = (data: MessageInput) => {
       setChatSession((prevSession) => {
-        if (!prevSession) return createNewSession(data.chatId);
+        if (!prevSession) {
+          console.warn("Previous session is null, creating a new one.");
+          return createNewSession(data.chatId);
+        }
 
-        const existingMessage = prevSession.messages.find(
+        if (!messageInProgressRef.current) {
+          console.error("messageInProgressRef is null during updateSessionWithMessage. This should not happen.");
+          return prevSession;
+        }
+
+        const existingMessageIndex = prevSession.messages.findIndex(
           (msg) => msg.id === messageInProgressRef.current!.id
         );
 
-        const updatedMessages = existingMessage
-          ? updateExistingMessage(prevSession, data)
-          : [...prevSession.messages, { ...messageInProgressRef.current! }];
+        let updatedMessages;
+        if (existingMessageIndex !== -1) {
+          if (data.id === 'unknown') {
+            console.warn("Received message part with unknown ID; removing this part.");
+            return prevSession; // Ignore this specific part if the ID is 'unknown'
+          }
+          updatedMessages = prevSession.messages.map((msg, index) =>
+            index === existingMessageIndex
+              ? {
+                  ...msg,
+                  text: msg.text + data.response,
+                  isComplete: data.isComplete,
+                }
+              : msg
+          );
+        } else {
+          if (data.id === 'unknown') {
+            console.warn("Received message part with unknown ID; ignoring.");
+            return prevSession; // Ignore the message part if the ID is 'unknown'
+          }
+          updatedMessages = [...prevSession.messages, { ...messageInProgressRef.current }];
+        }
 
+        console.log("Updating chat session with messages:", updatedMessages);
         return { ...prevSession, messages: updatedMessages };
       });
     };
@@ -90,27 +120,17 @@ export const useChatListener = () => {
       timestamp: new Date().toISOString(),
       chatName: 'New Chat',
       createdAt: new Date().toISOString(),
-      messages: [messageInProgressRef.current!],
+      messages: messageInProgressRef.current ? [messageInProgressRef.current] : [],
     });
 
-    const updateExistingMessage = (prevSession: ChatSession, data: MessageInput) => {
-      return prevSession.messages.map((msg) =>
-        msg.id === messageInProgressRef.current!.id
-          ? {
-              ...msg,
-              text: msg.text + data.response,
-              isComplete: data.isComplete,
-            }
-          : msg
-      );
-    };
-
     const resetMessageProgress = () => {
+      console.log("Resetting message progress");
       accumulatedResponseRef.current = '';
       messageInProgressRef.current = null;
     };
 
     const finalizeMessage = () => {
+      console.log("Finalizing message");
       setIsTyping(false);
       setTimeout(resetMessageProgress, 0);
     };
