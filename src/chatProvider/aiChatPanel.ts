@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getNonce } from '../utilities/chatUtilities';
 import { PanelManager } from './panelManager'
 import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
+import { getExactNewlineCharacter } from '../utilities/basicUtilities';
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
   public static readonly primaryViewType = 'aiChatPanelPrimary';
@@ -127,15 +128,23 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           case 'insertCodeSnippet':
               // console.log("insertCodeSnippet")
               // console.log(message.data.code)
+              const nextLineCharacter: string | undefined = getExactNewlineCharacter()
               if (message.data.location === "terminal") {
                 this.codeInsertionManager.insertTextIntoTerminal(
                   message.data.code
                 )
               } else if (message.data.location === "editor") {
-                this.codeInsertionManager.insertTextUsingSnippetAtCursorWithoutDecoration(
-                  message.data.code,
-                  "12345"
-                )
+                if (nextLineCharacter){
+                  this.codeInsertionManager.insertTextUsingSnippetAtCursorWithoutDecoration(
+                    message.data.code + nextLineCharacter,
+                    uuidv4()
+                  )
+                } else {
+                  this.codeInsertionManager.insertTextUsingSnippetAtCursorWithoutDecoration(
+                    message.data.code,
+                    uuidv4()
+                  )
+                }
               }
               break;
 
