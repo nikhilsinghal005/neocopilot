@@ -21,6 +21,7 @@ interface CodeProps {
 
 const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
   const vscode = useVscode();
+
   const handleInsertToEditorTerminal = (code: string, location: string) => {
     console.log("VS Code API in ChatControls:", vscode);
     vscode.postMessage({
@@ -141,7 +142,6 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
 
       // If no language detected and not inline, treat it as regular text
       return <span>{children}</span>;
-
     } catch (error) {
       console.log('Error rendering Markdown: ', error);
       return <div>Error rendering code block</div>;
@@ -149,7 +149,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
   };
 
   return (
-    <div className="prose max-w-full text-sm leading-6">
+    <div className="prose max-w-full text-sm leading-6 space-y-4"> {/* Updated styling to improve aesthetics */}
       <ReactMarkdown
         children={text}
         // skipHtml={true}
@@ -159,6 +159,46 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
         ]}
         components={{
           code: renderCodeBlock,
+          p: ({ node, children }) => (
+            <p className="text-gray-200 my-2 leading-relaxed"> {/* Added styling for paragraphs */}
+              {children}
+            </p>
+          ),
+          blockquote: ({ node, children }) => (
+            <blockquote className="border-l-4 border-gray-500 pl-4 italic text-gray-400 my-4"> {/* Styled blockquotes for emphasis */}
+              {children}
+            </blockquote>
+          ),
+          a: ({ node, href, children }) => (
+            <a
+              href={href}
+              className="text-blue-400 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {children}
+            </a>
+          ),
+          ul: ({ node, children }) => (
+            <ul className="list-disc list-inside pl-4 text-gray-200 my-2"> {/* Styled unordered lists */}
+              {children}
+            </ul>
+          ),
+          ol: ({ node, children }) => (
+            <ol className="list-decimal list-outside pl-6 ml-2 text-gray-200 my-2"> {/* Adjusted ordered list marker position to align correctly */}
+              {children}
+            </ol>
+          ),
+          strong: ({ node, children }) => (
+            <strong className="text-gray-100 font-semibold">{/* Styling for bold text */}
+              {children}
+            </strong>
+          ),
+          em: ({ node, children }) => (
+            <em className="text-gray-300 italic">{/* Styling for italic text */}
+              {children}
+            </em>
+          ),
         }}
       />
     </div>

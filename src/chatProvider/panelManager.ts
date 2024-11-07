@@ -62,9 +62,9 @@ export class PanelManager {
                 const desiredOption = "New Secondary Side Bar Entry";
                 await vscode.env.clipboard.writeText(desiredOption);
                 await vscode.commands.executeCommand('workbench.action.moveFocusedView');
-                await new Promise(resolve => setTimeout(resolve, 200));
+                await new Promise(resolve => setTimeout(resolve, 20));
                 await vscode.commands.executeCommand('editor.action.clipboardPasteAction');
-                await new Promise(resolve => setTimeout(resolve, 200));
+                await new Promise(resolve => setTimeout(resolve, 20));
                 await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
 
                 // Update the workspace state
@@ -79,9 +79,9 @@ export class PanelManager {
                 const desiredOption = "New Side Bar Entry";
                 await vscode.env.clipboard.writeText(desiredOption);
                 await vscode.commands.executeCommand('workbench.action.moveFocusedView');
-                await new Promise(resolve => setTimeout(resolve, 200));
+                await new Promise(resolve => setTimeout(resolve, 20));
                 await vscode.commands.executeCommand('editor.action.clipboardPasteAction');
-                await new Promise(resolve => setTimeout(resolve, 200));
+                await new Promise(resolve => setTimeout(resolve, 20));
                 await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
                 await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
             } catch (error) {

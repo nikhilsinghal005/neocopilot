@@ -17,7 +17,7 @@ const MessageList: React.FC<MessageListProps> = ({ chatSession }) => {
 
   return (
     <div className="messages-container flex-1 overflow-y-auto p-0 bg-vscode-editor-background">
-      {chatSession.messages.map((message) => (
+      {chatSession.messages.slice(-60).map((message) => (
         <MessageComponent key={message.id} message={message} />
       ))}
       <div ref={messagesEndRef} />
