@@ -23,7 +23,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
   const vscode = useVscode();
 
   const handleInsertToEditorTerminal = (code: string, location: string) => {
-    console.log("VS Code API in ChatControls:", vscode);
+    // console.log("VS Code API in ChatControls:", vscode);
     vscode.postMessage({
       command: 'insertCodeSnippet',
       data: {
@@ -37,7 +37,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
     navigator.clipboard
       .writeText(code)
       .then(() => {
-        console.log('Code copied to clipboard!');
+        // console.log('Code copied to clipboard!');
       })
       .catch((err) => {
         console.error('Failed to copy code: ', err);
@@ -91,7 +91,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
         };
   
         const handleInsertClick = () => {
-          console.log('Insert action clicked for:', codeContent);
+          // console.log('Insert action clicked for:', codeContent);
           handleInsertToEditorTerminal(codeContent, 'editor');
         };
   
@@ -143,7 +143,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
       // If no language detected and not inline, treat it as regular text
       return <span>{children}</span>;
     } catch (error) {
-      console.log('Error rendering Markdown: ', error);
+      // console.log('Error rendering Markdown: ', error);
       return <div>Error rendering code block</div>;
     }
   };

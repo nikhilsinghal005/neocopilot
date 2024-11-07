@@ -9,7 +9,7 @@ export class CompletionProviderModule implements vscode.InlineCompletionItemProv
     };
 
     public updateSuggestion(suggestion: string) {
-      // // console.log(`Received suggestion: ${suggestion}`);
+      // // // console.log(`Received suggestion: ${suggestion}`);
       if(suggestion){
         this.suggestion = suggestion;
         this.triggerInlineSuggestion() 
@@ -33,9 +33,9 @@ export class CompletionProviderModule implements vscode.InlineCompletionItemProv
           const editor = vscode.window.activeTextEditor;
           if (editor) {
             vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
-            // console.log("Suggestion Triggered")
+            // // console.log("Suggestion Triggered")
           } else {
-            // console.log('No active editor!');
+            // // console.log('No active editor!');
           }
       }
 

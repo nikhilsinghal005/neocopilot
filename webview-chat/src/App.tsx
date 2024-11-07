@@ -22,10 +22,10 @@ const isSessionValid = () => {
   const sessionData = sessionStorage.getItem('isLoggedIn');
   if (sessionData) {
     const { value, expiry } = JSON.parse(sessionData);
-    console.log('Session data:', value, expiry, 'Current time:', Date.now());
+    // console.log('Session data:', value, expiry, 'Current time:', Date.now());
     return value && Date.now() < expiry;
   }
-  console.log('No valid session data found.');
+  // console.log('No valid session data found.');
   return false;
 };
 
@@ -33,7 +33,7 @@ const setSessionData = (value: boolean) => {
   const expiry = Date.now() + 60 * 60 * 1000; // 1 hour
   const sessionData = JSON.stringify({ value, expiry });
   sessionStorage.setItem('isLoggedIn', sessionData);
-  console.log('Session data set with expiry:', expiry);
+  // console.log('Session data set with expiry:', expiry);
 };
 
 const App: React.FC = () => {
@@ -42,22 +42,22 @@ const App: React.FC = () => {
   // Function to check if session is expired and re-validate
   const checkSessionAndRevalidate = () => {
     const sessionIsValid = isSessionValid();
-    console.log('Checking session validity:', sessionIsValid);
+    // console.log('Checking session validity:', sessionIsValid);
     if (!sessionIsValid) {
-      console.log("Session expired or invalid, sending 'ready' command to revalidate login status.");
+      // console.log("Session expired or invalid, sending 'ready' command to revalidate login status.");
       vscodeApi.postMessage({ command: 'ready' });
     }
   };
 
   useEffect(() => {
-    console.log('Sending initial "ready" command.');
+    // console.log('Sending initial "ready" command.');
     vscodeApi.postMessage({ command: 'ready' });
 
     const handleMessage = (event: MessageEvent) => {
-      console.log('Message received from VSCode:', event.data);
+      // console.log('Message received from VSCode:', event.data);
       const message = event.data;
       if (message.command === 'authStatus') {
-        console.log('Received authStatus:', message.isLoggedIn);
+        // console.log('Received authStatus:', message.isLoggedIn);
         setIsLoggedIn(message.isLoggedIn);
 
         if (message.isLoggedIn) {
@@ -65,7 +65,7 @@ const App: React.FC = () => {
         } else {
           // Clear session data if logged out
           sessionStorage.removeItem('isLoggedIn');
-          console.log('Session cleared.');
+          // console.log('Session cleared.');
         }
       }
     };

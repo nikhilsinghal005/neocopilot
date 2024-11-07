@@ -45,14 +45,14 @@ export class DeletionHandler {
   ): boolean {
 
     if (!this.isDeletionContextValid(deletedText)) {
-      console.log("Location Not Verified for Deletion");
+      // console.log("Location Not Verified for Deletion");
       this.suggestionManager.reinitialize();
       return false;
     }
-    console.log("Location Verified for Deletion");
+    // console.log("Location Verified for Deletion");
 
     if (this.handleSpecialCharacterDeletion(deletedText)) {
-      console.log("Handled Special Characters");
+      // console.log("Handled Special Characters");
       return true;
     }
 
@@ -63,14 +63,14 @@ export class DeletionHandler {
   private handleMultiLineDeletion(deletedText: string): boolean {
     // Check if the deletion context is valid
     if (!this.isDeletionContextValid(deletedText)) {
-      console.log("Location Not Verified for Deletion");
+      // console.log("Location Not Verified for Deletion");
       this.suggestionManager.reinitialize();
       return false;
     }
-    console.log("Location Verified for Deletion");
+    // console.log("Location Verified for Deletion");
 
     if (this.suggestionManager.mainSuggestion.endsWith(deletedText + this.suggestionManager.tempSuggestion)) {
-      console.log("Suggestion ends with deleted text + temp suggestion");
+      // console.log("Suggestion ends with deleted text + temp suggestion");
       this.suggestionManager.tempSuggestion = deletedText + this.suggestionManager.tempSuggestion;
       this.socketModule.completionProvider.updateSuggestion(this.suggestionManager.tempSuggestion);
       return true;
@@ -90,9 +90,9 @@ export class DeletionHandler {
     const expectedTextBeforeCursor = previousFullText.slice(0, -tempSuggestionLength - deletedTextLength);
     const currentTextWithDeleted = this.suggestionManager.textBeforeCursor;
 
-    console.log("Previous Full Text:", previousFullText);
-    console.log("Expected Text Before Cursor:", expectedTextBeforeCursor);
-    console.log("Current Text With Deleted:", currentTextWithDeleted);
+    // console.log("Previous Full Text:", previousFullText);
+    // console.log("Expected Text Before Cursor:", expectedTextBeforeCursor);
+    // console.log("Current Text With Deleted:", currentTextWithDeleted);
 
     return expectedTextBeforeCursor === currentTextWithDeleted;
   }
@@ -114,12 +114,12 @@ export class DeletionHandler {
 
       // Update the suggestion in the editor
       this.socketModule.completionProvider.updateSuggestion(this.suggestionManager.tempSuggestion);
-      console.log("Handled Special Character Deletion");
-      console.log("**************************************")
-      console.log("previousText", previousText)
-      console.log("mainSuggestion", mainSuggestion)
-      console.log("currentText", currentText)
-      console.log("acceptedSuggestion", acceptedSuggestion)
+      // console.log("Handled Special Character Deletion");
+      // console.log("**************************************")
+      // console.log("previousText", previousText)
+      // console.log("mainSuggestion", mainSuggestion)
+      // console.log("currentText", currentText)
+      // console.log("acceptedSuggestion", acceptedSuggestion)
       return true;
     }
     return false;

@@ -63,10 +63,10 @@ export class SocketModule {
       if (!completionProvider) {
         throw new Error("SocketModule has not been initialized yet. Please provide a CompletionProviderModule.");
       }
-      console.log("SocketModule: Creating new instance");
+      // console.log("SocketModule: Creating new instance");
       SocketModule.instance = new SocketModule(completionProvider);
     } else {
-      console.log("SocketModule: Returning existing instance");
+      // console.log("SocketModule: Returning existing instance");
     }
     return SocketModule.instance;
   }
@@ -219,7 +219,7 @@ export class SocketModule {
       } else {
         const extensionId = data.extension_id;
         const newRequiredVersion = data.latest_version;
-        this.promptUpdate(extensionId, newRequiredVersion);
+        this.promptUpdate(extensionId, newRequiredVersion, data.message);
         this.isUpdatePopupShown = true;
       }
     });
@@ -238,7 +238,7 @@ export class SocketModule {
           this.docstring = ""
         }else{
           this.docstring = this.docstring +  data.docstring
-          console.log(this.docstring)
+          // console.log(this.docstring)
         }
 
       } catch (error) {
@@ -258,7 +258,7 @@ export class SocketModule {
       this.reinitializeSocket();
       return;
     }
-    console.log("UUID for docstring", uuid)
+    // console.log("UUID for docstring", uuid)
     // StatusBarManager.updateMessage(`$(loading~spin) Neo Copilot`);
     if (this.socket) {
       const timestamp = new Date().toISOString();
@@ -273,7 +273,7 @@ export class SocketModule {
   }
 
   public sendChatMessage(chat: ChatSession) {
-    console.log("Message to scoket from backend")
+    // console.log("Message to scoket from backend")
     this.predictionRequestInProgress = true;
     // const messageList: MessageInput = chat.messages;
     // const timestamp = new Date().toISOString();
@@ -291,7 +291,7 @@ export class SocketModule {
   }
 
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string) {
-    console.log("Sending Message for Completion")
+    // console.log("Sending Message for Completion")
     this.predictionRequestInProgress = true;
 
     if (this.rateLimitExceeded) {
@@ -319,7 +319,7 @@ export class SocketModule {
       });
     }
     this.previousText = prefix;
-    console.log("Sending Message for Completion", uuid)
+    // console.log("Sending Message for Completion", uuid)
 
   }
 
@@ -380,10 +380,10 @@ export class SocketModule {
     }, 10);
   }
 
-  private promptUpdate(extensionId: string, newRequiredVersion: string) {
+  private promptUpdate(extensionId: string, newRequiredVersion: string, inpputMessage: string) {
     vscode.window
       .showWarningMessage(
-        `You are using an outdated version of this extension. Please update to the latest version (${newRequiredVersion}).`,
+        inpputMessage,
         'Update Now'
       )
       .then((selection: string | undefined) => {
@@ -399,8 +399,8 @@ export class SocketModule {
   }
 
   private predictionHandleFunction(predictionReceived: any): void {
-    console.log("Recieved Message for Completion", predictionReceived.unique_Id)
-    console.log("Recieved Message for Completion", predictionReceived.message_list)
+    // console.log("Recieved Message for Completion", predictionReceived.unique_Id)
+    // console.log("Recieved Message for Completion", predictionReceived.message_list)
     if (predictionReceived.message && this.tempUniqueIdentifier === predictionReceived.unique_Id) {
       if (getTextBeforeCursor(vscode.window.activeTextEditor) === this.previousText + this.predictionWaitText) {
         this.currentSuggestionId = predictionReceived.unique_Id;

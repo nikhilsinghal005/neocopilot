@@ -33,7 +33,7 @@ export const useChatContext = (): ChatContextProps => {
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [chatSession, setChatSession] = useState<ChatSession>(() => {
     const storedSession = sessionStorage.getItem('chatSession');
-    console.info("Chat Session Already Exsists: ", storedSession)
+    // console.info("Chat Session Already Exsists: ", storedSession)
     if (storedSession) {
       try {
         return JSON.parse(storedSession) as ChatSession;
@@ -42,7 +42,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return createNewChatSession();
       }
     }else{
-      console.log("No Chat Session Exists")
+      // console.log("No Chat Session Exists")
       const newSession: ChatSession = createNewChatSession();
       sessionStorage.setItem('chatSession', JSON.stringify(newSession));
       return createNewChatSession();

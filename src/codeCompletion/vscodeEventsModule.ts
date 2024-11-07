@@ -35,7 +35,7 @@ export class VscodeEventsModule {
   }
 
   public reinitialize(comment: string = ""): void {
-    // if (comment){console.log(comment);}
+    // if (comment){// console.log(comment);}
     this.suggestionManager.reinitialize();
   }
 
@@ -49,7 +49,7 @@ export class VscodeEventsModule {
       this.currentEndCharacterPosition = range.end.character; // Character position of the text that is changed
       return true;
     }catch(error){
-      console.log(JSON.stringify(event.contentChanges[0]))
+      // console.log(JSON.stringify(event.contentChanges[0]))
       return false;
     }
   }
@@ -67,8 +67,8 @@ export class VscodeEventsModule {
           this.previousText = this.currentText;
           this.eventPositionVariables(event);
           this.currentText = getCompleteEditorText(vscode.window.activeTextEditor);
-          console.log("Current Text", this.currentText)
-          console.log("previousText Text", this.previousText)
+          // console.log("Current Text", this.currentText)
+          // console.log("previousText Text", this.previousText)
 
           this.currentLanguage = event.document.languageId;
   
@@ -109,12 +109,12 @@ export class VscodeEventsModule {
           StatusBarManager.updateMessage(`$(check) Neo Copilot`);
           this.isFileNotSupported = false;
         }
-        // console.log(`File Not Supported: ${this.isFileNotSupported}`);
+        // // console.log(`File Not Supported: ${this.isFileNotSupported}`);
         this.socketModule.completionProvider.updateSuggestion("");
       }, 100);
     } catch (error) {
       this.socketModule.customInformationMessage('vscode_module:getCurrentFileName', JSON.stringify(error));
-      // console.log(error);
+      // // console.log(error);
     }
   }
 

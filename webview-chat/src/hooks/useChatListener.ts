@@ -63,11 +63,11 @@ export const useChatListener = () => {
           text: accumulatedResponseRef.current,
           isComplete: data.isComplete,
         };
-        console.log("Created new messageInProgress:", messageInProgressRef.current);
+        // console.log("Created new messageInProgress:", messageInProgressRef.current);
       } else {
         messageInProgressRef.current.text += data.response;
         messageInProgressRef.current.isComplete = data.isComplete;
-        console.log("Updated messageInProgress:", messageInProgressRef.current);
+        // console.log("Updated messageInProgress:", messageInProgressRef.current);
       }
     };
 
@@ -110,7 +110,7 @@ export const useChatListener = () => {
           updatedMessages = [...prevSession.messages, { ...messageInProgressRef.current }];
         }
 
-        console.log("Updating chat session with messages:", updatedMessages);
+        // console.log("Updating chat session with messages:", updatedMessages);
         return { ...prevSession, messages: updatedMessages };
       });
     };
@@ -124,13 +124,13 @@ export const useChatListener = () => {
     });
 
     const resetMessageProgress = () => {
-      console.log("Resetting message progress");
+      // console.log("Resetting message progress");
       accumulatedResponseRef.current = '';
       messageInProgressRef.current = null;
     };
 
     const finalizeMessage = () => {
-      console.log("Finalizing message");
+      // console.log("Finalizing message");
       setIsTyping(false);
       setTimeout(resetMessageProgress, 0);
     };

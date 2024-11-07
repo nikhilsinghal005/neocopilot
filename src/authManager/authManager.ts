@@ -17,13 +17,13 @@ export class AuthManager {
 
   // Store the access token securely
   public async storeAccessToken(token: string): Promise<void> {
-    console.log("NeoCopilot: Stored a-controls locally")
+    // console.log("NeoCopilot: Stored a-controls locally")
     await this.context.secrets.store('accessToken', token);
   }
 
    // Store the refresh token securely
    public async storeRefreshToken(token: string): Promise<void> {
-    console.log("NeoCopilot: Stored r-controls locally")
+    // console.log("NeoCopilot: Stored r-controls locally")
     await this.context.secrets.store('refreshToken', token);
   }
 
@@ -47,7 +47,7 @@ export class AuthManager {
   public async storeUserProfile(userProfile: UserProfile): Promise<void> {
       const userInfo = JSON.stringify(userProfile);
       await this.context.secrets.store('userProfile', userInfo);
-      console.log('Neo Copilot: User profile stored successfully.');
+      // console.log('Neo Copilot: User profile stored successfully.');
   }
 
   // Retrieve the user profile
@@ -103,11 +103,11 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
     } catch (error) {
       retries++;
       console.error('Neo Copilot: User verification failed');
-      console.log(error, 'Neo Copilot: User verification failed');
+      // console.log(error, 'Neo Copilot: User verification failed');
 
       // Retry only for network issues or temporary failures
       if (retries >= maxRetries || !isTemporaryError(error)) {
-        console.log("Unknwon Error", error)
+        // console.log("Unknwon Error", error)
         console.error('Neo Copilot: User verification failed');
         await this.clearTokens();
         return false;
@@ -142,7 +142,7 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
   
       if (response.ok && data.access_token) {
         await this.storeAccessToken(data.access_token);
-        console.log('Neo Copilot: Token refreshed successfully.');
+        // console.log('Neo Copilot: Token refreshed successfully.');
         return data.access_token;
       } else {
         // Check for 401 or 403 status codes to trigger logout
@@ -234,7 +234,7 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Neo Copilot: User info fetched successfully.',);
+        // console.log('Neo Copilot: User info fetched successfully.',);
         return {
           email: data.email,
           name: data.name,
@@ -254,7 +254,7 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
 
   // Clear the access and refresh tokens
   public async clearTokens(): Promise<void> {
-    console.log('Neo Copilot: Clearing tokens')
+    // console.log('Neo Copilot: Clearing tokens')
     console.info("%cNeo Copilot: User logged out", 'color: green;')
     await this.context.secrets.store('accessToken', '');
     await this.context.secrets.store('refreshToken', '');

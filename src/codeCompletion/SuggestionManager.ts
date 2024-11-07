@@ -56,9 +56,9 @@ export class SuggestionManager {
     currentLanguage: string
   ): void {
     try {
-      console.log("============ NeoCopilot: Text Prediction Handling ===============");
+      // console.log("============ NeoCopilot: Text Prediction Handling ===============");
       if (isNullOrEmptyOrWhitespace(currentText) || !editor) { // strip white spaces from current text
-        console.log("Input text is short");
+        // console.log("Input text is short");
         this.reinitialize();
         return;
       }
@@ -66,19 +66,19 @@ export class SuggestionManager {
       const reason = event.reason;
       switch (reason) {
         case vscode.TextDocumentChangeReason.Undo:
-          console.log("User has undone changes");
+          // console.log("User has undone changes");
           // FutureLogs: Add handling when user has predicted changes: Priority Low
           this.reinitialize();
           return;
         case vscode.TextDocumentChangeReason.Redo:
-          console.log("User has redo changes");
+          // console.log("User has redo changes");
           this.reinitialize();
           // FutureLogs: Add handling when user has predicted changes: Priority Low
           return;
       }
 
       if (event.contentChanges.length > 1) { // If there are more than one changes in the editor
-        console.log("More than one changes in the editor");
+        // console.log("More than one changes in the editor");
         const multipleChange = event.contentChanges[0].text;
         if (["// ", "# "].includes(multipleChange)) {
           this.reinitialize();
@@ -96,11 +96,11 @@ export class SuggestionManager {
 
       // Check if Prediction is Already in Progress
       if (this.socketModule.predictionRequestInProgress) {
-        console.log("Prediction is in progress");
+        // console.log("Prediction is in progress");
         this.handlePredictionInProgress(updatedText);
         return;
       } else {
-        console.log("Prediction is not in progress");
+        // console.log("Prediction is not in progress");
         this.predictionWaitText = "";
         this.socketModule.predictionWaitText = "";
       }
@@ -108,11 +108,11 @@ export class SuggestionManager {
       // Action when prediction exists
       if (this.mainSuggestion && this.tempSuggestion) { 
 
-          console.log("Prediction already exists");
+          // console.log("Prediction already exists");
           // Check if text is deleted or not
           if (this.deleteActionHandler.isTextDeleted(updatedText)) { 
 
-            console.log("Text is deleted");
+            // console.log("Text is deleted");
             const deletedText = getDeletedText( 
               previousText, 
               currentStartLineNumber, 
@@ -121,7 +121,7 @@ export class SuggestionManager {
               currentEndCharacterPosition
             );
 
-            console.log("Deleted Text:", deletedText);
+            // console.log("Deleted Text:", deletedText);
             this.deleteActionHandler.handleDeletion(
               deletedText,
               currentStartLineNumber,
@@ -133,7 +133,7 @@ export class SuggestionManager {
 
       } else {
           // When no suggestion exists in the editor
-          console.log("Prediction does not exist");
+          // console.log("Prediction does not exist");
           this.reinitialize();
           if (this.deleteActionHandler.isTextDeleted(updatedText)) {
               this.deleteActionHandler.handleAllDeletion(
@@ -156,7 +156,7 @@ export class SuggestionManager {
         }
 
       } else {
-        console.log("Text is updated");
+        // console.log("Text is updated");
         this.updateActionHandler.handleUpdateWhenPredictionExists(
             event,
             editor,
@@ -166,7 +166,7 @@ export class SuggestionManager {
       }
 
     } catch (Error) {
-      console.log("Error:", Error)
+      // console.log("Error:", Error)
       this.socketModule.customInformationMessage(
         'SuggestionManager:handleTextChange', 
         JSON.stringify(Error)
@@ -192,7 +192,7 @@ export class SuggestionManager {
   public sendForPrediction(updatedText: string, currentLanguage: string): void {
     // Clear any existing debounce timeout
     if (this.debounceTimeout) {
-      console.log("Time Cleared Out")
+      // console.log("Time Cleared Out")
       clearTimeout(this.debounceTimeout);
     }
   

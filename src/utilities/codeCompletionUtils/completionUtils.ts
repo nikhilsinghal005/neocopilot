@@ -17,13 +17,13 @@ export function checkFileNameForCodeCompletion(fileName: string | null | undefin
 }
   
 export function notSupportedFiles(fileName: string | null | undefined): boolean {
-    // console.log("fileName", fileName)
+    // // console.log("fileName", fileName)
     const commonIncludedFileList = ["requirements.txt", "package.json", "package-lock.json", "config.json", ".env"];
     if (fileName === undefined || fileName === null) {
       return true;
     }
     if (commonIncludedFileList.includes(fileName)) {
-      // console.log("includes_file_name")
+      // // console.log("includes_file_name")
       return false;
     }
     const notSupportedExtensions = ['.csv', '.log', '.json', '.xml', '.md', '.txt', '.sql', '.html', '.xlsx', '.pdf'];
@@ -63,7 +63,7 @@ export function handleAddedSpecialCharacters(mianString: string, tempString: str
     }   
     const closeCharIndex = findLastMatchingParenthesis(tempString, 0);
     if (closeCharIndex === -1){
-        // console.log("No matching close char found");
+        // // console.log("No matching close char found");
         return "";
     }
     const beforeInsert = tempString.substring(1, closeCharIndex);

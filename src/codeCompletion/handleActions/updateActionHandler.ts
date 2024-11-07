@@ -20,7 +20,7 @@ export class UpdateHandler {
     updatedText: string,
     currentLanguage: string
   ): void {
-    console.log("Trying to update suggestion based on the text change");
+    // console.log("Trying to update suggestion based on the text change");
     let updatedTextLength = updatedText.length;
 
     // Handle special character insertion
@@ -47,7 +47,7 @@ export class UpdateHandler {
 //     event: vscode.TextDocumentChangeEvent,
 //     editor: vscode.TextEditor | undefined
 //   ): void {
-//     console.log("Prediction when no suggestion exists");
+//     // console.log("Prediction when no suggestion exists");
 //     this.handleAllUpdation(updatedText);
 //   }
 
@@ -67,14 +67,14 @@ export class UpdateHandler {
     updatedText: string,
     updatedTextLength: number
   ): boolean {
-    console.log("Handle Special Character Insertion");
+    // console.log("Handle Special Character Insertion");
     if (this.suggestionManager.deleteSpecialCharacters.includes(updatedText)) {
-      console.log("Character falls in Special Characters");
+      // console.log("Character falls in Special Characters");
       if (
         (this.socketModule.previousText + this.suggestionManager.mainSuggestion).startsWith(
           this.suggestionManager.textBeforeCursor + updatedText[0])
         ) {
-        console.log("Suggestion also has special character");
+        // console.log("Suggestion also has special character");
         const outputSuggestion = handleAddedSpecialCharacters(
           this.suggestionManager.mainSuggestion,
           this.suggestionManager.tempSuggestion,
@@ -103,18 +103,18 @@ export class UpdateHandler {
         this.suggestionManager.textBeforeCursor + updatedText)
     ) {
       if (updatedTextLength < this.suggestionManager.tempSuggestion.length) {
-        console.log("User Partially Accepted the Suggestion");
+        // console.log("User Partially Accepted the Suggestion");
         this.suggestionManager.tempSuggestion = this.suggestionManager.tempSuggestion.slice(updatedTextLength);
         this.socketModule.completionProvider.updateSuggestion(this.suggestionManager.tempSuggestion);
         this.socketModule.chatCompletionMessage("partial_completion", "-", updatedTextLength);
         return "CASE1";
       } else if (updatedTextLength === this.suggestionManager.mainSuggestion.length) {
-        console.log("User Accepted the complete Suggestion");
+        // console.log("User Accepted the complete Suggestion");
         this.socketModule.completionProvider.updateSuggestion("");
         this.socketModule.chatCompletionMessage("complete_completion", "main", updatedTextLength);
         return "CASE2";
       } else if (updatedTextLength === this.suggestionManager.tempSuggestion.length) {
-        console.log("User Accepted the partial Suggestion");
+        // console.log("User Accepted the partial Suggestion");
         this.socketModule.completionProvider.updateSuggestion("");
         this.socketModule.chatCompletionMessage("complete_completion", "partial", updatedTextLength);
         return "CASE3";
@@ -124,13 +124,13 @@ export class UpdateHandler {
   }
 
   private searchAndUpdateSuggestion(updatedText: string): boolean {
-    console.log("[INFO] searchAndUpdateSuggestion called with updatedText:", updatedText);
+    // console.log("[INFO] searchAndUpdateSuggestion called with updatedText:", updatedText);
 
     const previousText = this.socketModule.previousText;
     const textBeforeCursor = this.suggestionManager.textBeforeCursor;
 
-    console.log("[DEBUG] Previous text:", previousText);
-    console.log("[DEBUG] Text before cursor:", textBeforeCursor);
+    // console.log("[DEBUG] Previous text:", previousText);
+    // console.log("[DEBUG] Text before cursor:", textBeforeCursor);
 
     // Attempting to search for suggestions
     let [mainSuggestion, tempSuggestion] = searchSuggestion(
@@ -141,9 +141,9 @@ export class UpdateHandler {
     );
 
     // Log the suggestions found
-    console.log("[DEBUG] Main suggestion:", mainSuggestion);
-    console.log("[DEBUG] Temp suggestion:", tempSuggestion);
-    console.log("[DEBUG] List suggestion:", this.suggestionManager.mainListSuggestion);
+    // console.log("[DEBUG] Main suggestion:", mainSuggestion);
+    // console.log("[DEBUG] Temp suggestion:", tempSuggestion);
+    // console.log("[DEBUG] List suggestion:", this.suggestionManager.mainListSuggestion);
 
     if (mainSuggestion) {
       // Updating socket module with suggestions
@@ -153,25 +153,25 @@ export class UpdateHandler {
       this.socketModule.completionProvider.updateSuggestion(tempSuggestion);
       this.socketModule.chatCompletionMessage("search_completion", "found", tempSuggestion.length);
 
-      console.log("[INFO] Suggestion found and updated. Temp suggestion length:", tempSuggestion.length);
+      // console.log("[INFO] Suggestion found and updated. Temp suggestion length:", tempSuggestion.length);
       return true;
     }
 
-    console.log("[WARN] No suggestion found.");
+    // console.log("[WARN] No suggestion found.");
     return false;
   }
 
   public handleUpdateWhenNoPrediction(updatedText: string): void {
-    console.log("Handling update when no suggestion exists");
+    // console.log("Handling update when no suggestion exists");
     this.suggestionManager.predictionDelay = 400;
     this.suggestionManager.typeOfAction = "NEO-SNE-A-LC-1";
     if (updatedText.trim() === "\n" || updatedText.trim() === "\r\n") {
-      console.log("User went to next line in editor");
+      // console.log("User went to next line in editor");
       this.suggestionManager.predictionDelay = 1000;
     } else if (updatedText.includes("\n") || updatedText.includes("\r\n")) {
       this.suggestionManager.typeOfAction = "NEO-SNE-A-LC-X";
       this.suggestionManager.predictionDelay = 5000;
-      console.log("User went to multiple lines");
+      // console.log("User went to multiple lines");
     }
   }
 }

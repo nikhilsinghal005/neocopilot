@@ -21,7 +21,7 @@ const Login: React.FC<LoginProps> = ({ vscode }) => {
   };
 
   const handleCreateAccount = () => {
-    console.log('Create Account button clicked');
+    // console.log('Create Account button clicked');
     // You can implement additional logic here if needed
   };
 

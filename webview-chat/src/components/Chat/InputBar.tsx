@@ -31,7 +31,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage 
 
     const sanitizedInput = sanitizeInput(input);
     setInput(sanitizedInput);
-    console.log(sanitizedInput)
+    // console.log(sanitizedInput)
     handleSendMessage();
   };
 

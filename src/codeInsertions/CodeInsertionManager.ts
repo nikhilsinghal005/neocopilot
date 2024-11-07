@@ -297,7 +297,7 @@ export class CodeInsertionManager {
       editor.insertSnippet(snippet, position).then((success) => {
         if (success) {
           // Snippet inserted successfully, store any relevant information if needed
-          console.log('Snippet inserted successfully.');
+          // console.log('Snippet inserted successfully.');
           
           // Optionally, handle post-insertion logic here
           // For example, you could track the insertion range if needed
@@ -324,7 +324,7 @@ export class CodeInsertionManager {
       terminal.sendText(terminalText, true); // Send text and execute it
     
       // Optionally log or handle post-insertion logic
-      console.log('Text sent to terminal successfully.');
+      // console.log('Text sent to terminal successfully.');
     }
     
     public insertTextUsingSnippetAtCursor(

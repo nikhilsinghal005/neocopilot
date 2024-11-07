@@ -42,7 +42,7 @@ export function initializeNonLoginRequiredAppFunctions(
   authManager: AuthManager,
   context: vscode.ExtensionContext
 ): void {
-  console.info("%cNeo Copilot: Initializing functionalities", 'color: green;');
+  // console.info("%cNeo Copilot: Initializing functionalities", 'color: green;');
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(

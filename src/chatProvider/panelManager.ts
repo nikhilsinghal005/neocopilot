@@ -19,7 +19,7 @@ export class PanelManager {
             }
             
             if (isInPrimary) {
-                console.log("Webview is in the Primary Sidebar.");
+                // console.log("Webview is in the Primary Sidebar.");
                 return "primary";
             }
     
@@ -34,12 +34,12 @@ export class PanelManager {
             }
             
             if (isInSecondary) {
-                console.log("Webview is in the Secondary Sidebar.");
+                // console.log("Webview is in the Secondary Sidebar.");
                 return "secondary";
             }
     
             // Lastly, if it's not in the primary or secondary sidebar, assume it's elsewhere or not visible
-            console.log("Webview is not in a known sidebar. It might be hidden or in another panel.");
+            // console.log("Webview is not in a known sidebar. It might be hidden or in another panel.");
             return "unknown";
     
         } catch (error) {
@@ -52,10 +52,10 @@ export class PanelManager {
         await this.getCurrentPanelLocation();
         await this._context.workspaceState.update('currentPanelLocation', 'secondary');
         const currentLocation = this._context.workspaceState.get('currentPanelLocation', 'primary');
-        // console.log(`Current Panel Location: ${currentLocation}`);
+        // // console.log(`Current Panel Location: ${currentLocation}`);
 
         if (currentLocation === 'primary') {
-            console.log("Attempting to open the secondary sidebar...");
+            // console.log("Attempting to open the secondary sidebar...");
             try {
                 await vscode.commands.executeCommand('workbench.action.focusAuxiliaryBar');
                 await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
@@ -70,11 +70,11 @@ export class PanelManager {
                 // Update the workspace state
                 await this._context.workspaceState.update('currentPanelLocation', 'secondary');
             } catch (error) {
-                console.log("Failed to move webview to the secondary sidebar:", error);
+                // console.log("Failed to move webview to the secondary sidebar:", error);
                 console.error("Failed to move webview to the secondary sidebar:");
             }
         } else {
-            console.log("Switching to the primary sidebar...");
+            // console.log("Switching to the primary sidebar...");
             try {
                 const desiredOption = "New Side Bar Entry";
                 await vscode.env.clipboard.writeText(desiredOption);
@@ -85,7 +85,7 @@ export class PanelManager {
                 await vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
                 await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
             } catch (error) {
-                console.log("Failed to open the primary sidebar:", error);
+                // console.log("Failed to open the primary sidebar:", error);
                 console.error("Failed to open the primary sidebar:");
             }
         }
