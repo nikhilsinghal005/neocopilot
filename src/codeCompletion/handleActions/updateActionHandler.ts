@@ -165,12 +165,13 @@ export class UpdateHandler {
     // console.log("Handling update when no suggestion exists");
     this.suggestionManager.predictionDelay = 400;
     this.suggestionManager.typeOfAction = "NEO-SNE-A-LC-1";
-    if (updatedText.trim() === "\n" || updatedText.trim() === "\r\n") {
+    
+    if (updatedText.replace(/^[ \t]+|[ \t]+$/g, '') === "\n" || updatedText.replace(/^[ \t]+|[ \t]+$/g, '') === "\r\n") {
       // console.log("User went to next line in editor");
       this.suggestionManager.predictionDelay = 1000;
     } else if (updatedText.includes("\n") || updatedText.includes("\r\n")) {
       this.suggestionManager.typeOfAction = "NEO-SNE-A-LC-X";
-      this.suggestionManager.predictionDelay = 5000;
+      this.suggestionManager.predictionDelay = 7000;
       // console.log("User went to multiple lines");
     }
   }

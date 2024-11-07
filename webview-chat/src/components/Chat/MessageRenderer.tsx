@@ -111,6 +111,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
                     onClick={handleTButtonClick}
                     ariaLabel="Custom T action"
                     icon="codicon-terminal"
+                    tooltip="Run in Terminal"
                   />
                 ) : (
                   // Render Insert button for other languages
@@ -118,6 +119,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
                     onClick={handleInsertClick}
                     ariaLabel="Insert code"
                     icon="codicon-arrow-right"
+                    tooltip="Insert in Editor"
                   />
                 )}
                 {/* Reusable CodeButton for Copy */}
@@ -125,6 +127,8 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
                   onClick={handleCopyClick}
                   ariaLabel="Copy code to clipboard"
                   icon="codicon-copy"
+                  tooltip="Copy"
+
                 />
               </div>
             </div>

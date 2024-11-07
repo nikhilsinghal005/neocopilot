@@ -1,7 +1,7 @@
 import React from 'react';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
 import { useVscode } from '../../context/VscodeContext';
+import CodeButton from '../Common/CodeButton';
 
 const ChatControls: React.FC = () => {
   const vscode = useVscode(); // Consume vscode from context
@@ -28,22 +28,34 @@ const ChatControls: React.FC = () => {
 
   return (
     <div className="flex space-x-2 pr-4">
-      <VSCodeButton
+      {/* <VSCodeButton
         onClick={handleRefreshClick}
         appearance="icon"
         aria-label="Refresh Chat"
       >
         <span className="codicon codicon-refresh"></span>
-      </VSCodeButton>
-
-      <VSCodeButton
+      </VSCodeButton> */}
+      <CodeButton
+        onClick={handleRefreshClick}
+        ariaLabel="Refresh"
+        icon="codicon-refresh"
+        tooltip="New Chat"
+      />
+      <CodeButton
+        onClick={handleToggleClick}
+        ariaLabel="Toggle Sidebar"
+        icon="codicon-arrow-swap"
+        tooltip="Toggle View"
+        disabled={isTyping}
+      />
+      {/* <VSCodeButton
         onClick={handleToggleClick}
         appearance="icon"
         aria-label="Toggle Sidebar"
         disabled={isTyping} // Disable the button when typing
       >
         <span className="codicon codicon-arrow-swap"></span>
-      </VSCodeButton>
+      </VSCodeButton> */}
     </div>
   );
 };
