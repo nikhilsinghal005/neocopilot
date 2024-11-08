@@ -10,9 +10,9 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   return (
     <>
       {/* Divider line after each message */}
-      <div className="divider-line w-full h-[1px] bg-gray-600 m-0 p-0 py-1 bg-opacity-0"></div>
+      <div className="divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0"></div>
       {/* <div className="divider-line max-w-[98%] h-[1px] bg-gray-300 m-0 p-0 mx-auto"></div> */}
-      <div className="divider-line w-full h-[1px] bg-gray-600 m-0 p-0 py-1 bg-opacity-0"></div>
+      <div className="divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0"></div>
 
       <div
         className={`message flex ${
@@ -23,7 +23,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
         {message.messageType !== 'user' && (
           <div className="flex items-center mr-1 mt-1">
             <span 
-            className="codicon codicon-person text-gray-400"
+            className="codicon codicon-person text-vscode-editor-foreground"
             style={{ fontSize: '14px' }}
             ></span>
           </div>
@@ -31,10 +31,10 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
 
         {/* Message box */}
         <div
-          className={`p-0 rounded-md max-w-[93%] break-words shadow-md ${
+          className={`p-0 rounded-md max-w-[93%] break-words ${
             message.messageType === 'user'
-              ? 'bg-vscode-chat-message-outgoing text-white'
-              : 'bg-vscode-chat-message-incoming text-gray-200'
+              ? 'bg-vscode-chat-message-outgoing text-vscode-editor-foreground'
+              : 'bg-vscode-chat-message-incoming text-vscode-editor-foreground'
           }`}
         >
           <span className={`block text-sm font-semibold mb-2 opacity-75 ${message.messageType === 'user' ? 'text-right' : 'text-left'}`}>
@@ -51,7 +51,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
         {message.messageType === 'user' && (
           <div className="flex items-center ml-1 mt-1">
             <span 
-            className="codicon codicon-account text-gray-400 mr-1"
+            className="codicon codicon-account text-vscode-editor-foreground mr-1"
             style={{ fontSize: '14px' }}
             ></span>
           </div>
