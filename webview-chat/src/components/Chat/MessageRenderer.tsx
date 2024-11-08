@@ -59,7 +59,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
       if (inline) {
         return (
           <code
-            className={`bg-gray-800 rounded px-1 py-0.5 text-gray-300 ${className}`}
+            className={`bg-vscode-editor-background rounded px-1 py-0.5 text-vscode-editor-foreground ${className}`}
             {...props}
           >
             {children}
@@ -100,9 +100,18 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
         };
   
         return (
-          <div className="my-4 p-0">
+          <div className="my-4 p-0 rounded-lg shadow-lg border"
+            style={{
+              backgroundColor: 'var(--vscode-editor-background)',
+              borderColor: 'var(--vscode-editorGroup-border)',
+            }}
+          >
             {/* Header for the code block with language label and copy/insert buttons */}
-            <div className="flex justify-between items-center bg-gray-900 text-gray-100 px-4 py-1 rounded-t-md">
+            <div className="flex justify-between items-center bg-vscode-chat-message-incoming text-vscode-editor-foreground px-4 py-1 rounded-t-md border"
+            style={{
+              borderColor: 'var(--vscode-editorGroup-border)',
+            }}
+            >
               <span className="text-xs font-semibold uppercase">{language}</span>
               <div className="flex">
                 {language === 'bash' ? (
@@ -133,9 +142,9 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
               </div>
             </div>
             {/* Code snippet wrapper */}
-            <div className="rounded-b-md overflow-auto bg-gray-800 !p-0 !m-0">
+            <div className="rounded-b-md overflow-auto bg-vscode-chat-message-incoming !p-0 !m-0">
               <pre className="!m-0">
-                <code className={`${className} block p-4 text-gray-300`} {...props}>
+                <code className={`${className} block p-4 text-vscode-editor-foreground`} {...props}>
                   {children}
                 </code>
               </pre>
@@ -169,7 +178,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
             </p>
           ),
           blockquote: ({ node, children }) => (
-            <blockquote className="border-l-4 border-gray-500 pl-4 italic text-gray-400 my-4"> {/* Styled blockquotes for emphasis */}
+            <blockquote className="border-l-4 border-vscode-editor-background pl-4 italic text-vscode-editor-foreground my-4"> {/* Styled blockquotes for emphasis */}
               {children}
             </blockquote>
           ),
@@ -184,12 +193,12 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
             </a>
           ),
           ul: ({ node, children }) => (
-            <ul className="list-disc list-inside pl-4 text-gray-200 my-2"> {/* Styled unordered lists */}
+            <ul className="list-disc list-inside pl-4 text-vscode-editor-foreground my-2"> {/* Styled unordered lists */}
               {children}
             </ul>
           ),
           ol: ({ node, children }) => (
-            <ol className="list-decimal list-outside pl-6 ml-2 text-gray-200 my-2"> {/* Adjusted ordered list marker position to align correctly */}
+            <ol className="list-decimal list-outside pl-6 ml-2 text-vscode-editor-foreground my-2"> {/* Adjusted ordered list marker position to align correctly */}
               {children}
             </ol>
           ),
@@ -199,7 +208,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
             </strong>
           ),
           em: ({ node, children }) => (
-            <em className="text-gray-300 italic">{/* Styling for italic text */}
+            <em className="text-vscode-editor-foreground italic">{/* Styling for italic text */}
               {children}
             </em>
           ),

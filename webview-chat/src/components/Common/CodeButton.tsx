@@ -68,7 +68,7 @@ const CodeButton: React.FC<CodeButtonProps> = ({ onClick, ariaLabel, icon, text,
             left: tooltipPosition.left, 
             maxWidth: '150px', // Set maximum width for longer text
             whiteSpace: 'nowrap', // Prevents wrapping, so the tooltip expands to fit text
-            backgroundColor: 'rgba(0, 0, 0, 0.4)', // Dark background with opacity
+            backgroundColor: 'rgba(0, 0, 0, 0.15)', // Dark background with opacity
             textAlign: 'right', // Align text to the right
           }}
         >
