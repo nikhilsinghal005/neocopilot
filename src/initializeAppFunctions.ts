@@ -25,4 +25,34 @@ export function initializeAppFunctions(
 
   vscode.workspace.getConfiguration().update('editor.quickSuggestions', false);
   const currentVersion = context.extension.packageJSON.version;
+<<<<<<< HEAD
+=======
+
+  const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
+
+}
+
+export function initializeNonLoginRequiredAppFunctions(
+
+  vscodeEventsModule: VscodeEventsModule,
+  completionProviderModule: CompletionProviderModule,
+  authManager: AuthManager,
+  context: vscode.ExtensionContext
+): void {
+  console.info("%cNeo Copilot: Initializing functionalities", 'color: green;');
+  const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(
+      AiChatPanel.primaryViewType,
+      primaryViewProvider
+    )
+  );
+  // const secondaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.secondaryViewType);
+  // context.subscriptions.push(
+  //   vscode.window.registerWebviewViewProvider(
+  //     AiChatPanel.secondaryViewType,
+  //     secondaryViewProvider
+  //   )
+  // );
+>>>>>>> parent of be975a9 (Merge pull request #17 from nikhilsinghal005/chat-panel-v2)
 }

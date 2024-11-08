@@ -1,0 +1,81 @@
+// src/pages/Chat.tsx
+import React, { useState, useEffect } from 'react';
+import ChatContainer from '../components/Chat/ChatContainer';
+import ChatControls from '../components/Chat/ChatControls';
+import { useChatListener } from '../hooks/useChatListener';
+import { MessageStore, ChatSession, ChatData } from '../types/Message';
+import { v4 as uuidv4 } from 'uuid';
+import { useChatContext } from '../context/ChatContext';
+import { useVscode } from '../context/VscodeContext';
+
+const Chat: React.FC = () => {
+  const vscode = useVscode();
+  const { chatSession, setChatSession, isTyping, setIsTyping } = useChatContext();
+  const [input, setInput] = useState('');
+
+  useEffect(() => {
+    // Restore the saved chat session from VSCode state
+    const savedChatSession = vscode.getState ? vscode.getState() : null;
+    if (savedChatSession) {
+      setChatSession(savedChatSession);
+    }
+  }, [vscode, setChatSession]);
+
+  useEffect(() => {
+    // Save the chat session in VSCode state
+    if (chatSession) {
+      vscode.setState(chatSession);
+    }
+  }, [chatSession, vscode]);
+
+  useChatListener();
+
+  const handleSendMessage = () => {
+    if (input.trim() === '' || isTyping) return;
+  
+    const newMessage: MessageStore = {
+      id: uuidv4(),
+      timestamp: new Date().toISOString(),
+      messageType: 'user',
+      text: input.trim(),
+    };
+  
+    setChatSession((prevSession) => {
+  
+      // Prevent duplicate messages based on ID
+      const messageExists = prevSession.messages.some(msg => msg.id === newMessage.id);
+      if (messageExists) return prevSession;
+  
+      const updatedMessages = [...(prevSession.messages || []), newMessage];
+      const updatedChatSession: ChatSession = {
+        ...prevSession,
+        messages: updatedMessages,
+      };
+  
+      vscode.postMessage({
+        command: 'send_chat_message',
+        data: updatedChatSession,
+      });
+      console.log("Data send from previous session", updatedChatSession)
+
+      return updatedChatSession;
+    });
+  
+    setInput('');
+    setIsTyping(true);
+  };
+  
+
+  return (
+    <div>
+      <ChatContainer
+        input={input}
+        setInput={setInput}
+        isTyping={isTyping}
+        handleSendMessage={handleSendMessage}
+      />
+    </div>
+  );
+};
+
+export default Chat;
