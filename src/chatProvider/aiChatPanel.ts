@@ -120,6 +120,11 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             // Handle the login command and open the URL
             vscode.env.openExternal(vscode.Uri.parse(message.url));
             break;
+          case 'contact_us':
+            // Handle the contact us command and open the URL
+            // console.log("Contact us clicked")
+            require('vscode').commands.executeCommand('vscode.open', vscode.Uri.parse('mailto:support@neocopilot.com'));
+            break;
           case 'toggleSidebar':
               // Add the code to toggle the panel's location
               // console.log("panel change")

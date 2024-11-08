@@ -90,7 +90,7 @@ const App: React.FC = () => {
     },
     {
       label: 'About',
-      content: <About />,
+      content: <About vscode={vscodeApi} />,
     },
   ];
 
