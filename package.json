@@ -46,8 +46,8 @@
   ],
   "activationEvents": [
     "onUri",
-    "onStartupFinished",
-    "onLanguage:*"
+    "onLanguage:python",
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -56,71 +56,14 @@
         "uri": "vscode://neocopilot/token"
       }
     ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "codebuddy",
-          "title": "NeoChat",
-          "icon": "media/icon.svg"
-        }
-      ]
-    },
-    "views": {
-      "codebuddy": [
-        {
-          "type": "webview",
-          "id": "aiChatPanelPrimary",
-          "name": "AI Chat Panel",
-          "retention": true
-        }
-      ]
-    },
-
     "commands": [
       {
         "command": "disable-code-suggestions",
         "title": "Disable Code Suggestions"
-      },
-      {
-        "command": "extension.codeFactor",
-        "title": "Code Factor"
-      },
-      {
-        "command": "extension.addComment",
-        "title": "Add Comment"
-      },
-      {
-        "command": "extension.languageFunctionsCodeFactor",
-        "title": "Code Factor (Function/Class)"
-      },
-      {
-        "command": "extension.languageFunctionsAddComment",
-        "title": "Add Comment (Function/Class)"
-      },
-      {
-        "command": "extension.addQuery",
-        "title": "Add Query"
       }
-    ],
-    "configuration": {
-      "type": "object",
-      "title": "Neo Copilot Configuration",
-      "properties": {
-        "neocopilot.languageFunctionsEnabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable or disable the Language Functions CodeLenses."
-        },
-        "neocopilot.languageFunctionsDebounceDelay": {
-          "type": "number",
-          "default": 200,
-          "description": "Debounce delay in milliseconds for Language Functions CodeLens refresh."
-        }
-      }
-    }
+    ]
   },
   "scripts": {
-    "compile": "tsc -p ./",
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
     "lint": "eslint 'src/**/*.{ts,tsx}'"
@@ -129,28 +72,21 @@
     "@types/axios": "^0.14.0",
     "@types/diff": "^5.2.1",
     "@types/glob": "^8.1.0",
-    "@types/lodash": "^4.17.7",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^20.2.5",
+    "@types/node": "20.2.5",
     "@types/uuid": "^9.0.8",
     "@types/vscode": "^1.70.0",
     "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "^5.59.8",
     "@typescript-eslint/parser": "^5.59.8",
-    "@vitejs/plugin-react": "^4.3.1",
     "@vscode/test-electron": "^2.3.2",
-    "clangd": "^0.0.0",
     "esbuild": "^0.16.17",
     "esbuild-plugin-copy": "^2.0.1",
     "eslint": "^8.41.0",
     "glob": "^8.1.0",
-    "gopls": "^0.0.1-security.5",
-    "intelephense": "^1.12.6",
     "mocha": "^10.2.0",
     "ts-loader": "^9.5.1",
-    "typescript": "^5.6.2",
-    "vite": "^5.4.8",
-    "vscode-languageserver-textdocument": "^1.0.12",
+    "typescript": "^5.1.3",
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4"
   },
@@ -161,11 +97,8 @@
     "diff": "^5.2.0",
     "dotenv": "^16.4.5",
     "highlight.js": "^11.9.0",
-    "lodash": "^4.17.21",
     "socket.io-client": "^4.7.5",
     "uuid": "^9.0.1",
-    "vscode-languageclient": "^8.1.0",
-    "vscode-languageserver": "^8.1.0",
     "weather-js": "^2.0.0"
   }
 }
