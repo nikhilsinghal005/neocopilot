@@ -30,3 +30,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ### Added
 - Resolve Socket connection issue
+
+## [0.100.18] - 2024-11-09
+
+### Added
+- Added Chat Feature
+- Optimized Code Completion

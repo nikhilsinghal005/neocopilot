@@ -13,7 +13,7 @@ Neo Copilot is here to help you write better code, faster.
 
   return (
     <div 
-      className="new-chat-panel w-full h-full flex flex-col justify-start items-center"
+      className="w-full h-full flex flex-col justify-start items-center"
       style={{ 
         paddingTop: '40px'
       }}
@@ -23,8 +23,8 @@ Neo Copilot is here to help you write better code, faster.
           backgroundColor: 'var(--vscode-editor-background)',
           borderColor: 'var(--vscode-editorGroup-border)',
           color: 'var(--vscode-editor-foreground)',
-          maxWidth: '500px', // Set a maximum width of 500 pixels
-          minWidth: '300px', // Set a maximum width of 500 pixels
+          maxWidth: '450x', // Set a maximum width of 500 pixels
+          minWidth: '350px', // Set a maximum width of 500 pixels
           width: '100%', // Ensures responsiveness
         }}
       >

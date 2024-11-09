@@ -56,7 +56,11 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage 
         />
 
         {/* Send Button */}
-        <div className="flex justify-end bg-[#1e1e1e] p-0">
+        <div className="flex justify-end bg-[#1e1e1e] p-0"
+          style={{
+            backgroundColor: 'var(--vscode-editor-background)'
+          }}
+        >
           <VSCodeButton
             onClick={handleClick}
             appearance="icon"

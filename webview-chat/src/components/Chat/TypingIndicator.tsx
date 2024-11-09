@@ -4,8 +4,12 @@ import React from 'react';
 const TypingIndicator: React.FC = () => {
   return (
     <div className="message flex justify-start mb-3">
-      <span className="codicon codicon-person text-gray-400 mr-2"></span>
-      <div className="p-3 rounded-lg max-w-full break-words shadow-md bg-gray-800 text-gray-200">
+      <span className="codicon codicon-person text-vscode-editor-foreground mr-2"></span>
+      <div className="p-3 rounded-lg max-w-full break-words shadow-md text-vscode-editor-foreground"
+        style={{
+          backgroundColor: 'var(--vscode-editor-background)'
+        }}
+      >
         <span className="block text-xs font-semibold mb-1 opacity-75">
           NEO ·{' '}
           {new Date().toLocaleTimeString([], {
