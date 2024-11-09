@@ -52,7 +52,10 @@ Our mission is to create a **collaborative coding experience** by developing an 
               <blockquote 
                 className="italic text-lg text-center mt-8" 
                 {...props} 
-                style={{ color: 'var(--vscode-input-placeholder)' }} 
+                style={{ 
+                  backgroundColor: 'var(--vscode-editor-background)',
+                  color: 'var(--vscode-input-placeholder)' 
+                }} 
               />
             )
           }}

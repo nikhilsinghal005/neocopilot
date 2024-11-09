@@ -47,7 +47,7 @@
   "activationEvents": [
     "onUri",
     "onStartupFinished",
-    "onLanguage:*"
+    "onLanguage:python"
   ],
   "main": "./out/extension.js",
   "contributes": {
