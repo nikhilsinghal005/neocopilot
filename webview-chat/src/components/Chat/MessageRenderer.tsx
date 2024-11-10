@@ -173,7 +173,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
         components={{
           code: renderCodeBlock,
           p: ({ node, children }) => (
-            <p className="text-gray-200 my-2 leading-relaxed"> {/* Added styling for paragraphs */}
+            <p className="text-vscode-editor-foreground my-2 leading-relaxed"> {/* Added styling for paragraphs */}
               {children}
             </p>
           ),
