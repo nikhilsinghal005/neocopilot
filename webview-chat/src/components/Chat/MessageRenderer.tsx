@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypePrism from 'rehype-prism-plus';
-import 'prismjs/themes/prism-tomorrow.css';
+import './prism-nord.css';
 import './custom-overrides.css';
 import remarkGfm from 'remark-gfm';
 import CodeButton from '../Common/CodeButton';
@@ -21,8 +21,9 @@ interface CodeProps {
 
 const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
   const vscode = useVscode();
+
   const handleInsertToEditorTerminal = (code: string, location: string) => {
-    console.log("VS Code API in ChatControls:", vscode);
+    // console.log("VS Code API in ChatControls:", vscode);
     vscode.postMessage({
       command: 'insertCodeSnippet',
       data: {
@@ -36,7 +37,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
     navigator.clipboard
       .writeText(code)
       .then(() => {
-        console.log('Code copied to clipboard!');
+        // console.log('Code copied to clipboard!');
       })
       .catch((err) => {
         console.error('Failed to copy code: ', err);
@@ -58,7 +59,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
       if (inline) {
         return (
           <code
-            className={`bg-gray-800 rounded px-1 py-0.5 text-gray-300 ${className}`}
+            className={`bg-vscode-editor-background rounded px-1 py-0.5 text-vscode-editor-foreground ${className}`}
             {...props}
           >
             {children}
@@ -90,7 +91,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
         };
   
         const handleInsertClick = () => {
-          console.log('Insert action clicked for:', codeContent);
+          // console.log('Insert action clicked for:', codeContent);
           handleInsertToEditorTerminal(codeContent, 'editor');
         };
   
@@ -99,9 +100,18 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
         };
   
         return (
-          <div className="my-4 p-0">
+          <div className="my-4 p-0 rounded-lg shadow-lg border"
+            style={{
+              backgroundColor: 'var(--vscode-editor-background)',
+              borderColor: 'var(--vscode-editorGroup-border)',
+            }}
+          >
             {/* Header for the code block with language label and copy/insert buttons */}
-            <div className="flex justify-between items-center bg-gray-900 text-gray-100 px-4 py-2 rounded-t-md">
+            <div className="flex justify-between items-center bg-vscode-chat-message-incoming text-vscode-editor-foreground px-4 py-1 rounded-t-md border"
+            style={{
+              borderColor: 'var(--vscode-editorGroup-border)',
+            }}
+            >
               <span className="text-xs font-semibold uppercase">{language}</span>
               <div className="flex">
                 {language === 'bash' ? (
@@ -110,6 +120,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
                     onClick={handleTButtonClick}
                     ariaLabel="Custom T action"
                     icon="codicon-terminal"
+                    tooltip="Run in Terminal"
                   />
                 ) : (
                   // Render Insert button for other languages
@@ -117,6 +128,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
                     onClick={handleInsertClick}
                     ariaLabel="Insert code"
                     icon="codicon-arrow-right"
+                    tooltip="Insert in Editor"
                   />
                 )}
                 {/* Reusable CodeButton for Copy */}
@@ -124,13 +136,15 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
                   onClick={handleCopyClick}
                   ariaLabel="Copy code to clipboard"
                   icon="codicon-copy"
+                  tooltip="Copy"
+
                 />
               </div>
             </div>
             {/* Code snippet wrapper */}
-            <div className="rounded-b-md overflow-auto bg-gray-800 !p-0 !m-0">
+            <div className="rounded-b-md overflow-auto bg-vscode-chat-message-incoming !p-0 !m-0">
               <pre className="!m-0">
-                <code className={`${className} block p-4 text-gray-300`} {...props}>
+                <code className={`${className} block p-4 text-vscode-editor-foreground`} {...props}>
                   {children}
                 </code>
               </pre>
@@ -141,15 +155,14 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
 
       // If no language detected and not inline, treat it as regular text
       return <span>{children}</span>;
-
     } catch (error) {
-      console.log('Error rendering Markdown: ', error);
+      // console.log('Error rendering Markdown: ', error);
       return <div>Error rendering code block</div>;
     }
   };
 
   return (
-    <div className="prose max-w-full text-sm leading-6">
+    <div className="prose max-w-full text-sm leading-6 space-y-4"> {/* Updated styling to improve aesthetics */}
       <ReactMarkdown
         children={text}
         // skipHtml={true}
@@ -159,6 +172,46 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
         ]}
         components={{
           code: renderCodeBlock,
+          p: ({ node, children }) => (
+            <p className="text-vscode-editor-foreground my-2 leading-relaxed"> {/* Added styling for paragraphs */}
+              {children}
+            </p>
+          ),
+          blockquote: ({ node, children }) => (
+            <blockquote className="border-l-4 border-vscode-editor-background pl-4 italic text-vscode-editor-foreground my-4"> {/* Styled blockquotes for emphasis */}
+              {children}
+            </blockquote>
+          ),
+          a: ({ node, href, children }) => (
+            <a
+              href={href}
+              className="text-blue-400 hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {children}
+            </a>
+          ),
+          ul: ({ node, children }) => (
+            <ul className="list-disc list-inside pl-4 text-vscode-editor-foreground my-2"> {/* Styled unordered lists */}
+              {children}
+            </ul>
+          ),
+          ol: ({ node, children }) => (
+            <ol className="list-decimal list-outside pl-6 ml-2 text-vscode-editor-foreground my-2"> {/* Adjusted ordered list marker position to align correctly */}
+              {children}
+            </ol>
+          ),
+          strong: ({ node, children }) => (
+            <strong className="text-gray-100 font-semibold">{/* Styling for bold text */}
+              {children}
+            </strong>
+          ),
+          em: ({ node, children }) => (
+            <em className="text-vscode-editor-foreground italic">{/* Styling for italic text */}
+              {children}
+            </em>
+          ),
         }}
       />
     </div>

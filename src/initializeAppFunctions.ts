@@ -2,10 +2,14 @@ import * as vscode from 'vscode';
 import { VscodeEventsModule } from './codeCompletion/vscodeEventsModule';
 import { CompletionProviderModule } from './codeCompletion/completionProviderModule';
 import { StatusBarManager } from './StatusBarManager';
+import { AiChatPanel } from './chatProvider/aiChatPanel';
+import { AuthManager } from './authManager/authManager';
+
 
 export function initializeAppFunctions(
   vscodeEventsModule: VscodeEventsModule,
   completionProviderModule: CompletionProviderModule,
+  authManager: AuthManager,
   context: vscode.ExtensionContext
 ): void {
   console.info("%cNeo Copilot: Initializing functinalities", 'color: green;')
@@ -25,10 +29,9 @@ export function initializeAppFunctions(
 
   vscode.workspace.getConfiguration().update('editor.quickSuggestions', false);
   const currentVersion = context.extension.packageJSON.version;
-<<<<<<< HEAD
-=======
 
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
+  primaryViewProvider.sendAuthStatus(true)
 
 }
 
@@ -39,7 +42,7 @@ export function initializeNonLoginRequiredAppFunctions(
   authManager: AuthManager,
   context: vscode.ExtensionContext
 ): void {
-  console.info("%cNeo Copilot: Initializing functionalities", 'color: green;');
+  // console.info("%cNeo Copilot: Initializing functionalities", 'color: green;');
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
@@ -54,5 +57,4 @@ export function initializeNonLoginRequiredAppFunctions(
   //     secondaryViewProvider
   //   )
   // );
->>>>>>> parent of be975a9 (Merge pull request #17 from nikhilsinghal005/chat-panel-v2)
 }

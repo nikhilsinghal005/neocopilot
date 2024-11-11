@@ -1,10 +1,10 @@
 // src/context/ChatContext.tsx
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { ChatSession, MessageStore } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ChatContextProps {
-  chatSession: ChatSession;  // Chat session cannot be null
+  chatSession: ChatSession;
   setChatSession: React.Dispatch<React.SetStateAction<ChatSession>>;
   isTyping: boolean;
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>;
@@ -12,15 +12,13 @@ interface ChatContextProps {
   addMessage: (newMessage: MessageStore) => void;
 }
 
-// Default values for a new chat session
-const createNewChatSession = (): ChatSession => {
-  return {
-    chatId: uuidv4(), // Generate unique chatId
-    timestamp: new Date().toISOString(),
-    chatName: 'New Chat',  // Default chat name, can be customized
-    messages: [],          // Initialize with an empty message list
-  };
-};
+const createNewChatSession = (): ChatSession => ({
+  chatId: uuidv4(),
+  timestamp: new Date().toISOString(),
+  createdAt: new Date().toISOString(),
+  chatName: 'Untitled Chat',
+  messages: [],
+});
 
 const ChatContext = createContext<ChatContextProps | undefined>(undefined);
 
@@ -34,39 +32,51 @@ export const useChatContext = (): ChatContextProps => {
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [chatSession, setChatSession] = useState<ChatSession>(() => {
-    // Check if there's an existing session in sessionStorage
     const storedSession = sessionStorage.getItem('chatSession');
+    // console.info("Chat Session Already Exsists: ", storedSession)
     if (storedSession) {
-      return JSON.parse(storedSession) as ChatSession;
+      try {
+        return JSON.parse(storedSession) as ChatSession;
+      } catch (error) {
+        console.error("Failed to parse stored chat session:", error);
+        return createNewChatSession();
+      }
+    }else{
+      // console.log("No Chat Session Exists")
+      const newSession: ChatSession = createNewChatSession();
+      sessionStorage.setItem('chatSession', JSON.stringify(newSession));
+      return createNewChatSession();
     }
-    // If no session is found, create a new one
-    return createNewChatSession();
   });
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
 
-  // Store the chat session in sessionStorage whenever it changes
   useEffect(() => {
     sessionStorage.setItem('chatSession', JSON.stringify(chatSession));
   }, [chatSession]);
 
-  // Clears the current chat session and creates a new one
-  const clearChatSession = () => {
+  const clearChatSession = useCallback(() => {
     const newSession = createNewChatSession();
+    sessionStorage.setItem('chatSession', JSON.stringify(newSession));
     setChatSession(newSession);
-    console.log(`New chat session created with chatId: ${newSession.chatId}`);
-  };
+  }, []);
 
-  // Add a new message to the current chat session
-  const addMessage = (newMessage: MessageStore) => {
+  const addMessage = useCallback((newMessage: MessageStore) => {
     setChatSession((prevSession) => ({
       ...prevSession,
-      messages: [...prevSession.messages, newMessage], // Ensure messages is always an array
+      messages: [...prevSession.messages, newMessage],
     }));
-  };
+  }, []);
 
   return (
-    <ChatContext.Provider value={{ chatSession, setChatSession, isTyping, setIsTyping, clearChatSession, addMessage }}>
+    <ChatContext.Provider 
+      value={{
+        chatSession, 
+        setChatSession, 
+        isTyping, setIsTyping, 
+        clearChatSession, 
+        addMessage 
+      }}>
       {children}
     </ChatContext.Provider>
   );

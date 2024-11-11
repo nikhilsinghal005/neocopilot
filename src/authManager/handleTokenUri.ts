@@ -6,6 +6,7 @@ import { AuthManager } from './authManager';
 import { VscodeEventsModule } from '../codeCompletion/vscodeEventsModule';
 import { SocketModule } from '../socketModule';
 import { initializeAppFunctions } from '../initializeAppFunctions';
+import { AiChatPanel } from '../chatProvider/aiChatPanel';
 
 export interface UserProfile {
     email: string;
@@ -20,7 +21,7 @@ export async function handleTokenUri(
     vscodeEventsModule: VscodeEventsModule,
     completionProviderModule: CompletionProviderModule,
     socketModule: SocketModule,
-    authManager: AuthManager
+    authManager: AuthManager,
 ): Promise<void> {
     if (uri.path === '/token') {
         const query = new URLSearchParams(uri.query);
@@ -32,17 +33,20 @@ export async function handleTokenUri(
                 await authManager.storeAccessToken(accessToken);
                 await authManager.storeRefreshToken(refreshToken);
                 const tokenIsVerified = await authManager.verifyAccessToken();
+                // console.log("Token Verified - " , tokenIsVerified)
 
                 if (tokenIsVerified) {
                     await authManager.storeTokenProvider('googleToken');
                     const userProfile = await authManager.fetchUserProfile();
+                    // console.log("Token Stored Locally")
 
                     if (userProfile) {
                         await authManager.storeUserProfile(userProfile);
-                        showTextNotification(`Login Successful: Happy Coding ${userProfile.name}`, 20);
+                        showTextNotification(`Login Successful: Happy Coding ${userProfile.name}`, 10);
                         const currentVersion = context.extension.packageJSON.version;
                         const socketConnection: Socket | null = await socketModule.connect(currentVersion, context);
-                        initializeAppFunctions(vscodeEventsModule, completionProviderModule, context);
+                        initializeAppFunctions(vscodeEventsModule, completionProviderModule, authManager, context);
+                        
 
                     } else {
                         await authManager.clearTokens();

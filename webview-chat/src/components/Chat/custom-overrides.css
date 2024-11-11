@@ -1,0 +1,8 @@
+/* custom-overrides.css */
+
+pre[class*="language-"] {
+    padding: 0 !important;
+    margin: 0 !important;
+    background-color: var(--vscode-chat-message-incoming);
+    background: var(--vscode-chat-message-incoming);
+}

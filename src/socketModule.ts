@@ -13,6 +13,8 @@ import {
 } from "./utilities/codeCompletionUtils/completionUtils";
 import { getTextBeforeCursor } from "./utilities/codeCompletionUtils/editorCodeUtils";
 import { AuthManager } from './authManager/authManager';
+import { CodeInsertionManager } from './codeInsertions/CodeInsertionManager';
+import { ChatSession, MessageInput} from './chatProvider/types/messageTypes';
 
 interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {}
 
@@ -23,6 +25,7 @@ interface UserProfile {
 }
 
 export class SocketModule {
+  private static instance: SocketModule | null = null;
   public socket: Socket | null = null;
   public socketListSuggestion: string[] = [];
   public suggestion: string = "";
@@ -44,9 +47,28 @@ export class SocketModule {
   private email: string = "";
   private pingInterval: NodeJS.Timeout | null = null;
   private userId: string = "";
+  private codeInsertionManager: CodeInsertionManager| null = null;
+  private docstring: string = "";
+  private docstringData: { [key: string]: { 
+      id: string;
+      location: { line: number; character: number } 
+    }} = {};
 
   constructor(completionProvider: CompletionProviderModule) {
     this.completionProvider = completionProvider;
+  }
+
+  public static getInstance(completionProvider?: CompletionProviderModule): SocketModule {
+    if (!SocketModule.instance) {
+      if (!completionProvider) {
+        throw new Error("SocketModule has not been initialized yet. Please provide a CompletionProviderModule.");
+      }
+      // console.log("SocketModule: Creating new instance");
+      SocketModule.instance = new SocketModule(completionProvider);
+    } else {
+      // console.log("SocketModule: Returning existing instance");
+    }
+    return SocketModule.instance;
   }
 
   public reinitializeSocket(): void {
@@ -61,7 +83,7 @@ export class SocketModule {
     if (this.socket) {
       return this.socket;
     }
-
+    this.codeInsertionManager = CodeInsertionManager.getInstance(context);
     const authManager = new AuthManager(context);
     const userProfile = await authManager.getUserProfile();
 
@@ -100,7 +122,7 @@ export class SocketModule {
 
           if (tokenIsVerified) {
             this.socket.emit('ping');
-            console.info(`%c[${new Date().toLocaleTimeString()}] Neo Copilot: Connection alive`, 'color: green;');
+            // console.info(`%c[${new Date().toLocaleTimeString()}] Neo Copilot: Connection alive`, 'color: green;');
           } else {
             this.socket.disconnect();
             StatusBarManager.registerBeforeLoginCommand(context);
@@ -126,7 +148,7 @@ export class SocketModule {
       console.error(`[${new Date().toLocaleTimeString()}] Neo Copilot: Socket connection error`);
 
       if (err.message.includes('Authentication error')) {
-        await sleep(40000)
+        await sleep(5000)
         const tokenIsVerified = await authManager.verifyAccessToken();
     
         if (tokenIsVerified) {
@@ -197,15 +219,79 @@ export class SocketModule {
       } else {
         const extensionId = data.extension_id;
         const newRequiredVersion = data.latest_version;
-        this.promptUpdate(extensionId, newRequiredVersion);
+        this.promptUpdate(extensionId, newRequiredVersion, data.message);
         this.isUpdatePopupShown = true;
       }
     });
 
     // Add any other necessary event handlers here
+    this.socket.on('receive_docstring', (data: any) => {
+      this.predictionRequestInProgress = false;
+      try {
+        const docstring = data.docstring;
+        const docstring_id = data.unique_id;
+        if (data.complete){
+          this.docstring = this.docstring +  data.docstring
+          if (this.codeInsertionManager){
+            this.codeInsertionManager.insertTextUsingSnippetLocation(this.docstring, data.unique_id, this.docstringData[docstring_id].location);
+          }
+          this.docstring = ""
+        }else{
+          this.docstring = this.docstring +  data.docstring
+          // console.log(this.docstring)
+        }
+
+      } catch (error) {
+        this.predictionRequestInProgress = false;
+
+        this.customInformationMessage('socket_module:receive_message', JSON.stringify(error));
+        this.docstring = ""
+      }
+    });
+
+  }
+
+  public emitDocstringFunction(uuid: string, input_code: string, language: string, location: { line: number; character: number }) {
+    this.predictionRequestInProgress = true;
+    this.docstringData[uuid] = {id: uuid, location: location}
+    if (this.rateLimitExceeded) {
+      this.reinitializeSocket();
+      return;
+    }
+    // console.log("UUID for docstring", uuid)
+    // StatusBarManager.updateMessage(`$(loading~spin) Neo Copilot`);
+    if (this.socket) {
+      const timestamp = new Date().toISOString();
+      this.socket.emit('generate_docstring', {
+        uuid,
+        input_code,
+        language,
+        appVersion: this.currentVersion,
+        userEmail: this.email
+      });
+    }
+  }
+
+  public sendChatMessage(chat: ChatSession) {
+    // console.log("Message to scoket from backend")
+    this.predictionRequestInProgress = true;
+    // const messageList: MessageInput = chat.messages;
+    // const timestamp = new Date().toISOString();
+    // const messageType = chat.messageType;
+    if (this.socket) {
+      this.socket.emit('generate_chat_response', {
+        chatId: chat.chatId,
+        timestamp: chat.timestamp,
+        messageList: chat.messages.slice(-6),
+        appVersion: this.currentVersion,
+        userEmail: this.email,
+        uniqueId: uuidv4()
+      });
+    }
   }
 
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string) {
+    // console.log("Sending Message for Completion")
     this.predictionRequestInProgress = true;
 
     if (this.rateLimitExceeded) {
@@ -233,6 +319,8 @@ export class SocketModule {
       });
     }
     this.previousText = prefix;
+    // console.log("Sending Message for Completion", uuid)
+
   }
 
   public chatCompletionMessage(completion_type: string, completion_comment: string, completion_size: number) {
@@ -292,10 +380,10 @@ export class SocketModule {
     }, 10);
   }
 
-  private promptUpdate(extensionId: string, newRequiredVersion: string) {
+  private promptUpdate(extensionId: string, newRequiredVersion: string, inpputMessage: string) {
     vscode.window
       .showWarningMessage(
-        `You are using an outdated version of this extension. Please update to the latest version (${newRequiredVersion}).`,
+        inpputMessage,
         'Update Now'
       )
       .then((selection: string | undefined) => {
@@ -311,6 +399,8 @@ export class SocketModule {
   }
 
   private predictionHandleFunction(predictionReceived: any): void {
+    // console.log("Recieved Message for Completion", predictionReceived.unique_Id)
+    // console.log("Recieved Message for Completion", predictionReceived.message_list)
     if (predictionReceived.message && this.tempUniqueIdentifier === predictionReceived.unique_Id) {
       if (getTextBeforeCursor(vscode.window.activeTextEditor) === this.previousText + this.predictionWaitText) {
         this.currentSuggestionId = predictionReceived.unique_Id;
@@ -368,10 +458,10 @@ async function createSocketConnection(appVersion: string, email: string, userId:
     credentials: true,
     reconnection: true,
     secure: true,
-    reconnectionAttempts: 10000,
-    reconnectionDelay: 10000,
-    reconnectionDelayMax: 10000,
-    timeout: 30000,
+    // reconnectionAttempts: 10000,
+    // reconnectionDelay: 10000,
+    // reconnectionDelayMax: 10000,
+    // timeout: 10000,
     extraHeaders: {
       Authorization: `Bearer ${await authManager.getAccessToken()}`,
     },
