@@ -154,7 +154,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               break;
             
           case 'showInfoPopup':
-              console.log("showInfoPopup")
+              // console.log("showInfoPopup")
               // Show vscode information message
               vscode.window.showInformationMessage(message.data.message);
               break;

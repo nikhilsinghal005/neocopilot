@@ -1,12 +1,12 @@
 // ----------------------- Development Environment -----------------------
-export const API_BASE_URL = "https://apidev.neocopilot.io"; 
-export const SOCKET_API_BASE_URL = "wss://apidev.neocopilot.io/websocket/v1/gen-ai-premium";
-export const LOGIN_REDIRECT_URL = "https://dev.neocopilot.io/login";
+// export const API_BASE_URL = "https://apidev.neocopilot.io"; 
+// export const SOCKET_API_BASE_URL = "wss://apidev.neocopilot.io/websocket/v1/gen-ai-premium";
+// export const LOGIN_REDIRECT_URL = "https://dev.neocopilot.io/login";
 
 // ----------------------- Production Environment -----------------------
-// export const API_BASE_URL = "https://api.neocopilot.io";
-// export const SOCKET_API_BASE_URL = "wss://api.neocopilot.io/websocket/v1/gen-ai-premium";
-// export const LOGIN_REDIRECT_URL = "https://www.neocopilot.io/login";
+export const API_BASE_URL = "https://api.neocopilot.io";
+export const SOCKET_API_BASE_URL = "wss://api.neocopilot.io/websocket/v1/gen-ai-premium";
+export const LOGIN_REDIRECT_URL = "https://www.neocopilot.io/login";
 
 // ----------------------- Local Environment -----------------------
 // export const API_BASE_URL = "http://localhost:5000";
