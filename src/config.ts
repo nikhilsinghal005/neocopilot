@@ -1,3 +1,4 @@
+//src//config.ts
 // ----------------------- Development Environment -----------------------
 // export const API_BASE_URL = "https://apidev.neocopilot.io"; 
 // export const SOCKET_API_BASE_URL = "wss://apidev.neocopilot.io/websocket/v1/gen-ai-premium";
