@@ -224,31 +224,47 @@ export class SocketModule {
       }
     });
 
-    // Add any other necessary event handlers here
-    this.socket.on('receive_docstring', (data: any) => {
-      this.predictionRequestInProgress = false;
-      try {
-        const docstring = data.docstring;
-        const docstring_id = data.unique_id;
-        if (data.complete){
-          this.docstring = this.docstring +  data.docstring
-          if (this.codeInsertionManager){
-            this.codeInsertionManager.insertTextUsingSnippetLocation(this.docstring, data.unique_id, this.docstringData[docstring_id].location);
-          }
-          this.docstring = ""
-        }else{
-          this.docstring = this.docstring +  data.docstring
-          // console.log(this.docstring)
-        }
+    // // Add any other necessary event handlers here
+    // this.socket.on('receive_docstring', (data: any) => {
+    //   this.predictionRequestInProgress = false;
+    //   try {
+    //     const docstring = data.docstring;
+    //     const docstring_id = data.unique_id;
+    //     if (data.complete){
+    //       this.docstring = this.docstring +  data.docstring
+    //       if (this.codeInsertionManager){
+    //         this.codeInsertionManager.insertTextUsingSnippetLocation(this.docstring, data.unique_id, this.docstringData[docstring_id].location);
+    //       }
+    //       this.docstring = ""
+    //     }else{
+    //       this.docstring = this.docstring +  data.docstring
+    //       // console.log(this.docstring)
+    //     }
 
-      } catch (error) {
-        this.predictionRequestInProgress = false;
+    //   } catch (error) {
+    //     this.predictionRequestInProgress = false;
 
-        this.customInformationMessage('socket_module:receive_message', JSON.stringify(error));
-        this.docstring = ""
-      }
-    });
+    //     this.customInformationMessage('socket_module:receive_message', JSON.stringify(error));
+    //     this.docstring = ""
+    //   }
+    // });
 
+  }
+
+  public sendEditorCodeRefactor(userInput: string, selectedText: string, completeText: string) {
+    console.log("Message to scoket from backend")
+    this.predictionRequestInProgress = true;
+    if (this.socket) {
+      this.socket.emit('generate_editor_code_refactor', {
+        uniqueId: uuidv4(),
+        chatId: uuidv4(),
+        userInput: userInput,
+        selectedText: selectedText,
+        completeText: completeText,
+        appVersion: this.currentVersion,
+        userEmail: this.email
+      });
+    }
   }
 
   public emitDocstringFunction(uuid: string, input_code: string, language: string, location: { line: number; character: number }) {

@@ -1,3 +1,5 @@
+// src/codeInsertion/CodeInsertionCodeLensProvider.ts
+
 import * as vscode from 'vscode';
 import { CodeInsertionManager } from './CodeInsertionManager';
 

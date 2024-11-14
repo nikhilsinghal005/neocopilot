@@ -4,6 +4,8 @@ import { CompletionProviderModule } from './codeCompletion/completionProviderMod
 import { StatusBarManager } from './StatusBarManager';
 import { AiChatPanel } from './chatProvider/aiChatPanel';
 import { AuthManager } from './authManager/authManager';
+import { CodeSelectionProvider } from './codeSelection/codeSelectionProvider';
+import { CodeSelectionCommandHandler } from './codeSelection/codeSelectionCommand';
 
 
 export function initializeAppFunctions(
@@ -32,6 +34,11 @@ export function initializeAppFunctions(
 
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   primaryViewProvider.sendAuthStatus(true)
+
+  const codeLensProvider = new CodeSelectionProvider();
+  const documentSelector: vscode.DocumentSelector = { scheme: 'file', language: '*' };
+  vscode.languages.registerCodeLensProvider(documentSelector, codeLensProvider);
+  new  CodeSelectionCommandHandler(context);
 
 }
 
