@@ -5,6 +5,7 @@ import { insertTextAtCursorFunction } from './handleInsertionTypes/insertAtCurso
 import { insertSnippetAtCursorFunction} from './handleInsertionTypes/inserSnippetAtCursor';
 import {insertTextIntoTerminalFunction} from './handleInsertionTypes/insertCommandTerminal';
 import * as Diff from 'diff'; // Import jsdiff
+import { diffLines, Change, createPatch } from 'diff';
 
 /**
  * Represents an insertion in the editor.
@@ -29,6 +30,7 @@ export class CodeInsertionManager {
   private codeLensProvider: CodeInsertionCodeLensProvider;
   private snippetText: string[] = [];
   private pendingEdits: { type: "insert"; position: vscode.Position; text: string }[] = [];
+
 
   constructor(context: vscode.ExtensionContext) {
     // Initialize CodeLens Provider
@@ -219,163 +221,93 @@ public rejectInsertion(id: string): void {
    * @param id Unique identifier for the insertion.
    * @param selectionContext The selection range in the editor.
    */
-  public insertSnippetOnSelection(updatedText: string, id: string, selectionContext: vscode.Selection | undefined): void {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || !selectionContext) {
-      vscode.window.showErrorMessage('No active editor or valid selection context found.');
-      return;
-    }
-    
-    console.log("Updated Text From Backend", updatedText)
-    // Record the original text before making the changes
-    const oldText = editor.document.getText(selectionContext);
-  
-    // Split old and new text into lines
-    const oldLines = oldText.split(this.getLineSeparator());
-    let updatedLines = updatedText.split('\n');
-    
-    console.log("Old Lines", oldLines)
-    console.log("Updated Lines", updatedLines)
+  public async insertSnippetOnSelection(
+      updatedText: string,
+      id: string,
+      selectionContext: vscode.Selection | undefined
+  ): Promise<void> {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor || !selectionContext) {
+          vscode.window.showErrorMessage('No active editor or valid selection context found.');
+          return;
+      }
 
-    // Create a decoration type
-    const decorationsToApply = {
-      deleted: [] as vscode.Range[],
-      inserted: [] as vscode.Range[],
-      same: [] as vscode.Range[]
-    };
-  
-    let startLine = selectionContext.start.line;
-    let updatedIndex = 0;
+      const oldText = editor.document.getText(selectionContext);
+      const patch = createPatch('file', oldText, updatedText, '', '', {
+        context: 3  // Number of context lines
+      });
+      console.log(patch)
+      let patchList: string[] = patch.split('\n');
+      console.log(patchList)
+      patchList = patchList.slice(5, patchList.length - 2)
+      console.log(patchList)
 
-    for (let i = 0; i < oldLines.length; i++) {
+      const workspaceEdit = new vscode.WorkspaceEdit();
+      const decorationsToApply = {
+          deleted: [] as vscode.Range[],
+          inserted: [] as vscode.Range[],
+          same: [] as vscode.Range[]
+      };
+      let startLine = selectionContext.start.line;
+      let updatedIndex = 0;
+      this.pendingEdits = [];
 
-      console.log("================== New Loop Begin ===========================")
-      const oldLine = oldLines[i];
-
-      // index of old line in updated lines
-      const index = updatedLines.indexOf(oldLine);
-      console.log("startLine", startLine)
-      console.log("Index", index, oldLine)
-
-      if (index > -1) {
-          const slicedLines = updatedLines.slice(0, index + 1);
-          updatedLines = updatedLines.slice(index + 1);
-          console.log("Sliced Lines", slicedLines)
-
-          // Mark the current line as the same
-          for (let slicedLine of slicedLines) {
-            const startPos = new vscode.Position(startLine + updatedIndex, 0);
-            const endPos = new vscode.Position(startLine + updatedIndex, slicedLine.length);
-            const lineRange = new vscode.Range(startPos, new vscode.Position(startLine + updatedIndex, 1000));
-            if (oldLine !== slicedLine) {
-              console.log("Went to Updated", slicedLine, startLine + updatedIndex)
-              decorationsToApply.inserted.push(lineRange);
-              this.pendingEdits.push({ type: "insert", position: startPos, text: slicedLine + this.getLineSeparator() });
-              updatedIndex++;
-            }else{
-              console.log("Went to Same", slicedLine, startLine + updatedIndex)
-              decorationsToApply.same.push(lineRange);
-              updatedIndex++;
-            }
-          }
-      } else{
-        // Mark the old line as deleted
+      for (const line of patchList) {
         const startPos = new vscode.Position(startLine + updatedIndex, 0);
-        const endPos = new vscode.Position(startLine + updatedIndex, oldLine.length);
-        const lineRange = new vscode.Range(startPos, new vscode.Position(startLine + updatedIndex, 1000));
-        decorationsToApply.deleted.push(lineRange);
-        updatedIndex++;
-      }
-
-    }
-  
-  // Handle any remaining updated lines as inserted
-  for (const remainingLine of updatedLines) {
-    console.log("Remaining Inserted Line", remainingLine, startLine + updatedIndex);
-    const startPos = new vscode.Position(startLine + updatedIndex, 0);
-    const endPos = new vscode.Position(startLine + updatedIndex, remainingLine.length);
-    const lineRange = new vscode.Range(startPos, endPos);
-    decorationsToApply.inserted.push(lineRange);
-
-    // Add to pendingEdits array
-    this.pendingEdits.push({ type: "insert", position: startPos, text: remainingLine + this.getLineSeparator() });
-    updatedIndex++;
-  }
-    // Apply all pending edits in a single editor.edit call
-    async function sleep(ms: number) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-    
-    // Apply all pending edits in a single editor.edit call
-    (async () => {
-      for (const edit of this.pendingEdits) {
-        if (edit.type === "insert") {
-          console.log("Inserted Line:", edit.text, edit.position.line);
-    
-          // Apply the edit with a delay
-          await editor.edit((editBuilder) => {
-            editBuilder.insert(edit.position, edit.text);
-          });
-    
-          // Add a delay between each edit
-          await sleep(1000); // 500ms delay
+        const endPos = new vscode.Position(startLine + updatedIndex, line.length - 1);
+        const lineRange = new vscode.Range(startPos, endPos);
+      
+        switch (true) {
+          case line.startsWith("+"):
+            const edit = new vscode.WorkspaceEdit();
+            const textToInsert = line.slice(1); // Remove "+" from the line
+            edit.insert(editor.document.uri, startPos, textToInsert);
+            await vscode.workspace.applyEdit(edit);
+            decorationsToApply.inserted.push(lineRange);
+            break;
+          case line.startsWith("-"):
+            decorationsToApply.deleted.push(lineRange);
+            break;
+          default:
+            decorationsToApply.same.push(lineRange);
+            break;
         }
-      }
-    })();
+        updatedIndex++;
+      }    
 
-    this.pendingEdits = [];
+      // efine decoration types
+      const insertedDecorationType = vscode.window.createTextEditorDecorationType({
+          backgroundColor: 'rgba(92, 248, 1, 0.2)',
+          isWholeLine: true
+      });
 
-    // Apply decorations for inserted text (green), deleted text (red), and same text (blue)
-    const insertedDecorationType = vscode.window.createTextEditorDecorationType({
-      backgroundColor: 'rgba(0, 255, 0, 0.244)', // Light green background for inserted text
-    });
-    editor.setDecorations(insertedDecorationType, decorationsToApply.inserted);
-  
-    const deletedDecorationType = vscode.window.createTextEditorDecorationType({
-      backgroundColor: 'rgba(255, 0, 0, 0.288)', // Light red background for deleted text
-    });
-    editor.setDecorations(deletedDecorationType, decorationsToApply.deleted);
-  
-    const sameDecorationType = vscode.window.createTextEditorDecorationType({
-      backgroundColor: 'rgba(0, 0, 255, 0)', // Light blue background for the same text
-    });
-    editor.setDecorations(sameDecorationType, decorationsToApply.same);
-  
-    // Save insertion details
-    const insertion: Insertion = {
-      id,
-      range: selectionContext,
-      decorationType: insertedDecorationType,
-      deletedDecorationType: deletedDecorationType,
-      sameDecorationType: sameDecorationType,
-      codeLensRange: selectionContext,
-      insertedRanges: decorationsToApply.inserted, // Store inserted ranges
-      deletedRanges: decorationsToApply.deleted, // Store deleted ranges
-      sameRanges: decorationsToApply.same, // Store same ranges
-    };
+      const deletedDecorationType = vscode.window.createTextEditorDecorationType({
+          backgroundColor: 'rgba(255, 0, 0, 0.2)',
+          isWholeLine: true
+      });
 
-    console.log("insertions", decorationsToApply.inserted)
-    this.insertions.set(id, insertion);
-    this.codeLensProvider.refresh();
-    console.log("================== New Loop End ===========================")
-    console.log("insertions", this.insertions)
+      const sameDecorationType = vscode.window.createTextEditorDecorationType({
+        backgroundColor: 'rgba(0, 0, 255, 0)', // Light blue background for the same text
+      });
 
-  }
+      // Apply decorations
+      editor.setDecorations(insertedDecorationType, decorationsToApply.inserted);
+      editor.setDecorations(deletedDecorationType, decorationsToApply.deleted);
+      editor.setDecorations(sameDecorationType, decorationsToApply.same);
 
-  /**
-   * Retrieves the line separator based on the current editor settings.
-   * This method will use the VS Code status bar or editor settings to determine if the
-   * line separator is CRLF or LF.
-   * @returns {string} The line separator used in the current editor ('\r\n' or '\n').
-   */
-  private getLineSeparator(): string {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      return '\n'; // Default to LF if no editor is active
-    }
-  
-    const eol = editor.document.eol;
-    return eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
-  }
-  
+      const insertion: Insertion = {
+          id,
+          range: selectionContext,
+          decorationType: insertedDecorationType,
+          deletedDecorationType: deletedDecorationType,
+          sameDecorationType: sameDecorationType,
+          codeLensRange: selectionContext,
+          insertedRanges: decorationsToApply.inserted,
+          deletedRanges: decorationsToApply.deleted,
+          sameRanges: decorationsToApply.same,
+      };
+
+      this.insertions.set(id, insertion);
+      this.codeLensProvider.refresh();
+  } 
 }

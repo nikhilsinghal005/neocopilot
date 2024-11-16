@@ -248,21 +248,21 @@ export class SocketModule {
     //     this.docstring = ""
     //   }
     // });
-
   }
 
-  public sendEditorCodeRefactor(userInput: string, selectedText: string, completeText: string) {
+  public sendEditorCodeRefactor(uniqueId: string, uniqueChatId: string, userInput: string, selectedText: string, completeText: string, nextLineCharacter: string) {
     console.log("Message to scoket from backend")
     this.predictionRequestInProgress = true;
     if (this.socket) {
       this.socket.emit('generate_editor_code_refactor', {
-        uniqueId: uuidv4(),
-        chatId: uuidv4(),
+        uniqueId: uniqueId,
+        chatId: uniqueChatId,
         userInput: userInput,
         selectedText: selectedText,
         completeText: completeText,
         appVersion: this.currentVersion,
-        userEmail: this.email
+        userEmail: this.email,
+        nextLineCharacter: nextLineCharacter
       });
     }
   }

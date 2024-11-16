@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { SocketModule } from '../socketModule';
 import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
+import { v4 as uuidv4 } from 'uuid';
 
 export enum CodeSelectionCommand {
   CODE_FACTOR = 'extension.codeFactor',
@@ -13,6 +14,10 @@ export class CodeSelectionCommandHandler {
   private selectionContext: vscode.Selection | undefined;
   private completeText: string = "";
   private updatedtext: string = "";
+  private nextLineCharacter: string = "";
+  private uniqueRequestId: string = "";
+  private uniqueChatId: string = "";
+
   private currentSelectionDetails: {
     selectedCode: string;
     startLine: number;
@@ -49,23 +54,37 @@ export class CodeSelectionCommandHandler {
     });
   }
 
+  private getLineSeparator(): string {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return '\n'; // Default to LF if no editor is active
+    }
+  
+    const eol = editor.document.eol;
+    return eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+  }
+  
   private attachSocketListeners(): void {
     if (this.socketModule.socket?.listeners('recieve_editor_code_refactor').length === 0) {
-      // console.log("Adding 'receive_chat_response' listener.");
+      // ##### Add check for verify chat id's and response.
       this.socketModule.socket?.on('recieve_editor_code_refactor', (data: any) => {
-        // console.log("Received chat response: ", data.response);
 
         if (!data.isComplete) {
           this.updatedtext = this.updatedtext + data.response;
         } else {
-          // console.log("Updated text: ", this.updatedtext);
-
           if (this.selectionContext){
+          // Clear the selection in the active editor
+
             this.codeInsertionManager.insertSnippetOnSelection(
-              this.updatedtext,
+              this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.nextLineCharacter),
               data.id, 
               this.selectionContext
             );
+            const editor = vscode.window.activeTextEditor;
+            if (editor) {
+              const position = editor.selection.start; // You can also use editor.selection.start
+              editor.selection = new vscode.Selection(position, position);
+            }
             this.updatedtext = "";
             this.selectionContext = undefined;
             this.currentSelectionDetails = null;
@@ -110,7 +129,23 @@ export class CodeSelectionCommandHandler {
 
     if (userInput) {
       // Send data through SocketModule
-      this.socketModule.sendEditorCodeRefactor(userInput, selectedText, this.completeText);
+      this.nextLineCharacter = this.getLineSeparator()
+      this.uniqueRequestId = uuidv4();
+      this.uniqueChatId = uuidv4();
+      console.log("Sending editor code refactor request.");
+      console.log("Next line character:", JSON.stringify(this.nextLineCharacter))
+      console.log("Selected text:", selectedText)
+
+      this.socketModule.sendEditorCodeRefactor(
+        this.uniqueRequestId,
+        this.uniqueChatId,
+        userInput,
+        selectedText, 
+        this.completeText,
+        this.nextLineCharacter
+      );
+
+      // Show message to user
       vscode.window.showInformationMessage(
         `You entered: "${userInput}" for the selected code: "${selectedText}"`
       );
@@ -118,7 +153,4 @@ export class CodeSelectionCommandHandler {
       vscode.window.showInformationMessage('No input provided.');
     }
   }
-
-
-
 }
