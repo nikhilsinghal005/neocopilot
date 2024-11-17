@@ -205,7 +205,7 @@ export class CodeSelectionCommandHandler {
     this.completeText = editor.document.getText();
     this.currentFileName = editor.document.fileName;
 
-    this.aiChatpanel.insertMessagesToChat(
+    await this.aiChatpanel.insertMessagesToChat(
       this.currentFileName,
       selectedText,
       this.completeText

@@ -333,12 +333,14 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   }
 
 
-  public insertMessagesToChat(inputFile: string, inputText: string, completeText: string): void {
+  public async insertMessagesToChat(inputFile: string, inputText: string, completeText: string): Promise<void> {
     console.log("insertMessagesToChat called")
     console.log("inputFile", inputFile)
     console.log("inputText", inputText)
     console.log("completeText", completeText)
-    //
+    await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
+    // add sleep time
+    await new Promise(resolve => setTimeout(resolve, 1000));
     // Save the logged-in status in workspace state
     this.activePanels[0].webview.postMessage(
       { 
