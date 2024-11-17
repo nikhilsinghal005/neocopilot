@@ -1,12 +1,15 @@
 import * as vscode from 'vscode';
 import { CodeSelectionCommand } from './codeSelectionCommand';
+import { AiChatPanel } from '../chatProvider/aiChatPanel';
 
 export class FloatingHoverProvider implements vscode.HoverProvider {
     private hoverCache: Map<string, vscode.Hover> = new Map();
     private debounceTimeout: NodeJS.Timeout | null = null;
     private lastSelection: vscode.Selection | null = null;
+    private aiChatpanel: AiChatPanel;
 
-    constructor() {
+    constructor(aiChatpanel: AiChatPanel) {
+        this.aiChatpanel = aiChatpanel;
     }
 
     public provideHover(
@@ -58,7 +61,7 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
 
         // Add command buttons
         markdownContent.appendMarkdown(
-            `[Insert in Chat](command:${CodeSelectionCommand.CODE_FACTOR} "Talk to Code") | ` +
+            `[Insert in Chat](command:${CodeSelectionCommand.CHAT_INSERT} "Talk to Code") | ` +
             `[Edit](command:${CodeSelectionCommand.CODE_FACTOR} "Edit Code")`
         );
         markdownContent.isTrusted = true;

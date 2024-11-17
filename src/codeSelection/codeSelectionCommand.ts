@@ -2,10 +2,11 @@ import * as vscode from 'vscode';
 import { SocketModule } from '../socketModule';
 import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
 import { v4 as uuidv4 } from 'uuid';
+import { AiChatPanel } from '../chatProvider/aiChatPanel';
 
 export enum CodeSelectionCommand {
   CODE_FACTOR = 'extension.neoEdit',
-  ADD_COMMENT = 'extension.addComment',
+  CHAT_INSERT = 'extension.neoChatInsert',
 }
 
 export class CodeSelectionCommandHandler {
@@ -17,6 +18,8 @@ export class CodeSelectionCommandHandler {
   private nextLineCharacter: string = "";
   private uniqueRequestId: string = "";
   private uniqueChatId: string = "";
+  private aiChatpanel: AiChatPanel;
+  private currentFileName: string = "";
 
   private currentSelectionDetails: {
     selectedCode: string;
@@ -26,9 +29,10 @@ export class CodeSelectionCommandHandler {
     endCharacter: number;
   } | null = null; // Variable to store selection details
 
-  constructor(private context: vscode.ExtensionContext) {
+  constructor(private context: vscode.ExtensionContext, aiChatpanel: AiChatPanel) {
     this.socketModule = SocketModule.getInstance();
     this.codeInsertionManager = CodeInsertionManager.getInstance(context);
+    this.aiChatpanel = aiChatpanel;
     this.registerCommands();
   }
 
@@ -54,7 +58,25 @@ export class CodeSelectionCommandHandler {
 
                 this.handleCodeFactorCommand(selection);
             }
-        )
+        ),
+        vscode.commands.registerCommand(
+          CodeSelectionCommand.CHAT_INSERT,
+          () => {
+              const editor = vscode.window.activeTextEditor;
+              if (!editor) {
+                  vscode.window.showErrorMessage('No active editor found.');
+                  return;
+              }
+
+              const selection = editor.selection;
+              if (selection.isEmpty) {
+                  vscode.window.showErrorMessage('No text selected.');
+                  return;
+              }
+
+              this.handleChatInsertCommand(selection);
+          }
+      )
     );
 
     this.attachSocketListeners();
@@ -165,4 +187,41 @@ export class CodeSelectionCommandHandler {
       vscode.window.showInformationMessage('No input provided.');
     }
   }
+
+  /**
+   * Handles the "Code Factor" command.
+   */
+  private async handleChatInsertCommand(selection: vscode.Selection) {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showErrorMessage('No active editor found.');
+      return;
+    }
+
+    this.selectionContext = selection;
+    console.log("Code worked")
+    // Get selected text
+    const selectedText = editor.document.getText(selection);
+    this.completeText = editor.document.getText();
+    this.currentFileName = editor.document.fileName;
+
+    this.aiChatpanel.insertMessagesToChat(
+      this.currentFileName,
+      selectedText,
+      this.completeText
+    )
+
+      // Send data through SocketModule
+
+
+    // Show message to user
+    if (editor) {
+      const position = editor.selection.start; // You can also use editor.selection.start
+      editor.selection = new vscode.Selection(position, position);
+    }
+
+  }
+
 }
+
+

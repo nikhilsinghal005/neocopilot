@@ -34,11 +34,10 @@ export function initializeAppFunctions(
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   primaryViewProvider.sendAuthStatus(true)
 
-  const documentSelector: vscode.DocumentSelector = { scheme: 'file', language: '*' };
-  new  CodeSelectionCommandHandler(context);
+  new  CodeSelectionCommandHandler(context, primaryViewProvider);
 
  // Hover Provider 
- const hoverProvider = new FloatingHoverProvider();
+ const hoverProvider = new FloatingHoverProvider(primaryViewProvider);
  const hoverDisposable = vscode.languages.registerHoverProvider(
      { scheme: 'file', language: '*' }, // Adjust languages as needed
      hoverProvider

@@ -332,6 +332,24 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
 
+
+  public insertMessagesToChat(inputFile: string, inputText: string, completeText: string): void {
+    console.log("insertMessagesToChat called")
+    console.log("inputFile", inputFile)
+    console.log("inputText", inputText)
+    console.log("completeText", completeText)
+    //
+    // Save the logged-in status in workspace state
+    this.activePanels[0].webview.postMessage(
+      { 
+        command: 'insert_messages', 
+        fileName: inputFile,
+        inputText: inputText,
+        completeCode: completeText
+       }
+    );
+  }
+
   /**
    * Helper method to post a message to a specific webview.
    * @param webviewView - The webview to post the message to.
@@ -355,6 +373,9 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
 
+
+
+  
   /**
    * Generates the HTML content for the webview.
    * @param webview - The webview instance.
