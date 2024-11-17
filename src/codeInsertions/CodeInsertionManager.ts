@@ -236,11 +236,8 @@ public rejectInsertion(id: string): void {
       const patch = createPatch('file', oldText, updatedText, '', '', {
         context: 3  // Number of context lines
       });
-      console.log(patch)
       let patchList: string[] = patch.split('\n');
-      console.log(patchList)
       patchList = patchList.slice(5, patchList.length - 2)
-      console.log(patchList)
 
       const workspaceEdit = new vscode.WorkspaceEdit();
       const decorationsToApply = {
