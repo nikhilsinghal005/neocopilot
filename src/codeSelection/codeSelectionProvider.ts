@@ -159,7 +159,6 @@ export class CodeSelectionProvider implements vscode.CodeLensProvider {
     //   arguments: [selection]
     // });
     // codeLenses.push(addCommentLens);
-
     return codeLenses;
   }
 

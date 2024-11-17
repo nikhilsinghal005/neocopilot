@@ -4,9 +4,8 @@ import { CompletionProviderModule } from './codeCompletion/completionProviderMod
 import { StatusBarManager } from './StatusBarManager';
 import { AiChatPanel } from './chatProvider/aiChatPanel';
 import { AuthManager } from './authManager/authManager';
-import { CodeSelectionProvider } from './codeSelection/codeSelectionProvider';
 import { CodeSelectionCommandHandler } from './codeSelection/codeSelectionCommand';
-
+import { FloatingHoverProvider } from './codeSelection/codeSelectionOverlayPanel'; // Adjust the path as necessary
 
 export function initializeAppFunctions(
   vscodeEventsModule: VscodeEventsModule,
@@ -35,11 +34,16 @@ export function initializeAppFunctions(
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   primaryViewProvider.sendAuthStatus(true)
 
-  const codeLensProvider = new CodeSelectionProvider();
   const documentSelector: vscode.DocumentSelector = { scheme: 'file', language: '*' };
-  vscode.languages.registerCodeLensProvider(documentSelector, codeLensProvider);
   new  CodeSelectionCommandHandler(context);
 
+ // Hover Provider 
+ const hoverProvider = new FloatingHoverProvider();
+ const hoverDisposable = vscode.languages.registerHoverProvider(
+     { scheme: 'file', language: '*' }, // Adjust languages as needed
+     hoverProvider
+ );
+ context.subscriptions.push(hoverDisposable);
 }
 
 export function initializeNonLoginRequiredAppFunctions(
@@ -57,11 +61,4 @@ export function initializeNonLoginRequiredAppFunctions(
       primaryViewProvider
     )
   );
-  // const secondaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.secondaryViewType);
-  // context.subscriptions.push(
-  //   vscode.window.registerWebviewViewProvider(
-  //     AiChatPanel.secondaryViewType,
-  //     secondaryViewProvider
-  //   )
-  // );
 }

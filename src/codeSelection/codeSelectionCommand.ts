@@ -4,7 +4,7 @@ import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
 import { v4 as uuidv4 } from 'uuid';
 
 export enum CodeSelectionCommand {
-  CODE_FACTOR = 'extension.codeFactor',
+  CODE_FACTOR = 'extension.neoEdit',
   ADD_COMMENT = 'extension.addComment',
 }
 
@@ -37,22 +37,34 @@ export class CodeSelectionCommandHandler {
    */
   private registerCommands() {
     this.context.subscriptions.push(
-      vscode.commands.registerCommand(
-        CodeSelectionCommand.CODE_FACTOR, 
-        this.handleCodeFactorCommand.bind(this)
-      ),
-      // vscode.commands.registerCommand(
-      //   CodeSelectionCommand.ADD_COMMENT, 
-      //   this.handleAddCommentCommand.bind(this)
-      // )
+        vscode.commands.registerCommand(
+            CodeSelectionCommand.CODE_FACTOR,
+            () => {
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No active editor found.');
+                    return;
+                }
+
+                const selection = editor.selection;
+                if (selection.isEmpty) {
+                    vscode.window.showErrorMessage('No text selected.');
+                    return;
+                }
+
+                this.handleCodeFactorCommand(selection);
+            }
+        )
     );
 
     this.attachSocketListeners();
     this.socketModule.socket?.on('connect', () => {
-      // console.log("Socket reconnected. Re-attaching listeners.");
-      this.attachSocketListeners();
+        // Re-attach listeners on socket reconnect
+        this.attachSocketListeners();
     });
-  }
+}
+
+
 
   private getLineSeparator(): string {
     const editor = vscode.window.activeTextEditor;
@@ -74,17 +86,18 @@ export class CodeSelectionCommandHandler {
         } else {
           if (this.selectionContext){
           // Clear the selection in the active editor
-
+            console.log("Code Factored.");
+            console.log("Updated text: " + this.updatedtext);
             this.codeInsertionManager.insertSnippetOnSelection(
               this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.nextLineCharacter),
               data.id, 
               this.selectionContext
             );
-            const editor = vscode.window.activeTextEditor;
-            if (editor) {
-              const position = editor.selection.start; // You can also use editor.selection.start
-              editor.selection = new vscode.Selection(position, position);
-            }
+            // const editor = vscode.window.activeTextEditor;
+            // if (editor) {
+            //   const position = editor.selection.start; // You can also use editor.selection.start
+            //   editor.selection = new vscode.Selection(position, position);
+            // }
             this.updatedtext = "";
             this.selectionContext = undefined;
             this.currentSelectionDetails = null;
@@ -132,9 +145,6 @@ export class CodeSelectionCommandHandler {
       this.nextLineCharacter = this.getLineSeparator()
       this.uniqueRequestId = uuidv4();
       this.uniqueChatId = uuidv4();
-      console.log("Sending editor code refactor request.");
-      console.log("Next line character:", JSON.stringify(this.nextLineCharacter))
-      console.log("Selected text:", selectedText)
 
       this.socketModule.sendEditorCodeRefactor(
         this.uniqueRequestId,
@@ -146,9 +156,11 @@ export class CodeSelectionCommandHandler {
       );
 
       // Show message to user
-      vscode.window.showInformationMessage(
-        `You entered: "${userInput}" for the selected code: "${selectedText}"`
-      );
+            const editor = vscode.window.activeTextEditor;
+            if (editor) {
+              const position = editor.selection.start; // You can also use editor.selection.start
+              editor.selection = new vscode.Selection(position, position);
+            }
     } else {
       vscode.window.showInformationMessage('No input provided.');
     }
