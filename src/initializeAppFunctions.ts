@@ -6,11 +6,14 @@ import { AiChatPanel } from './chatProvider/aiChatPanel';
 import { AuthManager } from './authManager/authManager';
 import { CodeSelectionCommandHandler } from './codeSelection/codeSelectionCommand';
 import { FloatingHoverProvider } from './codeSelection/codeSelectionOverlayPanel'; // Adjust the path as necessary
+import { SocketModule } from './socketModule';
+import { SelectionContext } from './codeSelection/selectionContext'
 
 export function initializeAppFunctions(
   vscodeEventsModule: VscodeEventsModule,
   completionProviderModule: CompletionProviderModule,
   authManager: AuthManager,
+  socketModule: SocketModule,
   context: vscode.ExtensionContext
 ): void {
   console.info("%cNeo Copilot: Initializing functinalities", 'color: green;')
@@ -34,15 +37,17 @@ export function initializeAppFunctions(
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   primaryViewProvider.sendAuthStatus(true)
 
-  new  CodeSelectionCommandHandler(context, primaryViewProvider);
-
+  const selectionContext = new SelectionContext();
  // Hover Provider 
- const hoverProvider = new FloatingHoverProvider(primaryViewProvider);
+ const hoverProvider = new FloatingHoverProvider(primaryViewProvider, socketModule, selectionContext);
  const hoverDisposable = vscode.languages.registerHoverProvider(
      { scheme: 'file', language: '*' }, // Adjust languages as needed
      hoverProvider
  );
  context.subscriptions.push(hoverDisposable);
+
+ new  CodeSelectionCommandHandler(context, primaryViewProvider, selectionContext);
+
 }
 
 export function initializeNonLoginRequiredAppFunctions(

@@ -3,16 +3,13 @@ import { SocketModule } from '../socketModule';
 import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
 import { v4 as uuidv4 } from 'uuid';
 import { AiChatPanel } from '../chatProvider/aiChatPanel';
-
-export enum CodeSelectionCommand {
-  CODE_FACTOR = 'extension.neoEdit',
-  CHAT_INSERT = 'extension.neoChatInsert',
-}
+import { CodeSelectionCommand } from './selectionContext';
+import { SelectionContext } from './selectionContext';
 
 export class CodeSelectionCommandHandler {
   private socketModule: SocketModule;
   private codeInsertionManager: CodeInsertionManager;
-  private selectionContext: vscode.Selection | undefined;
+  private currentSelectionContext: vscode.Selection | undefined;
   private completeText: string = "";
   private updatedtext: string = "";
   private nextLineCharacter: string = "";
@@ -20,6 +17,7 @@ export class CodeSelectionCommandHandler {
   private uniqueChatId: string = "";
   private aiChatpanel: AiChatPanel;
   private currentFileName: string = "";
+  private selectionContext: SelectionContext;
 
   private currentSelectionDetails: {
     selectedCode: string;
@@ -29,9 +27,10 @@ export class CodeSelectionCommandHandler {
     endCharacter: number;
   } | null = null; // Variable to store selection details
 
-  constructor(private context: vscode.ExtensionContext, aiChatpanel: AiChatPanel) {
+  constructor(private context: vscode.ExtensionContext, aiChatpanel: AiChatPanel, selectionContext: SelectionContext) {
     this.socketModule = SocketModule.getInstance();
     this.codeInsertionManager = CodeInsertionManager.getInstance(context);
+    this.selectionContext = selectionContext;
     this.aiChatpanel = aiChatpanel;
     this.registerCommands();
   }
@@ -51,11 +50,11 @@ export class CodeSelectionCommandHandler {
                 }
 
                 const selection = editor.selection;
-                if (selection.isEmpty) {
-                    vscode.window.showErrorMessage('No text selected.');
-                    return;
-                }
-
+                // if (selection.isEmpty) {
+                //     vscode.window.showErrorMessage('No text selected.');
+                //     return;
+                // }
+                this.selectionContext.clearHoverCache();
                 this.handleCodeFactorCommand(selection);
             }
         ),
@@ -73,7 +72,7 @@ export class CodeSelectionCommandHandler {
                   vscode.window.showErrorMessage('No text selected.');
                   return;
               }
-
+              this.selectionContext.clearHoverCache();
               this.handleChatInsertCommand(selection);
           }
       )
@@ -106,14 +105,14 @@ export class CodeSelectionCommandHandler {
         if (!data.isComplete) {
           this.updatedtext = this.updatedtext + data.response;
         } else {
-          if (this.selectionContext){
+          if (this.currentSelectionContext){
           // Clear the selection in the active editor
             console.log("Code Factored.");
             console.log("Updated text: " + this.updatedtext);
             this.codeInsertionManager.insertSnippetOnSelection(
               this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.nextLineCharacter),
               data.id, 
-              this.selectionContext
+              this.currentSelectionContext
             );
             // const editor = vscode.window.activeTextEditor;
             // if (editor) {
@@ -121,7 +120,7 @@ export class CodeSelectionCommandHandler {
             //   editor.selection = new vscode.Selection(position, position);
             // }
             this.updatedtext = "";
-            this.selectionContext = undefined;
+            this.currentSelectionContext = undefined;
             this.currentSelectionDetails = null;
           }
         }
@@ -141,7 +140,7 @@ export class CodeSelectionCommandHandler {
       return;
     }
 
-    this.selectionContext = selection;
+    this.currentSelectionContext = selection;
 
     // Get selected text
     const selectedText = editor.document.getText(selection);
@@ -198,7 +197,7 @@ export class CodeSelectionCommandHandler {
       return;
     }
 
-    this.selectionContext = selection;
+    this.currentSelectionContext = selection;
     console.log("Code worked")
     // Get selected text
     const selectedText = editor.document.getText(selection);

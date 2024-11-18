@@ -1,15 +1,35 @@
 import * as vscode from 'vscode';
-import { CodeSelectionCommand } from './codeSelectionCommand';
 import { AiChatPanel } from '../chatProvider/aiChatPanel';
+import { SocketModule } from '../socketModule';
+import { CodeSelectionCommand } from './selectionContext';
+import { SelectionContext } from './selectionContext';
 
 export class FloatingHoverProvider implements vscode.HoverProvider {
-    private hoverCache: Map<string, vscode.Hover> = new Map();
     private debounceTimeout: NodeJS.Timeout | null = null;
     private lastSelection: vscode.Selection | null = null;
     private aiChatpanel: AiChatPanel;
+    private decorationType: vscode.TextEditorDecorationType;
+    private socketModule: SocketModule;
+    private decorationTimeout: NodeJS.Timeout | null = null;
+    private selectionContext: SelectionContext;
 
-    constructor(aiChatpanel: AiChatPanel) {
+    // Constructor
+    constructor(aiChatpanel: AiChatPanel, socketModule: SocketModule, selectionContext: SelectionContext) {
         this.aiChatpanel = aiChatpanel;
+        this.socketModule = socketModule;
+        this.selectionContext = selectionContext;
+
+        // Define the decoration type
+        this.decorationType = vscode.window.createTextEditorDecorationType({
+            after: {
+                contentText: 'NEO: Ctrl+O for chat and Ctrl+I for Inline Edit',
+                color: new vscode.ThemeColor('editorLineNumber.foreground'),
+                margin: '0 0 0 0',
+            },
+        });
+
+        // Listen for cursor position changes
+        vscode.window.onDidChangeTextEditorSelection((e) => this.onCursorPositionChanged(e));
     }
 
     public provideHover(
@@ -32,23 +52,21 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
             const selectedText = document.getText(selection);
 
             // Return cached hover if available
-            if (this.hoverCache.has(selectedText)) {
-                return this.hoverCache.get(selectedText);
+            if (this.selectionContext.hoverCache.has(selectedText)) {
+                return this.selectionContext.hoverCache.get(selectedText);
             }
 
             // Handle switching between selections with a delay
             const delay = this.lastSelection?.isEqual(selection) ? 0 : 2000;
 
             const hover = this.createFixedHover(selection, selectedText, delay);
-            this.hoverCache.set(selectedText, hover);
+            this.selectionContext.hoverCache.set(selectedText, hover);
 
             // Update last selection
             this.lastSelection = selection;
             return hover;
         }
 
-        // Clear decorations when not hovering over selection
-        this.lastSelection = null;
         return undefined;
     }
 
@@ -68,10 +86,49 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
 
         // Add delay if necessary
         if (delay > 0) {
-            setTimeout(() => {}, delay);
+            setTimeout(() => { }, delay);
         }
 
         return new vscode.Hover(markdownContent, selection);
     }
 
+    private addDecoration(editor: vscode.TextEditor, position: vscode.Position) {
+        // Clear any existing timeout to prevent overlapping timers
+        if (this.decorationTimeout) {
+            clearTimeout(this.decorationTimeout);
+        }
+
+        // Add a delay before showing the decoration
+        this.decorationTimeout = setTimeout(() => {
+            const line = editor.document.lineAt(position.line);
+            if (line.isEmptyOrWhitespace && this.socketModule.suggestion === "" && !this.socketModule.predictionRequestInProgress) {
+                const range = new vscode.Range(line.range.start, line.range.start);
+                editor.setDecorations(this.decorationType, [range]);
+            }
+        }, 1500); // 1.5-second delay before showing the decoration
+    }
+
+    private clearDecorations(editor: vscode.TextEditor) {
+        // Remove decorations immediately without any delay
+        if (this.decorationTimeout) {
+            clearTimeout(this.decorationTimeout);
+        }
+        editor.setDecorations(this.decorationType, []);
+    }
+
+    private onCursorPositionChanged(e: vscode.TextEditorSelectionChangeEvent) {
+        const editor = e.textEditor;
+        const position = editor.selection.active;
+
+        // Clear previous decorations immediately
+        this.clearDecorations(editor);
+
+        if (position.character === 0) {
+            const line = editor.document.lineAt(position.line);
+            if (line.isEmptyOrWhitespace && this.socketModule.suggestion === "" && !this.socketModule.predictionRequestInProgress) {
+                // Add decoration if the cursor is at the beginning of an empty line
+                this.addDecoration(editor, position);
+            }
+        }
+    }
 }

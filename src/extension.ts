@@ -34,7 +34,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const socketConnection: Socket | null = await socketModule.connect(currentVersion, context);
     
     if (socketConnection){
-      initializeAppFunctions(vscodeEventsModule, completionProviderModule, authManager,  context);
+      initializeAppFunctions(
+        vscodeEventsModule, 
+        completionProviderModule, 
+        authManager,  
+        socketModule,
+        context
+      );
     }else{
       showLoginNotification();
     }
