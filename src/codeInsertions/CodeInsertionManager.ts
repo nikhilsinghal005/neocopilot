@@ -4,8 +4,7 @@ import { CodeInsertionCodeLensProvider } from './CodeInsertionCodeLensProvider';
 import { insertTextAtCursorFunction } from './handleInsertionTypes/insertAtCursor';
 import { insertSnippetAtCursorFunction} from './handleInsertionTypes/inserSnippetAtCursor';
 import {insertTextIntoTerminalFunction} from './handleInsertionTypes/insertCommandTerminal';
-import * as Diff from 'diff'; // Import jsdiff
-import { diffLines, Change, createPatch } from 'diff';
+import { createPatch } from 'diff';
 
 /**
  * Represents an insertion in the editor.
@@ -234,11 +233,11 @@ public rejectInsertion(id: string): void {
 
       const oldText = editor.document.getText(selectionContext);
       const patch = createPatch('file', oldText, updatedText, '', '', {
-        context: 3  // Number of context lines
+        context: 100  // Number of context lines
       });
       let patchList: string[] = patch.split('\n');
       patchList = patchList.slice(5, patchList.length - 2)
-
+      patchList = patchList.filter(line => !/^@@.*@@$/.test(line));
       const workspaceEdit = new vscode.WorkspaceEdit();
       const decorationsToApply = {
           deleted: [] as vscode.Range[],

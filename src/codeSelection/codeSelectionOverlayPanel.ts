@@ -8,7 +8,6 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
     private debounceTimeout: NodeJS.Timeout | null = null;
     private lastSelection: vscode.Selection | null = null;
     private aiChatpanel: AiChatPanel;
-    private decorationType: vscode.TextEditorDecorationType;
     private socketModule: SocketModule;
     private decorationTimeout: NodeJS.Timeout | null = null;
     private selectionContext: SelectionContext;
@@ -20,7 +19,7 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
         this.selectionContext = selectionContext;
 
         // Define the decoration type
-        this.decorationType = vscode.window.createTextEditorDecorationType({
+        this.selectionContext.decorationType = vscode.window.createTextEditorDecorationType({
             after: {
                 contentText: 'NEO: Ctrl+O for chat and Ctrl+I for Inline Edit',
                 color: new vscode.ThemeColor('editorLineNumber.foreground'),
@@ -58,7 +57,7 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
 
             // Handle switching between selections with a delay
             const delay = this.lastSelection?.isEqual(selection) ? 0 : 2000;
-
+            editor.setDecorations(this.selectionContext.decorationType, []);
             const hover = this.createFixedHover(selection, selectedText, delay);
             this.selectionContext.hoverCache.set(selectedText, hover);
 
@@ -103,9 +102,9 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
             const line = editor.document.lineAt(position.line);
             if (line.isEmptyOrWhitespace && this.socketModule.suggestion === "" && !this.socketModule.predictionRequestInProgress) {
                 const range = new vscode.Range(line.range.start, line.range.start);
-                editor.setDecorations(this.decorationType, [range]);
+                editor.setDecorations(this.selectionContext.decorationType, [range]);
             }
-        }, 1500); // 1.5-second delay before showing the decoration
+        }, 2500); // 1.5-second delay before showing the decoration
     }
 
     private clearDecorations(editor: vscode.TextEditor) {
@@ -113,7 +112,7 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
         if (this.decorationTimeout) {
             clearTimeout(this.decorationTimeout);
         }
-        editor.setDecorations(this.decorationType, []);
+        editor.setDecorations(this.selectionContext.decorationType, []);
     }
 
     private onCursorPositionChanged(e: vscode.TextEditorSelectionChangeEvent) {

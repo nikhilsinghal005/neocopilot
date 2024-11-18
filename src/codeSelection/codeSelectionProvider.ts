@@ -1,6 +1,6 @@
 // src/codeDelection/codeSelectionProvider.ts
 import * as vscode from 'vscode';
-import { CodeSelectionCommand } from './codeSelectionCommand';
+import { CodeSelectionCommand } from './selectionContext';
 
 export class CodeSelectionProvider implements vscode.CodeLensProvider {
   private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();

@@ -250,7 +250,17 @@ export class SocketModule {
     // });
   }
 
-  public sendEditorCodeRefactor(uniqueId: string, uniqueChatId: string, userInput: string, selectedText: string, completeText: string, nextLineCharacter: string) {
+  public sendEditorCodeRefactor(
+    uniqueId: string, 
+    uniqueChatId: string, 
+    userInput: string, 
+    selectedText: string,
+    beforeText: string,
+    afterText: string,
+    completeText: string, 
+    nextLineCharacter: string,
+    actionType: string
+  ) {
     console.log("Message to scoket from backend")
     this.predictionRequestInProgress = true;
     if (this.socket) {
@@ -259,10 +269,13 @@ export class SocketModule {
         chatId: uniqueChatId,
         userInput: userInput,
         selectedText: selectedText,
+        beforeText: beforeText,
+        afterText: afterText,
         completeText: completeText,
+        nextLineCharacter: nextLineCharacter,
+        actionType: actionType,
         appVersion: this.currentVersion,
-        userEmail: this.email,
-        nextLineCharacter: nextLineCharacter
+        userEmail: this.email
       });
     }
   }

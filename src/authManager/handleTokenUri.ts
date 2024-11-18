@@ -45,7 +45,7 @@ export async function handleTokenUri(
                         showTextNotification(`Login Successful: Happy Coding ${userProfile.name}`, 10);
                         const currentVersion = context.extension.packageJSON.version;
                         const socketConnection: Socket | null = await socketModule.connect(currentVersion, context);
-                        initializeAppFunctions(vscodeEventsModule, completionProviderModule, authManager, context);
+                        initializeAppFunctions(vscodeEventsModule, completionProviderModule, authManager, socketModule, context);
                         
 
                     } else {

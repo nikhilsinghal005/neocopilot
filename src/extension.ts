@@ -7,7 +7,6 @@ import { CompletionProviderModule } from './codeCompletion/completionProviderMod
 import { StatusBarManager } from './StatusBarManager';
 import { versionConfig } from './versionConfig';
 import { showLoginNotification } from './utilities/statusBarNotifications/showLoginNotification';
-import { LOGIN_REDIRECT_URL } from './config';
 import { Socket } from 'socket.io-client';
 import { initializeAppFunctions, initializeNonLoginRequiredAppFunctions } from './initializeAppFunctions';
 import { AuthManager } from './authManager/authManager';

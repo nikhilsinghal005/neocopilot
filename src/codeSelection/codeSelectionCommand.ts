@@ -50,10 +50,13 @@ export class CodeSelectionCommandHandler {
                 }
 
                 const selection = editor.selection;
-                // if (selection.isEmpty) {
-                //     vscode.window.showErrorMessage('No text selected.');
-                //     return;
-                // }
+                const selectedText = editor.document.getText(selection).trim();
+                editor.setDecorations(this.selectionContext.decorationType, []);
+                if (selection.isEmpty && selectedText.length === 0) {
+                  // console.log("No text selected.");
+                  this.handleCodeFactorCommandForNoSelection(selection);
+                  return;
+                }
                 this.selectionContext.clearHoverCache();
                 this.handleCodeFactorCommand(selection);
             }
@@ -66,7 +69,7 @@ export class CodeSelectionCommandHandler {
                   vscode.window.showErrorMessage('No active editor found.');
                   return;
               }
-
+              editor.setDecorations(this.selectionContext.decorationType, []);
               const selection = editor.selection;
               if (selection.isEmpty) {
                   vscode.window.showErrorMessage('No text selected.');
@@ -107,13 +110,14 @@ export class CodeSelectionCommandHandler {
         } else {
           if (this.currentSelectionContext){
           // Clear the selection in the active editor
-            console.log("Code Factored.");
-            console.log("Updated text: " + this.updatedtext);
+            // console.log("Code Factored.");
+            // console.log("Updated text: " + this.updatedtext);
             this.codeInsertionManager.insertSnippetOnSelection(
               this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.nextLineCharacter),
               data.id, 
               this.currentSelectionContext
             );
+            console.log("Input from API", this.updatedtext)
             // const editor = vscode.window.activeTextEditor;
             // if (editor) {
             //   const position = editor.selection.start; // You can also use editor.selection.start
@@ -172,8 +176,11 @@ export class CodeSelectionCommandHandler {
         this.uniqueChatId,
         userInput,
         selectedText, 
+        "",
+        "",
         this.completeText,
-        this.nextLineCharacter
+        this.nextLineCharacter,
+        "select_action"
       );
 
       // Show message to user
@@ -187,6 +194,66 @@ export class CodeSelectionCommandHandler {
     }
   }
 
+/**
+ * Handles the "Code Factor" command.
+ */
+private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    vscode.window.showErrorMessage('No active editor found.');
+    return;
+  }
+
+  
+  const position = editor.selection.active; // Get the current cursor position
+  const currentLineText = editor.document.lineAt(position.line).text; // Get the line where the cursor is currently positioned
+
+  // Check if the current line is empty after trimming
+  if (currentLineText.trim() === '') {
+    const documentText = editor.document.getText();
+    const textBeforeLine = documentText.substring(0, editor.document.offsetAt(new vscode.Position(position.line, 0)));
+    const textAfterLine = documentText.substring(editor.document.offsetAt(new vscode.Position(position.line + 1, 0)));
+
+    this.currentSelectionContext = selection;
+    // console.log("currentSelectionContext: " + this.currentSelectionContext);
+    // console.log("textBeforeLine: " + textBeforeLine);
+    // console.log("textAfterLine: " + textAfterLine);
+
+    // Prompt user for input
+    const userInput = await vscode.window.showInputBox({
+      prompt: 'Enter the purpose or label for the text',
+      placeHolder: 'e.g., Refactor, Review, Debug',
+    });
+
+    if (userInput) {
+      // Send data through SocketModule
+      this.nextLineCharacter = this.getLineSeparator();
+      this.uniqueRequestId = uuidv4();
+      this.uniqueChatId = uuidv4();
+
+      this.socketModule.sendEditorCodeRefactor(
+        this.uniqueRequestId,
+        this.uniqueChatId,
+        userInput,
+        "def",
+        textBeforeLine, // Text before the line
+        textAfterLine,  // Text after the line
+        textBeforeLine + this.nextLineCharacter + textAfterLine,
+        this.nextLineCharacter,
+        "no_select_action"
+      );
+    } else {
+      vscode.window.showInformationMessage('No input provided.');
+    }
+  } else {
+    // If the current line is not empty
+    vscode.window.showInformationMessage(
+      'The current line is not empty. Select some text or move to an empty line to use the edit functionality.'
+    );
+  }
+}
+  
+
   /**
    * Handles the "Code Factor" command.
    */
@@ -198,7 +265,7 @@ export class CodeSelectionCommandHandler {
     }
 
     this.currentSelectionContext = selection;
-    console.log("Code worked")
+    // console.log("Code worked")
     // Get selected text
     const selectedText = editor.document.getText(selection);
     this.completeText = editor.document.getText();
