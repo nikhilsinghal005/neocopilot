@@ -12,7 +12,8 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
     private decorationTimeout: NodeJS.Timeout | null = null;
     private selectionContext: SelectionContext;
 
-    // Constructor
+    private lastHoverPosition: vscode.Position | null = null;
+
     constructor(aiChatpanel: AiChatPanel, socketModule: SocketModule, selectionContext: SelectionContext) {
         this.aiChatpanel = aiChatpanel;
         this.socketModule = socketModule;
@@ -35,60 +36,86 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
         document: vscode.TextDocument,
         position: vscode.Position,
         token: vscode.CancellationToken
-    ): vscode.Hover | undefined {
+    ): vscode.ProviderResult<vscode.Hover> {
         const editor = vscode.window.activeTextEditor;
 
         if (!editor || editor.document.uri.toString() !== document.uri.toString()) {
             return undefined;
         }
 
-        // Find the selection containing the hover position
-        for (const selection of editor.selections) {
-            if (selection.isEmpty || !selection.contains(position)) {
-                continue;
-            }
-
-            const selectedText = document.getText(selection);
-
-            // Return cached hover if available
-            if (this.selectionContext.hoverCache.has(selectedText)) {
-                return this.selectionContext.hoverCache.get(selectedText);
-            }
-
-            // Handle switching between selections with a delay
-            const delay = this.lastSelection?.isEqual(selection) ? 0 : 2000;
-            editor.setDecorations(this.selectionContext.decorationType, []);
-            const hover = this.createFixedHover(selection, selectedText, delay);
-            this.selectionContext.hoverCache.set(selectedText, hover);
-
-            // Update last selection
-            this.lastSelection = selection;
-            return hover;
+        // Clear the debounce timeout if a new request comes in
+        if (this.debounceTimeout) {
+            clearTimeout(this.debounceTimeout);
         }
 
-        return undefined;
+        // Only update hover if the position has changed
+        if (this.lastHoverPosition && this.lastHoverPosition.isEqual(position)) {
+            return undefined;
+        }
+
+        return new Promise<vscode.Hover | undefined>((resolve) => {
+            this.debounceTimeout = setTimeout(() => {
+                this.lastHoverPosition = position;
+
+                // Find the selection containing the hover position
+                for (const selection of editor.selections) {
+                    // Expand the selection range by 3 lines above and below
+                    const expandedRange = this.expandRange(selection, document);
+
+                    if (!expandedRange.contains(position)) {
+                        continue;
+                    }
+
+                    const selectedText = document.getText(selection);
+
+                    // Return cached hover if available
+                    if (this.selectionContext.hoverCache.has(selectedText)) {
+                        resolve(this.selectionContext.hoverCache.get(selectedText));
+                        return;
+                    }
+
+                    // Create the hover
+                    editor.setDecorations(this.selectionContext.decorationType, []);
+
+                    const hover = this.createFixedHover(expandedRange, selectedText);
+                    this.selectionContext.hoverCache.set(selectedText, hover);
+                    this.lastSelection = selection;
+
+                    resolve(hover);
+                    return;
+                }
+
+                resolve(undefined); // No valid hover found
+            }, 1000); // 1-second delay
+        });
     }
 
-    private createFixedHover(
-        selection: vscode.Selection,
-        selectedText: string,
-        delay: number
-    ): vscode.Hover {
+    private expandRange(selection: vscode.Selection, document: vscode.TextDocument): vscode.Range {
+        // Calculate the expanded range
+        const startLine = Math.max(0, selection.start.line - 3);
+        const endLine = Math.min(document.lineCount - 1, selection.end.line + 3);
+
+        // Extend to infinity on the same line
+        const startChar = 0;
+        const endChar = Number.MAX_SAFE_INTEGER;
+
+        return new vscode.Range(
+            new vscode.Position(startLine, startChar),
+            new vscode.Position(endLine, endChar)
+        );
+    }
+
+    private createFixedHover(expandedRange: vscode.Range, selectedText: string): vscode.Hover {
         const markdownContent = new vscode.MarkdownString();
 
         // Add command buttons
         markdownContent.appendMarkdown(
-            `[Insert in Chat](command:${CodeSelectionCommand.CHAT_INSERT} "Talk to Code") | ` +
-            `[Edit](command:${CodeSelectionCommand.CODE_FACTOR} "Edit Code")`
+            `[Insert in Chat(Ctrl+O)](command:${CodeSelectionCommand.CHAT_INSERT} "Talk to Code") | ` +
+            `[Edit Inline(Ctrl+I)](command:${CodeSelectionCommand.CODE_FACTOR} "Edit Code")`
         );
         markdownContent.isTrusted = true;
 
-        // Add delay if necessary
-        if (delay > 0) {
-            setTimeout(() => { }, delay);
-        }
-
-        return new vscode.Hover(markdownContent, selection);
+        return new vscode.Hover(markdownContent, expandedRange);
     }
 
     private addDecoration(editor: vscode.TextEditor, position: vscode.Position) {

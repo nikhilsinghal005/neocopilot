@@ -342,14 +342,27 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     // add sleep time
     await new Promise(resolve => setTimeout(resolve, 1000));
     // Save the logged-in status in workspace state
-    this.activePanels[0].webview.postMessage(
-      { 
-        command: 'insert_messages', 
-        fileName: inputFile,
-        inputText: inputText,
-        completeCode: completeText
-       }
-    );
+    if (this.activePanels.length > 0){
+      this.activePanels[0].webview.postMessage(
+        { 
+          command: 'insert_messages', 
+          fileName: inputFile,
+          inputText: inputText,
+          completeCode: completeText
+         }
+      );
+    } else {
+      await new Promise(resolve => setTimeout(resolve, 4000));
+      this.activePanels[0].webview.postMessage(
+        { 
+          command: 'insert_messages', 
+          fileName: inputFile,
+          inputText: inputText,
+          completeCode: completeText
+         }
+      );
+    }
+
   }
 
   /**
