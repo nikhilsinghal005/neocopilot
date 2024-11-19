@@ -14,6 +14,11 @@ import { handleTokenUri } from './authManager/handleTokenUri';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 
+
+  const config = vscode.workspace.getConfiguration('editor.hover');
+  config.update('delay', 500, vscode.ConfigurationTarget.Global)
+
+  // Initialize the modules
   const completionProviderModule = new CompletionProviderModule();
   versionConfig.initialize(context);
   const authManager = new AuthManager(context);
