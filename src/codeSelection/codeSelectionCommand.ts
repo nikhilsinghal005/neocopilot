@@ -42,7 +42,7 @@ export class CodeSelectionCommandHandler {
     this.context.subscriptions.push(
         vscode.commands.registerCommand(
             CodeSelectionCommand.CODE_FACTOR,
-            () => {
+            async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
                     vscode.window.showErrorMessage('No active editor found.');
@@ -52,18 +52,21 @@ export class CodeSelectionCommandHandler {
                 const selection = editor.selection;
                 const selectedText = editor.document.getText(selection).trim();
                 editor.setDecorations(this.selectionContext.decorationType, []);
+                this.selectionContext.clearHoverCache();
+                this.selectionContext.clearHover(editor);
                 if (selection.isEmpty && selectedText.length === 0) {
                   // console.log("No text selected.");
                   this.handleCodeFactorCommandForNoSelection(selection);
                   return;
                 }
-                this.selectionContext.clearHoverCache();
-                this.handleCodeFactorCommand(selection);
+                await this.handleCodeFactorCommand(selection);
+                vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
+
             }
         ),
         vscode.commands.registerCommand(
           CodeSelectionCommand.CHAT_INSERT,
-          () => {
+          async () => {
               const editor = vscode.window.activeTextEditor;
               if (!editor) {
                   vscode.window.showErrorMessage('No active editor found.');
@@ -76,7 +79,9 @@ export class CodeSelectionCommandHandler {
                   return;
               }
               this.selectionContext.clearHoverCache();
-              this.handleChatInsertCommand(selection);
+              this.selectionContext.clearHover(editor);
+              await this.handleChatInsertCommand(selection);
+              vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
           }
       )
     );
@@ -87,8 +92,6 @@ export class CodeSelectionCommandHandler {
         this.attachSocketListeners();
     });
 }
-
-
 
   private getLineSeparator(): string {
     const editor = vscode.window.activeTextEditor;
@@ -117,12 +120,10 @@ export class CodeSelectionCommandHandler {
               data.id, 
               this.currentSelectionContext
             );
+            // this.progressSessionManager.simulateStep(4, 1000, "Process Finished")
+            // this.progressSessionManager.complete();
+
             console.log("Input from API", this.updatedtext)
-            // const editor = vscode.window.activeTextEditor;
-            // if (editor) {
-            //   const position = editor.selection.start; // You can also use editor.selection.start
-            //   editor.selection = new vscode.Selection(position, position);
-            // }
             this.updatedtext = "";
             this.currentSelectionContext = undefined;
             this.currentSelectionDetails = null;
@@ -277,9 +278,7 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
       this.completeText
     )
 
-      // Send data through SocketModule
-
-
+    // Send data through SocketModule
     // Show message to user
     if (editor) {
       const position = editor.selection.start; // You can also use editor.selection.start
