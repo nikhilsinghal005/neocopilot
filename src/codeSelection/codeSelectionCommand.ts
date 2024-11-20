@@ -114,40 +114,45 @@ export class CodeSelectionCommandHandler {
 
 
   private getLineSeparator(): string {
+
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       return '\n'; // Default to LF if no editor is active
     }
-  
     const eol = editor.document.eol;
     return eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
   }
   
   private attachSocketListeners(): void {
     if (this.socketModule.socket?.listeners('recieve_editor_code_refactor').length === 0) {
+
       // ##### Add check for verify chat id's and response.
       this.socketModule.socket?.on('recieve_editor_code_refactor', (data: any) => {
+        this.updatedtext = this.updatedtext + data.response;
 
-        if (!data.isComplete) {
-          this.updatedtext = this.updatedtext + data.response;
-        } else {
-          if (this.currentSelectionContext){
-          // Clear the selection in the active editor
-            // console.log("Code Factored.");
-            // console.log("Updated text: " + this.updatedtext);
-            this.codeInsertionManager.insertSnippetOnSelection(
-              this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.nextLineCharacter),
-              data.id, 
-              this.currentSelectionContext
-            );
-            // this.progressSessionManager.simulateStep(4, 1000, "Process Finished")
-            // this.progressSessionManager.complete();
+        if (data.isLineComplete) {
+          console.log("Line complete");
+          const tempText: string = this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.nextLineCharacter);
+          this.codeInsertionManager.insertSnippetLineByLine(
+            tempText,
+            data.id,
+            this.currentSelectionContext,
+            this.nextLineCharacter,
+            false
+          );
+          this.updatedtext = "";
+        }
 
-            console.log("Input from API", this.updatedtext)
-            this.updatedtext = "";
-            this.currentSelectionContext = undefined;
-            this.currentSelectionDetails = null;
-          }
+        if (data.isComplete) {
+          console.log("complete");
+          this.codeInsertionManager.insertSnippetLineByLine(
+            "",
+            data.id,
+            this.currentSelectionContext,
+            this.nextLineCharacter,
+            true
+          );
+          this.updatedtext = "";
         }
       });
     } else {
@@ -164,20 +169,21 @@ export class CodeSelectionCommandHandler {
       vscode.window.showErrorMessage('No active editor found.');
       return;
     }
-
+    this.codeInsertionManager.reinitialize()
     this.currentSelectionContext = selection;
+    this.nextLineCharacter = this.getLineSeparator()
 
     // Get selected text
     const selectedText = editor.document.getText(selection);
     this.completeText = editor.document.getText();
 
-    // Store selection details
-    this.currentSelectionDetails = {
-      selectedCode: selectedText,
-      startLine: selection.start.line,
-      startCharacter: selection.start.character,
-      endLine: selection.end.line,
-      endCharacter: selection.end.character,
+    this.codeInsertionManager.oldLinesList = selectedText.split(this.nextLineCharacter);
+    this.codeInsertionManager.oldStartLine = selection.start.line;
+    this.codeInsertionManager.oldEndLine = selection.end.line;
+    this.codeInsertionManager.decorationsToApply = {
+      deleted: [] as vscode.Range[],
+      inserted: [] as vscode.Range[],
+      same: [] as vscode.Range[]
     };
 
     // Prompt user for input
@@ -188,7 +194,6 @@ export class CodeSelectionCommandHandler {
 
     if (userInput) {
       // Send data through SocketModule
-      this.nextLineCharacter = this.getLineSeparator()
       this.uniqueRequestId = uuidv4();
       this.uniqueChatId = uuidv4();
 
@@ -236,9 +241,6 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
     const textAfterLine = documentText.substring(editor.document.offsetAt(new vscode.Position(position.line + 1, 0)));
 
     this.currentSelectionContext = selection;
-    // console.log("currentSelectionContext: " + this.currentSelectionContext);
-    // console.log("textBeforeLine: " + textBeforeLine);
-    // console.log("textAfterLine: " + textAfterLine);
 
     // Prompt user for input
     const userInput = await vscode.window.showInputBox({
@@ -274,7 +276,6 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
   }
 }
   
-
   /**
    * Handles the "Code Factor" command.
    */
