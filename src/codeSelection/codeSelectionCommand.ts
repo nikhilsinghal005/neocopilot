@@ -49,19 +49,27 @@ export class CodeSelectionCommandHandler {
                     return;
                 }
 
-                const selection = editor.selection;
-                const selectedText = editor.document.getText(selection).trim();
+                let selection = editor.selection;
+                let selectedText = editor.document.getText(selection);
+
+                // If the selection starts or ends mid-line, expand to include the full line(s)
+                if (!selection.isEmpty) {
+                    selection = this.expandSelectionToFullLines(selection, editor);
+                    selectedText = editor.document.getText(selection);
+                }
+                console.log(selectedText)
                 editor.setDecorations(this.selectionContext.decorationType, []);
                 this.selectionContext.clearHoverCache();
                 this.selectionContext.clearHover(editor);
+
                 if (selection.isEmpty && selectedText.length === 0) {
                   // console.log("No text selected.");
                   this.handleCodeFactorCommandForNoSelection(selection);
                   return;
                 }
+
                 await this.handleCodeFactorCommand(selection);
                 vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
-
             }
         ),
         vscode.commands.registerCommand(
@@ -78,6 +86,7 @@ export class CodeSelectionCommandHandler {
                   vscode.window.showErrorMessage('No text selected.');
                   return;
               }
+
               this.selectionContext.clearHoverCache();
               this.selectionContext.clearHover(editor);
               await this.handleChatInsertCommand(selection);
@@ -91,7 +100,18 @@ export class CodeSelectionCommandHandler {
         // Re-attach listeners on socket reconnect
         this.attachSocketListeners();
     });
-}
+  }
+
+  private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.TextEditor): vscode.Selection {
+    const startLine = selection.start.line;
+    const endLine = selection.end.line;
+
+    const start = editor.document.lineAt(startLine).range.start;
+    const end = editor.document.lineAt(endLine).range.end;
+
+    return new vscode.Selection(start, end);
+  }
+
 
   private getLineSeparator(): string {
     const editor = vscode.window.activeTextEditor;

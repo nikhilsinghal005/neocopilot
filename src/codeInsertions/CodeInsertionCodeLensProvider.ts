@@ -18,27 +18,28 @@ export class CodeInsertionCodeLensProvider implements vscode.CodeLensProvider {
   ): vscode.CodeLens[] {
     const insertions = this.codeInsertionManager.getInsertionsForDocument(document.uri);
     const codeLenses: vscode.CodeLens[] = [];
-
+  
     insertions.forEach((insertion) => {
-      // Create "Accept" CodeLens
+      // Create "Accept" CodeLens with emoji
       const acceptCodeLens = new vscode.CodeLens(insertion.codeLensRange, {
-        title: 'Accept',
+        title: '✅ <<<<<<<< ACCEPT >>>>>>>>>',
         command: 'codeInsertion.accept',
         arguments: [insertion.id],
       });
-
-      // Create "Reject" CodeLens
+  
+      // Create "Reject" CodeLens with emoji
       const rejectCodeLens = new vscode.CodeLens(insertion.codeLensRange, {
-        title: 'Reject',
+        title: '❌ <<<<<<<< REJECT >>>>>>>>>',
         command: 'codeInsertion.reject',
         arguments: [insertion.id],
       });
-
+  
       codeLenses.push(acceptCodeLens, rejectCodeLens);
     });
-
+  
     return codeLenses;
   }
+  
 
   /**
    * Triggers a refresh of CodeLenses.
