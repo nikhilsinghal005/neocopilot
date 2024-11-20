@@ -1,11 +1,24 @@
+// src/codeInsertions/CodeInsertionManager.ts
 import * as vscode from 'vscode';
 import { CodeInsertionCodeLensProvider } from './CodeInsertionCodeLensProvider';
+import { insertTextAtCursorFunction } from './handleInsertionTypes/insertAtCursor';
+import { insertSnippetAtCursorFunction} from './handleInsertionTypes/inserSnippetAtCursor';
+import {insertTextIntoTerminalFunction} from './handleInsertionTypes/insertCommandTerminal';
+import { createPatch } from 'diff';
 
+/**
+ * Represents an insertion in the editor.
+ */
 interface Insertion {
   id: string;
   range: vscode.Range;
   decorationType: vscode.TextEditorDecorationType;
   codeLensRange: vscode.Range;
+  deletedDecorationType?: vscode.TextEditorDecorationType;
+  sameDecorationType?: vscode.TextEditorDecorationType;
+  insertedRanges: vscode.Range[];
+  deletedRanges: vscode.Range[];
+  sameRanges: vscode.Range[];
 }
 
 export class CodeInsertionManager {
@@ -14,6 +27,9 @@ export class CodeInsertionManager {
   private disposables: vscode.Disposable[] = [];
   private insertions: Map<string, Insertion> = new Map();
   private codeLensProvider: CodeInsertionCodeLensProvider;
+  private snippetText: string[] = [];
+  private pendingEdits: { type: "insert"; position: vscode.Position; text: string }[] = [];
+
 
   constructor(context: vscode.ExtensionContext) {
     // Initialize CodeLens Provider
@@ -41,54 +57,16 @@ export class CodeInsertionManager {
    * @param newText The text to insert.
    * @param id Unique identifier for the insertion.
    */
-  public insertTextAtCursor(newText: string, id: string): void {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      vscode.window.showErrorMessage('No active editor found.');
-      return;
-    }
+  // public insertTextAtCursor(newText: string, id: string): void {
+  //   const insertion = insertTextAtCursorFunction(newText, id);
+  //   if (!insertion) {
+  //     vscode.window.showErrorMessage('Failed to insert text.');
+  //     return;
+  //   }
+  //   this.insertions.set(id, insertion);
+  //   this.codeLensProvider.refresh();
+  // }
 
-    const position = editor.selection.active;
-
-    editor
-      .edit((editBuilder) => {
-        editBuilder.insert(position, newText);
-      })
-      .then((success) => {
-        if (success) {
-          const lines = newText.split('\n').length - 1;
-          const lastLineLength = newText.split('\n').pop()?.length || 0;
-          const endPosition = position.translate(lines, lastLineLength);
-          const range = new vscode.Range(position, endPosition);
-
-          const decorationType = vscode.window.createTextEditorDecorationType({
-            backgroundColor: 'rgba(45, 225, 75, 0.5)', // Green highlight
-          });
-
-          editor.setDecorations(decorationType, [range]);
-
-          const codeLensPosition = new vscode.Position(range.start.line, 0);
-          const codeLensRange = new vscode.Range(codeLensPosition, codeLensPosition);
-
-          const insertion: Insertion = {
-            id,
-            range,
-            decorationType,
-            codeLensRange,
-          };
-
-          this.insertions.set(id, insertion);
-
-          this.codeLensProvider.refresh();
-        }
-      });
-  }
-
-  /**
-   * Retrieves all insertions for a given document.
-   * @param uri The URI of the document.
-   * @returns Array of Insertion objects.
-   */
   public getInsertionsForDocument(uri: vscode.Uri): Insertion[] {
     return Array.from(this.insertions.values()).filter(
       (insertion) => insertion.range.start.line >= 0
@@ -96,7 +74,7 @@ export class CodeInsertionManager {
   }
 
   /**
-   * Accepts an insertion, removing its decoration and CodeLens.
+   * Accepts an insertion, keeping updated and same lines, and removing deleted lines.
    * @param id Unique identifier for the insertion.
    */
   public acceptInsertion(id: string): void {
@@ -104,48 +82,98 @@ export class CodeInsertionManager {
     if (!insertion) {
       vscode.window.showErrorMessage('Insertion not found.');
       return;
-    }
-
-    insertion.decorationType.dispose();
-    this.insertions.delete(id);
-    this.codeLensProvider.refresh();
-
-    vscode.window.showInformationMessage('Code accepted.');
   }
 
-  /**
-   * Rejects an insertion, removing its decoration and deleting the inserted text.
-   * @param id Unique identifier for the insertion.
-   */
-  public rejectInsertion(id: string): void {
-    const insertion = this.insertions.get(id);
-    if (!insertion) {
-      vscode.window.showErrorMessage('Insertion not found.');
-      return;
-    }
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    vscode.window.showErrorMessage('No active editor found.');
+    return;
+  }
 
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      vscode.window.showErrorMessage('No active editor found.');
-      return;
-    }
-
-    editor
-      .edit((editBuilder) => {
-        editBuilder.delete(insertion.range);
-      })
-      .then((success) => {
-        if (success) {
-          insertion.decorationType.dispose();
-          this.insertions.delete(id);
-          this.codeLensProvider.refresh();
-
-          vscode.window.showInformationMessage('Code rejected.');
-        } else {
-          vscode.window.showErrorMessage('Failed to reject the insertion.');
-        }
+  editor
+    .edit((editBuilder) => {
+      // Delete ranges for deleted lines
+      insertion.deletedRanges.forEach((range) => {
+        const fullLineRange = new vscode.Range(
+          range.start.line,
+          0,
+          range.start.line + 1,
+          0 // Move to the start of the next line to capture the newline
+        ); 
+        editBuilder.delete(fullLineRange);
       });
+    })
+    .then((success) => {
+      if (success) {
+        // Dispose of decorations
+        insertion.decorationType.dispose();
+        if (insertion.deletedDecorationType) {
+          insertion.deletedDecorationType.dispose();
+        }
+        if (insertion.sameDecorationType) {
+          insertion.sameDecorationType.dispose();
+        }
+
+        this.insertions.delete(id);
+        this.codeLensProvider.refresh();
+        vscode.window.showInformationMessage('Code accepted.');
+      } else {
+        vscode.window.showErrorMessage('Failed to accept the insertion.');
+      }
+    });
+}
+
+/**
+ * Rejects an insertion, keeping only the same lines and removing updated and deleted lines.
+ * @param id Unique identifier for the insertion.
+ */
+public rejectInsertion(id: string): void {
+  const insertion = this.insertions.get(id);
+  if (!insertion) {
+    vscode.window.showErrorMessage('Insertion not found.');
+    return;
   }
+
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    vscode.window.showErrorMessage('No active editor found.');
+    return;
+  }
+
+  editor
+    .edit((editBuilder) => {
+      // Delete ranges for inserted and deleted lines
+      insertion.insertedRanges.forEach((range) => {
+        const fullLineRange = new vscode.Range(
+          range.start.line,
+          0,
+          range.start.line + 1,
+          0 // Move to the start of the next line to capture the newline
+        ); 
+        editBuilder.delete(fullLineRange);
+      });
+    })
+    .then((success) => {
+      if (success) {
+        // Dispose of all decorations
+        if (insertion.decorationType) {
+          insertion.decorationType.dispose();
+        }
+        if (insertion.deletedDecorationType) {
+          insertion.deletedDecorationType.dispose();
+        }
+        if (insertion.sameDecorationType) {
+          insertion.sameDecorationType.dispose();
+        }
+
+        this.insertions.delete(id);
+        this.codeLensProvider.refresh();
+        vscode.window.showInformationMessage('Code rejected.');
+      } else {
+        vscode.window.showErrorMessage('Failed to reject the insertion.');
+      }
+    });
+}
 
   /**
    * Registers the "Accept" and "Reject" commands.
@@ -169,300 +197,113 @@ export class CodeInsertionManager {
    */
   public dispose() {
     this.disposables.forEach((d) => d.dispose());
-    this.insertions.forEach((insertion) => insertion.decorationType.dispose());
+    this.insertions.forEach((insertion) => {
+      insertion.decorationType.dispose();
+      if (insertion.deletedDecorationType) {
+        insertion.deletedDecorationType.dispose();
+      }
+    });
     this.insertions.clear();
   }
 
-  public insertTextLineByLine(newText: string, id: string): void {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('No active editor found.');
-        return;
-      }
-    
-      const position = editor.selection.active;
-    
-      editor
-        .edit((editBuilder) => {
-          editBuilder.insert(position, newText);
-          // editor.insertSnippet(newText, position);
-        })
-        .then((success) => {
-          if (success) {
-            const lines = newText.split('\n').length;
-            const lastLineLength = newText.split('\n').pop()?.length || 0;
-            const endPosition = new vscode.Position(
-              position.line + lines - 1,
-              lastLineLength
-            );
-            const range = new vscode.Range(position, endPosition);
-    
-            // Apply decoration over the full range of inserted text
-            const decorationType = vscode.window.createTextEditorDecorationType({
-              backgroundColor: 'rgba(51, 149, 67, 0.5)', // Green highlight
-            });
-    
-            editor.setDecorations(decorationType, [range]);
-    
-            const codeLensPosition = new vscode.Position(range.start.line, 0);
-            const codeLensRange = new vscode.Range(codeLensPosition, codeLensPosition);
-    
-            const insertion: Insertion = {
-              id,
-              range,
-              decorationType,
-              codeLensRange,
-            };
-    
-            this.insertions.set(id, insertion);
-    
-            // Trigger formatting after insertion
-            // this.formatInsertedCode(editor, range);
-            this.codeLensProvider.refresh();
-          } else {
-            vscode.window.showErrorMessage('Failed to insert text.');
-          }
-        });
-    }
-    
-    public insertTextUsingSnippet(newText: string, id: string): void {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('No active editor found.');
-        return;
-      }
-    
-      const position = editor.selection.active;
-    
-      const snippetText = newText.replace(/\$/g, '\\$'); // Escape $ symbols in snippet
-      const snippet = new vscode.SnippetString(snippetText);
-    
-      editor
-        .insertSnippet(snippet, position)
-        .then((success) => {
-          if (success) {
-            const lines = newText.split('\n').length;
-            const lastLineLength = newText.split('\n').pop()?.length || 0;
-            const endPosition = new vscode.Position(
-              position.line + lines - 1,
-              lastLineLength
-            );
-            const range = new vscode.Range(position, endPosition);
-    
-            // Apply decoration over the full range of inserted text
-            const decorationType = vscode.window.createTextEditorDecorationType({
-              backgroundColor: 'rgba(38, 236, 71, 0.281)', // Green highlight
-            });
-    
-            editor.setDecorations(decorationType, [range]);
-    
-            const codeLensPosition = new vscode.Position(range.start.line, 0);
-            const codeLensRange = new vscode.Range(codeLensPosition, codeLensPosition);
-    
-            const insertion: Insertion = {
-              id,
-              range,
-              decorationType,
-              codeLensRange,
-            };
-    
-            this.insertions.set(id, insertion);
-            this.codeLensProvider.refresh();
-          } else {
-            vscode.window.showErrorMessage('Failed to insert snippet.');
-          }
-        });
-    }
+  public insertTextUsingSnippetAtCursorWithoutDecoration(newText: string, id: string): void {
+    insertSnippetAtCursorFunction(newText, id, false);
+  }
+  
+  public insertTextIntoTerminal(newText: string): void {
+    insertTextIntoTerminalFunction(newText);
+  }
 
-    public insertTextUsingSnippetAtCursorWithoutDecoration(
-      newText: string,
-      id: string
-    ): void {
-      const editor = vscode.window.activeTextEditor;
-      
-      // Check if there is an active editor
-      if (!editor) {
-        vscode.window.showInformationMessage('No active editor found.');
-        return;
-      }
-    
-      // Get the current position of the cursor in the editor
-      const position = editor.selection.active;
-    
-      // Prepare the snippet by escaping $ symbols (needed for VSCode Snippets)
-      const snippetText = newText.replace(/\$/g, '\\$'); // Escape $ symbols in snippet
-      const snippet = new vscode.SnippetString(snippetText);
-    
-      // Insert the snippet at the current cursor position
-      editor.insertSnippet(snippet, position).then((success) => {
-        if (success) {
-          // Snippet inserted successfully, store any relevant information if needed
-          // console.log('Snippet inserted successfully.');
-          
-          // Optionally, handle post-insertion logic here
-          // For example, you could track the insertion range if needed
-        } else {
-          vscode.window.showErrorMessage('Failed to insert snippet.');
-        }
-      });
-    }
-    
-    public insertTextIntoTerminal(newText: string): void {
-      // Check if there is an active terminal
-      let terminal = vscode.window.activeTerminal;
-      if (!terminal) {
-        // If no terminal is active, create a new terminal
-        terminal = vscode.window.createTerminal('Code Snippet Terminal');
-        vscode.window.showInformationMessage('No active terminal found. Created a new terminal.');
-      }
-    
-      // Escape special characters in the newText (like $ symbols) if necessary
-      const terminalText = newText.replace(/\$/g, '\\$'); // Escape $ symbols if needed for terminal
-    
-      // Send the newText to the terminal
-      terminal.show(); // Ensure the terminal is visible
-      terminal.sendText(terminalText, true); // Send text and execute it
-    
-      // Optionally log or handle post-insertion logic
-      // console.log('Text sent to terminal successfully.');
-    }
-    
-    public insertTextUsingSnippetAtCursor(
-      newText: string,
-      id: string
-    ): void {
-      const editor = vscode.window.activeTextEditor;
-      
-      // Check if there is an active editor
-      if (!editor) {
-        vscode.window.showInformationMessage('No active editor found.');
-        return;
-      }
-    
-      // Get the current position of the cursor in the editor
-      const position = editor.selection.active;
-    
-      // Prepare the snippet by escaping $ symbols (needed for VSCode Snippets)
-      const snippetText = newText.replace(/\$/g, '\\$'); // Escape $ symbols in snippet
-      const snippet = new vscode.SnippetString(snippetText);
-    
-      // Insert the snippet at the current cursor position
-      editor.insertSnippet(snippet, position).then((success) => {
-        if (success) {
-          // Calculate the range of the inserted snippet
-          const lines = newText.split('\n').length;
-          const lastLineLength = newText.split('\n').pop()?.length || 0;
-          const endPosition = new vscode.Position(position.line + lines - 1, lastLineLength);
-          const range = new vscode.Range(position, endPosition);
-    
-          // Create a decoration to highlight the inserted code
-          const lineDecorationType = vscode.window.createTextEditorDecorationType({
-            isWholeLine: true, // Highlight the entire line
-            backgroundColor: 'rgba(38, 236, 71, 0.15)', // Light green background to highlight lines
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderColor: 'rgba(38, 236, 71, 0.5)', // Optional: Add border to make it stand out
-          });
-    
-          // Apply the line decorations
-          editor.setDecorations(lineDecorationType, [range]);
-    
-          // Create a range for CodeLens (optional, depending on your need)
-          const codeLensPosition = new vscode.Position(range.start.line, 0);
-          const codeLensRange = new vscode.Range(codeLensPosition, codeLensPosition);
-    
-          // Store insertion information for future reference
-          const insertion: Insertion = {
-            id,
-            range,
-            decorationType: lineDecorationType,
-            codeLensRange,
-          };
-    
-          // Update insertion information
-          this.insertions.set(id, insertion);
-          this.codeLensProvider.refresh();
-        } else {
-          vscode.window.showErrorMessage('Failed to insert snippet.');
-        }
-      });
-    }
-    
-    public insertTextUsingSnippetLocation(
-      newText: string,
+  /**
+   * Inserts a snippet at the specified selection and highlights the deleted and inserted text.
+   * @param updatedText The text to be inserted.
+   * @param id Unique identifier for the insertion.
+   * @param selectionContext The selection range in the editor.
+   */
+  public async insertSnippetOnSelection(
+      updatedText: string,
       id: string,
-      startPosition: { line: number; character: number }
-    ): void {
+      selectionContext: vscode.Selection | undefined
+  ): Promise<void> {
       const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('No active editor found.');
-        return;
+      if (!editor || !selectionContext) {
+          vscode.window.showErrorMessage('No active editor or valid selection context found.');
+          return;
       }
-    
-      // Convert the provided startPosition into a vscode.Position object
-      const position = new vscode.Position(startPosition.line, startPosition.character);
-    
-      const snippetText = newText.replace(/\$/g, '\\$'); // Escape $ symbols in snippet
-      const snippet = new vscode.SnippetString(snippetText);
-    
-      editor.insertSnippet(snippet, position).then((success) => {
-        if (success) {
-          const lines = newText.split('\n').length;
-          const lastLineLength = newText.split('\n').pop()?.length || 0;
-          const endPosition = new vscode.Position(position.line + lines - 1, lastLineLength);
-          const range = new vscode.Range(position, endPosition);
-    
-          // Create a line decoration to highlight the entire lines where text was inserted
-          const lineDecorationType = vscode.window.createTextEditorDecorationType({
-            isWholeLine: true, // Highlight the entire line
-            backgroundColor: 'rgba(38, 236, 71, 0.15)', // Light green background to highlight lines
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderColor: 'rgba(38, 236, 71, 0.5)', // Optional: Add border to make it stand out
-          });
-    
-          // Apply the line decorations
-          editor.setDecorations(lineDecorationType, [range]);
-    
-          const codeLensPosition = new vscode.Position(range.start.line, 0);
-          const codeLensRange = new vscode.Range(codeLensPosition, codeLensPosition);
-    
-          const insertion: Insertion = {
-            id,
-            range,
-            decorationType: lineDecorationType,
-            codeLensRange,
-          };
-    
-          this.insertions.set(id, insertion);
-          this.codeLensProvider.refresh();
-        } else {
-          vscode.window.showErrorMessage('Failed to insert snippet.');
-        }
+
+      const oldText = editor.document.getText(selectionContext);
+      const patch = createPatch('file', oldText, updatedText, '', '', {
+        context: 100  // Number of context lines
       });
-    }
-    
-    
-    private formatInsertedCode(editor: vscode.TextEditor, range: vscode.Range): void {
-      // Format the inserted text to adjust its layout and indentation
-      editor.selection = new vscode.Selection(range.start, range.end);
-      vscode.commands.executeCommand('editor.action.formatSelection').then(
-        () => {
-          // Adjust indentation specifically to match typing behavior
-          vscode.commands.executeCommand('editor.action.reindentlines').then(
-            () => {
-              vscode.window.showInformationMessage('Inserted code formatted and indented correctly.');
-            },
-            (err) => {
-              console.error('Error adjusting indentation:', err);
-            }
-          );
-        },
-        (err) => {
-          console.error('Error formatting inserted code:', err);
+      let patchList: string[] = patch.split('\n');
+      patchList = patchList.slice(5, patchList.length - 2)
+      patchList = patchList.filter(line => !/^@@.*@@$/.test(line));
+      const workspaceEdit = new vscode.WorkspaceEdit();
+      const decorationsToApply = {
+          deleted: [] as vscode.Range[],
+          inserted: [] as vscode.Range[],
+          same: [] as vscode.Range[]
+      };
+      let startLine = selectionContext.start.line;
+      let updatedIndex = 0;
+      this.pendingEdits = [];
+
+      for (const line of patchList) {
+        const startPos = new vscode.Position(startLine + updatedIndex, 0);
+        const endPos = new vscode.Position(startLine + updatedIndex, line.length - 1);
+        const lineRange = new vscode.Range(startPos, endPos);
+      
+        switch (true) {
+          case line.startsWith("+"):
+            const edit = new vscode.WorkspaceEdit();
+            const textToInsert = line.slice(1); // Remove "+" from the line
+            edit.insert(editor.document.uri, startPos, textToInsert);
+            await vscode.workspace.applyEdit(edit);
+            decorationsToApply.inserted.push(lineRange);
+            break;
+          case line.startsWith("-"):
+            decorationsToApply.deleted.push(lineRange);
+            break;
+          default:
+            decorationsToApply.same.push(lineRange);
+            break;
         }
-      );
-    }
+        updatedIndex++;
+      }    
+
+      // efine decoration types
+      const insertedDecorationType = vscode.window.createTextEditorDecorationType({
+          backgroundColor: 'rgba(92, 248, 1, 0.2)',
+          isWholeLine: true
+      });
+
+      const deletedDecorationType = vscode.window.createTextEditorDecorationType({
+          backgroundColor: 'rgba(255, 0, 0, 0.2)',
+          isWholeLine: true
+      });
+
+      const sameDecorationType = vscode.window.createTextEditorDecorationType({
+        backgroundColor: 'rgba(0, 0, 255, 0)', // Light blue background for the same text
+      });
+
+      // Apply decorations
+      editor.setDecorations(insertedDecorationType, decorationsToApply.inserted);
+      editor.setDecorations(deletedDecorationType, decorationsToApply.deleted);
+      editor.setDecorations(sameDecorationType, decorationsToApply.same);
+
+      const insertion: Insertion = {
+          id,
+          range: selectionContext,
+          decorationType: insertedDecorationType,
+          deletedDecorationType: deletedDecorationType,
+          sameDecorationType: sameDecorationType,
+          codeLensRange: selectionContext,
+          insertedRanges: decorationsToApply.inserted,
+          deletedRanges: decorationsToApply.deleted,
+          sameRanges: decorationsToApply.same,
+      };
+
+      this.insertions.set(id, insertion);
+      this.codeLensProvider.refresh();
+  } 
 }
-
-

@@ -82,26 +82,26 @@
         "title": "Disable Code Suggestions"
       },
       {
-        "command": "extension.codeFactor",
-        "title": "Code Factor"
+        "command": "extension.neoEdit",
+        "title": "Neo Edit"
       },
       {
-        "command": "extension.addComment",
-        "title": "Add Comment"
-      },
-      {
-        "command": "extension.languageFunctionsCodeFactor",
-        "title": "Code Factor (Function/Class)"
-      },
-      {
-        "command": "extension.languageFunctionsAddComment",
-        "title": "Add Comment (Function/Class)"
-      },
-      {
-        "command": "extension.addQuery",
-        "title": "Add Query"
+        "command": "extension.neoChatInsert",
+        "title": "Neo Chat Insert"
       }
     ],
+    "keybindings": [
+      {
+          "command": "extension.neoEdit",
+          "key": "ctrl+I",
+          "when": "editorTextFocus"
+      },
+      {
+        "command": "extension.neoChatInsert",
+        "key": "ctrl+O",
+        "when": "editorTextFocus"
+      }
+  ],
     "configuration": {
       "type": "object",
       "title": "Neo Copilot Configuration",

@@ -7,7 +7,6 @@ import { CompletionProviderModule } from './codeCompletion/completionProviderMod
 import { StatusBarManager } from './StatusBarManager';
 import { versionConfig } from './versionConfig';
 import { showLoginNotification } from './utilities/statusBarNotifications/showLoginNotification';
-import { LOGIN_REDIRECT_URL } from './config';
 import { Socket } from 'socket.io-client';
 import { initializeAppFunctions, initializeNonLoginRequiredAppFunctions } from './initializeAppFunctions';
 import { AuthManager } from './authManager/authManager';
@@ -15,6 +14,11 @@ import { handleTokenUri } from './authManager/handleTokenUri';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 
+
+  const config = vscode.workspace.getConfiguration('editor.hover');
+  config.update('delay', 500, vscode.ConfigurationTarget.Global)
+
+  // Initialize the modules
   const completionProviderModule = new CompletionProviderModule();
   versionConfig.initialize(context);
   const authManager = new AuthManager(context);
@@ -34,7 +38,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const socketConnection: Socket | null = await socketModule.connect(currentVersion, context);
     
     if (socketConnection){
-      initializeAppFunctions(vscodeEventsModule, completionProviderModule, authManager,  context);
+      initializeAppFunctions(
+        vscodeEventsModule, 
+        completionProviderModule, 
+        authManager,  
+        socketModule,
+        context
+      );
     }else{
       showLoginNotification();
     }

@@ -1,4 +1,3 @@
-// src/components/Chat/InputBar.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { VSCodeButton, VSCodeDropdown, VSCodeOption, VSCodeTag } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
@@ -15,6 +14,21 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
   const [warningMessage, setWarningMessage] = useState('');
   const { isTyping: contextIsTyping } = useChatContext();
   const vscode = useVscode();
+
+  useEffect(() => {
+    const handleIncomingMessage = (event: MessageEvent) => {
+      if (event.data.command === 'insert_messages') {
+        console.log('Received chat message from VS Code:', event.data);
+        setInput(event.data.inputText || '');
+      }
+    };
+
+    window.addEventListener('message', handleIncomingMessage);
+
+    return () => {
+      window.removeEventListener('message', handleIncomingMessage);
+    };
+  }, [setInput]);
 
   // Function to sanitize input to prevent code execution
   const sanitizeInput = (input: string): string => {
@@ -34,7 +48,6 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
   };
 
   const handleCodeInsertClick = () => {
-    // console.log("VS Code API in ChatControls:", vscode);
     vscode.postMessage({
       command: 'showInfoPopup',
       data: {
