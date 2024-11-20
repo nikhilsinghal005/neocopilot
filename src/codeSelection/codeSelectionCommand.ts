@@ -169,7 +169,7 @@ export class CodeSelectionCommandHandler {
       vscode.window.showErrorMessage('No active editor found.');
       return;
     }
-
+    this.codeInsertionManager.reinitialize()
     this.currentSelectionContext = selection;
     this.nextLineCharacter = this.getLineSeparator()
 

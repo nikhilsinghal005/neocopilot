@@ -60,8 +60,59 @@ export class CodeInsertionManager {
     this.registerCommands(context);
   }
 
+  public reinitialize(): void {
+    // Dispose of all existing decorations
+    this.insertions.forEach((insertion) => {
+        insertion.decorationType.dispose();
+        if (insertion.deletedDecorationType) {
+            insertion.deletedDecorationType.dispose();
+        }
+        if (insertion.sameDecorationType) {
+            insertion.sameDecorationType.dispose();
+        }
+    });
 
-  
+    // Clear decorations in the editor
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+        editor.setDecorations(this.insertedDecorationType, []);
+        editor.setDecorations(this.deletedDecorationType, []);
+        editor.setDecorations(this.sameDecorationType, []);
+    }
+
+    // Reset insertion map
+    this.insertions.clear();
+
+    // Clear old lines list and reset old start and end line values
+    this.oldLinesList = [];
+    this.oldStartLine = 0;
+    this.oldEndLine = 0;
+
+    // Reinitialize the decoration types
+    this.insertedDecorationType = vscode.window.createTextEditorDecorationType({
+        backgroundColor: 'rgba(92, 248, 1, 0.2)',
+        isWholeLine: true,
+    });
+    this.deletedDecorationType = vscode.window.createTextEditorDecorationType({
+        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+        isWholeLine: true,
+    });
+    this.sameDecorationType = vscode.window.createTextEditorDecorationType({
+        backgroundColor: 'rgba(0, 0, 255, 0)',
+    });
+
+    // Clear decorations to apply
+    this.decorationsToApply = {
+        deleted: [],
+        inserted: [],
+        same: [],
+    };
+
+    // Refresh CodeLens provider
+    this.codeLensProvider.refresh();
+}
+
+
   // Static method to get the singleton instance
   public static getInstance(context: vscode.ExtensionContext): CodeInsertionManager {
     if (!CodeInsertionManager.instance) {
