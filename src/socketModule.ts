@@ -280,6 +280,28 @@ export class SocketModule {
     }
   }
 
+  public sendEditorSmartInsert(
+    uniqueId: string, 
+    uniqueChatId: string, 
+    editorCode: string, 
+    updatedCode: string,
+    actionType: string
+  ) {
+    console.log("Message to scoket from backend")
+    this.predictionRequestInProgress = true;
+    if (this.socket) {
+      this.socket.emit('generate_editor_smart_insert', {
+        uniqueId: uniqueId,
+        chatId: uniqueChatId,
+        editorCode: editorCode,
+        updatedCode: updatedCode,
+        actionType: actionType,
+        appVersion: this.currentVersion,
+        userEmail: this.email
+      });
+    }
+  }
+
   public emitDocstringFunction(uuid: string, input_code: string, language: string, location: { line: number; character: number }) {
     this.predictionRequestInProgress = true;
     this.docstringData[uuid] = {id: uuid, location: location}
