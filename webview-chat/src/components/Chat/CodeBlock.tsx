@@ -120,7 +120,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, .
   };
 
   const code = extractText(codeContent).trim();
-  const language = className ? className.replace('language-', '') : '';
+  const language = className ? className.replace(/language-|code-highlight/g, '').trim() : '';
   console.log(language)
 
   return (
@@ -144,7 +144,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, .
                 icon="codicon-play"
                 tooltip="Smart Insert"
               />
-              {language === 'bash code-highlight' || language === 'powershell' ? (
+              {language === 'bash' || language === 'powershell' || language === 'powershell' ? (
                 // Render "T" button for Bash language
                 <CodeButton
                   onClick={() => handleInsertToEditorTerminal(code, 'terminal')}
