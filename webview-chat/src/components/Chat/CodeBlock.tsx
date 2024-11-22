@@ -13,6 +13,7 @@ interface CodeBlockProps {
 const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, ...props }) => {
   const vscode = useVscode();
   const [state, setState] = useState<'idle' | 'processing' | 'review'>('idle');
+  const [dots, setDots] = useState('');
   const codeId = React.useMemo(() => Math.random().toString(36).substr(2, 9), []); // Generate unique ID for the code block
 
   useEffect(() => {
@@ -28,6 +29,23 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, .
       window.removeEventListener('message', handleSmartInsertToEditorUpdate);
     };
   }, [codeId]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (state === 'processing') {
+      interval = setInterval(() => {
+        setDots((prevDots) => (prevDots.length < 3 ? prevDots + '.' : ''));
+      }, 500);
+    } else {
+      setDots('');
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [state]);
 
   const handleInsertToEditorTerminal = (code: string, location: string) => {
     vscode.postMessage({
@@ -153,7 +171,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, .
             </>
           )}
           {state === 'processing' && (
-            <span className="text-vscode-editor-foreground font-bold">Processing...</span>
+            <span className="text-vscode-editor-foreground">Processing{dots}</span>
           )}
           {state === 'review' && (
             <span className="px-2 flex gap-2">

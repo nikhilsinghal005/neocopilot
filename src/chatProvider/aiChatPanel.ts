@@ -171,11 +171,11 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 return;
               }
               // get complete text of the current doc
-              const editorCode = editor.document.getText();
+              const editorCode = editor.document.getText().trim();
               const updatedCode = message.data.code
               this.smartInsertionManager.reinitialize()
 
-              if (editorCode.trim().length === 0) {
+              if (editorCode.length === 0) {
                 this.smartInsertionManager.oldLinesList = [];
               } else {
                 this.smartInsertionManager.oldLinesList = editorCode.split(this.getLineSeparator());
