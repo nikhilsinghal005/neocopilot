@@ -211,8 +211,6 @@ public rejectInsertion(): void {
     });
 }
 
-
-
 public async enqueueSnippetLineByLine(
     updatedText: string,
     id: string,
@@ -271,25 +269,26 @@ public async enqueueSnippetLineByLine(
         };
 
         this.insertions.set(id, insertion);
+        console.log("Insertion Process Completed")
         return;
       }
-      console.log("------------------------------------------------", JSON.stringify(updatedText))
+      // console.log("------------------------------------------------", JSON.stringify(updatedText))
       // count of occurances
       let newLineList = updatedText.split(nextLineCharacter)
       if (newLineList.length > 1) {
         newLineList.pop()
       }
-      console.log("#######", newLineList)
+      // console.log("#######", newLineList)
 
       // Required Input Variables
       for (const newLine of newLineList) {
-        console.log("===============================================")
-        console.log("***************", JSON.stringify(newLine))
+        // console.log("===============================================")
+        // console.log("***************", JSON.stringify(newLine))
         let updatedIndex = 0
   
         // Index of newLine in oldText
         const index = this.oldLinesList.indexOf(newLine); 
-        console.log("***************", JSON.stringify(index))
+        // console.log("***************", JSON.stringify(index))
 
         if (index === -1) {
           // Getting Updated Positions
@@ -308,11 +307,11 @@ public async enqueueSnippetLineByLine(
           updatedIndex += 1
           this.oldStartLine = this.oldStartLine + updatedIndex
           this.oldEndLine = this.oldEndLine + updatedIndex
-          console.log("***************", JSON.stringify(lineRange), JSON.stringify(newLine))
+          // console.log("***************", JSON.stringify(lineRange), JSON.stringify(newLine))
 
         } else {
           const slicedLines = this.oldLinesList.slice(0, index + 1)
-          console.log("***************", JSON.stringify(this.oldLinesList))
+          // console.log("***************", JSON.stringify(this.oldLinesList))
 
           for (let tempLine in slicedLines) {
             const startPos = new vscode.Position(this.oldStartLine + updatedIndex, 0);
@@ -325,14 +324,14 @@ public async enqueueSnippetLineByLine(
               this.decorationsToApply.deleted.push(lineRange);
             }  
             updatedIndex += 1
-            console.log("***************", JSON.stringify(lineRange), JSON.stringify(tempLine))
+            // console.log("***************", JSON.stringify(lineRange), JSON.stringify(tempLine))
           }
           this.oldStartLine = this.oldStartLine + updatedIndex
           this.oldEndLine = this.oldEndLine + updatedIndex
           this.oldLinesList = this.oldLinesList.slice(index + 1)
         }
-        console.log("***************", JSON.stringify(this.oldLinesList))
-        console.log("***************", JSON.stringify(this.oldStartLine))
+        // console.log("***************", JSON.stringify(this.oldLinesList))
+        // console.log("***************", JSON.stringify(this.oldStartLine))
 
         // Apply decorations
         editor.setDecorations(this.insertedDecorationType, this.decorationsToApply.inserted);
