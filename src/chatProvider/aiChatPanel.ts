@@ -1,14 +1,22 @@
 // webview-chat/src/aiChatPanel.ts
-
 import * as vscode from 'vscode';
 import { AuthManager } from '../authManager/authManager';
 import { SocketModule } from '../socketModule';
-import { ChatSession, MessageResponse, MessageInput, MessageResponseFromBackEnd } from './types/messageTypes';
+import { ChatSession, MessageResponse, MessageResponseFromBackEnd } from './types/messageTypes';
 import { v4 as uuidv4 } from 'uuid';
 import { getNonce } from '../utilities/chatUtilities';
 import { PanelManager } from './panelManager'
 import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
 import { getExactNewlineCharacter } from '../utilities/basicUtilities';
+import { SmartInsertionManager } from '../codeInsertions/smartCodeInsert';
+
+interface smartInsert {
+  uniqueId: string, 
+  uniqueChatId: string, 
+  editorCode: string, 
+  updatedCode: string,
+  actionType: string
+}
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
   public static readonly primaryViewType = 'aiChatPanelPrimary';
@@ -19,6 +27,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   private socketModule: SocketModule;
   private panelManager: PanelManager;
   private codeInsertionManager: CodeInsertionManager;
+  private smartInsertionManager: SmartInsertionManager = new SmartInsertionManager();;
+  private updatedtext: string = "";
 
   // Flags to prevent multiple listeners
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
@@ -56,7 +66,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken
   ) {
     // console.log("Webview View is being resolved.");
-
     // Add the webview to activePanels if it's initially visible
     if (webviewView.visible) {
       this.activePanels.push(webviewView);
@@ -111,9 +120,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             // console.log("Message recived from react app", message.data)
             // console.log("Chat id for Messages", message.data.chatId)
             const inputChat: ChatSession = message.data
-            // const chatId: string = message.data.chatId
-            // const sanitizedMessage = this.sanitizeMessage(message.data.messages.slice(-1)[0]);
-            // console.log("Chat id for Messages", message.data.messages.slice(-1)[0])
             this.attemptSocketConnection(inputChat)
             break;
           case 'login':
@@ -122,17 +128,14 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             break;
           case 'contact_us':
             // Handle the contact us command and open the URL
-            // console.log("Contact us clicked")
             require('vscode').commands.executeCommand('vscode.open', vscode.Uri.parse('mailto:support@neocopilot.com'));
             break;
           case 'toggleSidebar':
               // Add the code to toggle the panel's location
-              // console.log("panel change")
               await this.togglePanelLocation();
               break;
           case 'insertCodeSnippet':
               // console.log("insertCodeSnippet")
-              // console.log(message.data.code)
               const nextLineCharacter: string | undefined = getExactNewlineCharacter()
               if (message.data.location === "terminal") {
                 this.codeInsertionManager.insertTextIntoTerminal(
@@ -152,9 +155,58 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 }
               }
               break;
-            
+          
+          case 'smartCodeInsert':
+              const editor = vscode.window.activeTextEditor;
+              if (!editor) {
+                return;
+              }
+              // get complete text of the current doc
+              const editorCode = editor.document.getText().trim();
+              const updatedCode = message.data.code
+              this.smartInsertionManager.reinitialize()
+
+              if (editorCode.length === 0) {
+                this.smartInsertionManager.oldLinesList = [];
+                this.smartInsertionManager.currentCodeBlockId = message.data.codeId
+                // console.log("oldLinesList", this.smartInsertionManager.oldLinesList)
+                this.smartInsertionManager.oldStartLine = 0;
+                this.smartInsertionManager.oldEndLine = 1000;
+                this.smartInsertionManager.uniqueId = uuidv4();
+                const output : smartInsert = {
+                  "uniqueId": this.smartInsertionManager.uniqueId,
+                  "uniqueChatId": uuidv4(),
+                  "editorCode": editorCode,
+                  "updatedCode": updatedCode,
+                  "actionType": "smart_update"
+                }
+                this.applyDirectSmartInsertCode(output)
+              } else {
+                this.smartInsertionManager.oldLinesList = editorCode.split(this.getLineSeparator());
+                this.smartInsertionManager.currentCodeBlockId = message.data.codeId
+                // console.log("oldLinesList", this.smartInsertionManager.oldLinesList)
+                this.smartInsertionManager.oldStartLine = 0;
+                this.smartInsertionManager.oldEndLine = 1000;
+                this.smartInsertionManager.uniqueId = uuidv4();
+                const output : smartInsert = {
+                  "uniqueId": this.smartInsertionManager.uniqueId,
+                  "uniqueChatId": uuidv4(),
+                  "editorCode": editorCode,
+                  "updatedCode": updatedCode,
+                  "actionType": "smart_update"
+                }
+                this.sendSmartinsertCode(output)
+              }
+              break;
+        
+          case 'smartCodeInsertUserAction':
+              if (message.data.action === "accepted") {
+                this.smartInsertionManager.acceptInsertion()
+              } else if (message.data.action === "rejected") {
+                this.smartInsertionManager.rejectInsertion()
+              }
+              break;
           case 'showInfoPopup':
-              // console.log("showInfoPopup")
               // Show vscode information message
               vscode.window.showInformationMessage(message.data.message);
               break;
@@ -189,7 +241,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               this.messageQueue = [];
               // console.log("Message queue cleared.");
             }
-
             break;
           default:
             vscode.window.showInformationMessage(`Unknown command: ${message.command}`);
@@ -234,11 +285,37 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
 
+  private sendSmartinsertCode(inputMessages: smartInsert, retries = 3) {
+    if (this.socketModule.socket?.connected) {
+      this.attachSocketListeners();
+      this.socketModule.sendEditorSmartInsert(
+        inputMessages.uniqueId,
+        inputMessages.uniqueChatId,
+        inputMessages.editorCode,
+        inputMessages.updatedCode,
+        inputMessages.actionType
+      );
+    } else if (retries > 0) {
+      // console.log(`Attempting to reconnect... (${4 - retries}/3)`);
+      
+      setTimeout(() => {
+        this.sendSmartinsertCode(inputMessages, retries - 1);
+      }, 5000);
+    } else {
+      // console.log("Failed to reconnect.");
+      vscode.window.showInformationMessage("Please check your internet connection. or try again")
+    }
+  }
+
+
   private attachSocketListeners(): void {
     if (this.socketModule.socket?.listeners('receive_chat_response').length === 0) {
       // console.log("Adding 'receive_chat_response' listener.");
       this.socketModule.socket?.on('receive_chat_response', (data: MessageResponseFromBackEnd) => {
         this.forwardMessageToWebviews(data);
+      });
+      this.socketModule.socket?.on('recieve_editor_smart_insert', (data: any) => {
+        this.applySmartInsertCode(data);
       });
     } else {
       // console.log("'receive_chat_response' listener already exists.");
@@ -248,29 +325,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
   private async togglePanelLocation(): Promise<void> {
     this.panelManager.togglePanelLocationChange()
-  }
-
-  /**
-   * Sanitizes incoming messages to prevent security vulnerabilities.
-   * @param data - The message data to sanitize.
-   * @returns The sanitized message or null if invalid.
-   */
-  private sanitizeMessage(data: MessageInput): MessageInput | null {
-    try {
-      console.info("Sanatizing user requested chat", data);
-      const sanitized: MessageInput = {
-        id: uuidv4(),
-        timestamp: data.timestamp,
-        messageType: data.messageType,
-        text: data.text,
-      };
-
-      return sanitized;
-    } catch (error) {
-      // console.log("Message Sanitization Failed:", error);
-      console.error("Message Sanitization Failed");
-      return null;
-    }
   }
 
   /**
@@ -286,6 +340,102 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     this.activePanels.forEach(panel => {
       panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
     });
+  }
+  private getLineSeparator(): string {
+
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return '\n'; // Default to LF if no editor is active
+    }
+    const eol = editor.document.eol;
+    return eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+  }
+  /**
+   * Forwards incoming chat messages from the backend to all active webviews.
+   * If no webviews are active, the message is queued.
+   * @param data - The chat message data received from the backend.
+   */
+  public async applySmartInsertCode(data: any): Promise<void> {
+    this.updatedtext = this.updatedtext + data.response;
+
+    if (data.isLineComplete) {
+      this.smartInsertionManager.enqueueSnippetLineByLine(
+        this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.getLineSeparator()),
+        data.id,
+        this.getLineSeparator(),
+        false
+      );
+      this.updatedtext = "";
+    }
+
+    if (data.isComplete) {
+
+      // add a sleep time
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      this.smartInsertionManager.enqueueSnippetLineByLine(
+        "",
+        data.id,
+        this.getLineSeparator(),
+        true
+      );
+
+      this.updatedtext = "";
+
+      if (this.activePanels.length > 0){
+        this.activePanels[0].webview.postMessage(
+           {
+            command: 'smart_insert_to_editor_update', 
+            isComplete:  true,
+            uniqueId: data.id,
+            codeId: this.smartInsertionManager.currentCodeBlockId,
+            status: "completed_successfully" 
+           }
+        );
+      }
+    }
+  }
+
+  /**
+   * Forwards incoming chat messages from the backend to all active webviews.
+   * If no webviews are active, the message is queued.
+   * @param data - The chat message data received from the backend.
+   */
+  public async applyDirectSmartInsertCode(data: any): Promise<void> {
+    console.log("Applying direct smart insert code")
+    const updated_code = data.updatedCode.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.getLineSeparator());
+    const updated_code_split = updated_code.split(this.getLineSeparator());
+
+    for (let i = 0; i < updated_code_split.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const line = updated_code_split[i];
+      this.smartInsertionManager.enqueueSnippetLineByLine(
+        line,
+        data.uniqueId,
+        this.getLineSeparator(),
+        false
+      );
+    }
+
+    // add a sleep time
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    this.smartInsertionManager.enqueueSnippetLineByLine(
+      "",
+      data.uniqueId,
+      this.getLineSeparator(),
+      true
+    );
+
+    if (this.activePanels.length > 0){
+      this.activePanels[0].webview.postMessage(
+          {
+          command: 'smart_insert_to_editor_update', 
+          isComplete:  true,
+          uniqueId: data.uniqueId,
+          codeId: this.smartInsertionManager.currentCodeBlockId,
+          status: "completed_successfully" 
+          }
+      );
+    }
   }
 
   /**
@@ -326,7 +476,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       });
     } else {
       // No active (visible) webviews, enqueue the message
-      // // console.log("No active webviews. Queuing message.");
       this.messageQueue.push(data);
       // // console.log(`Message queued. Queue length: ${this.messageQueue.length}`);
     }
@@ -334,10 +483,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
 
   public async insertMessagesToChat(inputFile: string, inputText: string, completeText: string): Promise<void> {
-    console.log("insertMessagesToChat called")
-    console.log("inputFile", inputFile)
-    console.log("inputText", inputText)
-    console.log("completeText", completeText)
     await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
     // add sleep time
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -388,9 +533,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
 
-
-
-  
   /**
    * Generates the HTML content for the webview.
    * @param webview - The webview instance.
@@ -421,28 +563,28 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     const nonce = getNonce();
 
     return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta
-    http-equiv="Content-Security-Policy"
-    content="
-      default-src 'none'; 
-      img-src ${webview.cspSource} https: data:; 
-      font-src ${webview.cspSource}; 
-      style-src ${webview.cspSource} 'unsafe-inline' https://*.vscode-cdn.net; 
-      frame-src 'none';
-      script-src 'nonce-${nonce}' 'strict-dynamic';
-    "
-  />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" type="text/css" href="${styleUri}">
-  <title>AI Chat Panel</title>
-</head>
-<body>
-  <div id="root"></div>
-  <script nonce="${nonce}" src="${scriptUri}"></script>
-</body>
-</html>`;
-  }
-}
+              <html lang="en">
+              <head>
+                <meta charset="UTF-8">
+                <meta
+                  http-equiv="Content-Security-Policy"
+                  content="
+                    default-src 'none'; 
+                    img-src ${webview.cspSource} https: data:; 
+                    font-src ${webview.cspSource}; 
+                    style-src ${webview.cspSource} 'unsafe-inline' https://*.vscode-cdn.net; 
+                    frame-src 'none';
+                    script-src 'nonce-${nonce}' 'strict-dynamic';
+                  "
+                />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <link rel="stylesheet" type="text/css" href="${styleUri}">
+                <title>AI Chat Panel</title>
+              </head>
+              <body>
+                <div id="root"></div>
+                <script nonce="${nonce}" src="${scriptUri}"></script>
+              </body>
+              </html>`;
+          }
+    }

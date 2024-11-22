@@ -36,6 +36,13 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               ? 'bg-vscode-chat-message-outgoing text-vscode-editor-foreground'
               : 'bg-vscode-chat-message-incoming text-vscode-editor-foreground'
           }`}
+          style={
+            message.messageType === 'user'
+              ? {
+                  overflowX: 'auto'
+                }
+              : {}
+          }
         >
           <span className={`block text-sm font-semibold mb-2 opacity-75 ${message.messageType === 'user' ? 'text-right' : 'text-left'}`}>
             {message.messageType === 'user' ? 'YOU' : 'NEO'} ·{' '}
