@@ -29,6 +29,8 @@ export class CodeInsertionManager {
   public oldLinesList: string[] = [];
   public oldStartLine: number = 0;
   public oldEndLine: number = 0;
+  public currentEditor: vscode.TextEditor | undefined;
+  public selectionContext: vscode.Selection | undefined;
   private insertedDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(92, 248, 1, 0.2)',
     isWholeLine: true
@@ -40,7 +42,12 @@ export class CodeInsertionManager {
   private sameDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(0, 0, 255, 0)',
   });
-
+  private movingDecorationType = vscode.window.createTextEditorDecorationType({
+    backgroundColor: 'rgba(81, 81, 171, 0.358)',
+    isWholeLine: true
+  });
+  private responseQueue: Array<{ updatedText: string, id: string, nextLineCharacter: string, isComplete: boolean }> = [];
+  private isProcessing = false;
   public decorationsToApply = {
     deleted: [] as vscode.Range[],
     inserted: [] as vscode.Range[],
@@ -75,9 +82,9 @@ export class CodeInsertionManager {
     // Clear decorations in the editor
     const editor = vscode.window.activeTextEditor;
     if (editor) {
-        editor.setDecorations(this.insertedDecorationType, []);
-        editor.setDecorations(this.deletedDecorationType, []);
-        editor.setDecorations(this.sameDecorationType, []);
+        this.currentEditor?.setDecorations(this.insertedDecorationType, []);
+        this.currentEditor?.setDecorations(this.deletedDecorationType, []);
+        this.currentEditor?.setDecorations(this.sameDecorationType, []);
     }
 
     // Reset insertion map
@@ -109,7 +116,7 @@ export class CodeInsertionManager {
     };
 
     // Refresh CodeLens provider
-    this.codeLensProvider.refresh();
+    this.codeLensProvider.refresh(editor);
 }
 
 
@@ -154,7 +161,7 @@ export class CodeInsertionManager {
       return;
   }
 
-  const editor = vscode.window.activeTextEditor;
+  const editor = this.currentEditor;
   if (!editor) {
     vscode.window.showErrorMessage('No active editor found.');
     return;
@@ -185,7 +192,7 @@ export class CodeInsertionManager {
         }
 
         this.insertions.delete(id);
-        this.codeLensProvider.refresh();
+        this.codeLensProvider.refresh(editor);
         editor.setDecorations(this.insertedDecorationType, []);
         editor.setDecorations(this.deletedDecorationType, []);
         editor.setDecorations(this.sameDecorationType, []);
@@ -207,7 +214,7 @@ public rejectInsertion(id: string): void {
     return;
   }
 
-  const editor = vscode.window.activeTextEditor;
+  const editor = this.currentEditor;
   if (!editor) {
     vscode.window.showErrorMessage('No active editor found.');
     return;
@@ -240,7 +247,7 @@ public rejectInsertion(id: string): void {
         }
 
         this.insertions.delete(id);
-        this.codeLensProvider.refresh();
+        this.codeLensProvider.refresh(editor);
         editor.setDecorations(this.insertedDecorationType, []);
         editor.setDecorations(this.deletedDecorationType, []);
         editor.setDecorations(this.sameDecorationType, []);
@@ -290,112 +297,136 @@ public rejectInsertion(id: string): void {
     insertTextIntoTerminalFunction(newText);
   }
 
-  private countOccurrences(str: string, substring: string): number {
-    // Split the string by the substring and get the length of the resulting array
-    return str.split(substring).length - 1;
-}
+  public async enqueueSnippetLineByLine(
+    updatedText: string,
+    id: string,
+    nextLineCharacter: string,
+    isComplete: boolean = false
+  ): Promise<void> {
+      // Add the response to the queue
+      this.responseQueue.push({ updatedText, id, nextLineCharacter, isComplete });
 
+      // Start processing if not already processing
+      if (!this.isProcessing) {
+          this.processQueue();
+      }
+  }
+
+  private async processQueue(): Promise<void> {
+      this.isProcessing = true;
+
+      while (this.responseQueue.length > 0) {
+          const { updatedText, id, nextLineCharacter, isComplete } = this.responseQueue.shift()!;
+
+          // Call your existing insert function
+          await this.insertSnippetLineByLineInternal(updatedText, id, nextLineCharacter, isComplete);
+      }
+
+      this.isProcessing = false;
+  }
   /**
    * Inserts a snippet at the specified selection and highlights the deleted and inserted text.
    * @param updatedText The text to be inserted.
    * @param id Unique identifier for the insertion.
-   * @param selectionContext The selection range in the editor.
    */
-  public async insertSnippetLineByLine(
-      updatedText: string,
-      id: string,
-      selectionContext: vscode.Selection | undefined,
-      nextLineCharacter: string,
-      isComplete: boolean = false
-  ): Promise<void> {
+  public async insertSnippetLineByLineInternal(
+    updatedText: string,
+    id: string,
+    nextLineCharacter: string,
+    isComplete: boolean = false
+): Promise<void> {
 
-      const editor = vscode.window.activeTextEditor;
-      if (!editor || !selectionContext) {
-          vscode.window.showErrorMessage('No active editor or valid selection context found.');
-          return;
-      }
+    const editor = this.currentEditor;
+    if (!editor || !this.selectionContext) {
+      vscode.window.showErrorMessage('No active editor or valid selection context found.');
+        return;
+    }
 
       if (isComplete) {
         const insertion: Insertion = {
             id,
-            range: selectionContext,
+            range: this.selectionContext,
             decorationType: this.insertedDecorationType,
             deletedDecorationType: this.deletedDecorationType,
             sameDecorationType: this.sameDecorationType,
-            codeLensRange: selectionContext,
+            codeLensRange: this.selectionContext,
             insertedRanges: this.decorationsToApply.inserted,
             deletedRanges: this.decorationsToApply.deleted,
             sameRanges: this.decorationsToApply.same,
         };
+      editor.setDecorations(this.movingDecorationType, []);
+      this.insertions.set(id, insertion);
+      this.codeLensProvider.refresh(this.currentEditor);
+      return;
+    }
 
-        this.insertions.set(id, insertion);
-        this.codeLensProvider.refresh();
-        return;
-      }
+    // console.log("------------------------------------------------", JSON.stringify(updatedText))
+    // count of occurances
+    let newLineList = updatedText.split(nextLineCharacter)
+    if (newLineList.length > 1) {
+      newLineList.pop()
+    }
+    // console.log("#######", newLineList)
 
-      // count of occurances
-      const countNextLineCharacter = this.countOccurrences(updatedText, nextLineCharacter);
-      let newLineList = []
-      if (countNextLineCharacter === 1) {
-        newLineList = [updatedText.replace(/\r\n|\r/g, '')]
+    // Required Input Variables
+    for (const newLine of newLineList) {
+      // console.log("===============================================")
+      // console.log("***************", JSON.stringify(newLine))
+      let updatedIndex = 0
+
+      // Index of newLine in oldText
+      const index = this.oldLinesList.indexOf(newLine); 
+      // console.log("***************", JSON.stringify(index))
+
+      if (index === -1) {
+        // Getting Updated Positions
+        const startPos = new vscode.Position(this.oldStartLine + updatedIndex, 0);
+        const endPos = new vscode.Position(this.oldStartLine + updatedIndex, 1000);
+        const lineRange = new vscode.Range(startPos, endPos);
+        editor.setDecorations(this.movingDecorationType, [lineRange]);
+
+        // Inserting newLine into Editor
+        const edit = new vscode.WorkspaceEdit();
+        edit.insert(editor.document.uri, startPos, newLine + nextLineCharacter);
+        const success = await vscode.workspace.applyEdit(edit)
+        // Applying Decorations
+        this.decorationsToApply.inserted.push(lineRange);
+
+        // Updating Finalize Variables
+        updatedIndex += 1
+        this.oldStartLine = this.oldStartLine + updatedIndex
+        this.oldEndLine = this.oldEndLine + updatedIndex
+        // console.log("***************", JSON.stringify(lineRange), JSON.stringify(newLine))
+
       } else {
-        newLineList = updatedText.split(nextLineCharacter).slice(0, 2)
-      }
+        const slicedLines = this.oldLinesList.slice(0, index + 1)
+        // console.log("***************", JSON.stringify(this.oldLinesList))
 
-      // console.log("final new Line", newLine)
-      // Required Input Variables
-      for (const newLine of newLineList) {
-        const oldText = this.oldLinesList;
-        const startLine = this.oldStartLine
-        const endLine = this.oldEndLine
-        let updatedIndex = 0
-  
-        // Index of newLine in oldText
-        const index = oldText.indexOf(newLine); 
-
-        if (index === -1) {
-          // Getting Updated Positions
-          const startPos = new vscode.Position(startLine + updatedIndex, 0);
-          const endPos = new vscode.Position(startLine + updatedIndex, newLine.length - 1);
+        for (let tempLine in slicedLines) {
+          const startPos = new vscode.Position(this.oldStartLine + updatedIndex, 0);
+          const endPos = new vscode.Position(this.oldStartLine + updatedIndex, 1000);
           const lineRange = new vscode.Range(startPos, endPos);
-  
-          // Inserting newLine into Editor
-          const edit = new vscode.WorkspaceEdit();
-          edit.insert(editor.document.uri, startPos, newLine + nextLineCharacter);
-          await vscode.workspace.applyEdit(edit);
-  
-          // Applying Decorations
-          this.decorationsToApply.inserted.push(lineRange);
+          editor.setDecorations(this.movingDecorationType, [lineRange]);
 
-          // Updating Finalize Variables
+          if (slicedLines[tempLine] === newLine){
+            this.decorationsToApply.same.push(lineRange);
+          } else {
+            this.decorationsToApply.deleted.push(lineRange);
+          }  
           updatedIndex += 1
-          this.oldStartLine = startLine + updatedIndex
-          this.oldEndLine = endLine + updatedIndex
-        } else {
-          const slicedLines = oldText.slice(0, index + 1)
-  
-          for (let tempLine in slicedLines) {
-            const startPos = new vscode.Position(startLine + updatedIndex, 0);
-            const endPos = new vscode.Position(startLine + updatedIndex, slicedLines.length - 1);
-            const lineRange = new vscode.Range(startPos, endPos);
-    
-            if (slicedLines[tempLine] === newLine){
-              this.decorationsToApply.same.push(lineRange);
-            } else {
-              this.decorationsToApply.deleted.push(lineRange);
-            }  
-  
-            updatedIndex += 1
-          }
-          this.oldStartLine = startLine + updatedIndex
-          this.oldEndLine = endLine + updatedIndex
-          this.oldLinesList = oldText.slice(index + 1)
+          // console.log("***************", JSON.stringify(lineRange), JSON.stringify(tempLine))
         }
-
-        // Apply decorations
-        editor.setDecorations(this.insertedDecorationType, this.decorationsToApply.inserted);
-        editor.setDecorations(this.deletedDecorationType, this.decorationsToApply.deleted);
-        editor.setDecorations(this.sameDecorationType, this.decorationsToApply.same);
+        this.oldStartLine = this.oldStartLine + updatedIndex
+        this.oldEndLine = this.oldEndLine + updatedIndex
+        this.oldLinesList = this.oldLinesList.slice(index + 1)
       }
+      // console.log("***************", JSON.stringify(this.oldLinesList))
+      // console.log("***************", JSON.stringify(this.oldStartLine))
+
+      // Apply decorations
+      editor.setDecorations(this.insertedDecorationType, this.decorationsToApply.inserted);
+      editor.setDecorations(this.deletedDecorationType, this.decorationsToApply.deleted);
+      editor.setDecorations(this.sameDecorationType, this.decorationsToApply.same);
+    }
   } 
 }

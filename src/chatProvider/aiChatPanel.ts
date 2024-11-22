@@ -158,7 +158,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           
           case 'smartCodeInsert':
               const editor = vscode.window.activeTextEditor;
+              this.smartInsertionManager.currentEditor = editor;
               if (!editor) {
+                // show Information
+                vscode.window.showErrorMessage('No active editor found.');
                 return;
               }
               // get complete text of the current doc

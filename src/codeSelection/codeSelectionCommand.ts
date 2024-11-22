@@ -18,6 +18,7 @@ export class CodeSelectionCommandHandler {
   private aiChatpanel: AiChatPanel;
   private currentFileName: string = "";
   private selectionContext: SelectionContext;
+  
 
   private currentSelectionDetails: {
     selectedCode: string;
@@ -35,6 +36,30 @@ export class CodeSelectionCommandHandler {
     this.registerCommands();
   }
 
+
+  private expandSelectionToLine() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return; // No active editor
+    }
+
+    const selection = editor.selection;
+    const document = editor.document;
+
+    // Get the start and end positions of the selection
+    const startLine = selection.start.line;
+    const endLine = selection.end.line;
+
+    // Create new range that covers from the start of the line to the end of the line
+    const newSelection = new vscode.Selection(
+        document.lineAt(startLine).range.start, // Start of the first line
+        document.lineAt(endLine).range.end     // End of the last line
+    );
+
+    // Apply the new selection
+    editor.selection = newSelection;
+  }
+
   /**
    * Registers the commands in the context.
    */
@@ -44,32 +69,36 @@ export class CodeSelectionCommandHandler {
             CodeSelectionCommand.CODE_FACTOR,
             async () => {
                 const editor = vscode.window.activeTextEditor;
+                this.codeInsertionManager.currentEditor = editor;
                 if (!editor) {
                     vscode.window.showErrorMessage('No active editor found.');
                     return;
                 }
 
                 let selection = editor.selection;
-                let selectedText = editor.document.getText(selection);
+                const isEmpty = selection.isEmpty;
 
-                // If the selection starts or ends mid-line, expand to include the full line(s)
-                if (!selection.isEmpty) {
-                    selection = this.expandSelectionToFullLines(selection, editor);
-                    selectedText = editor.document.getText(selection);
+                if (isEmpty) {
+                    // check if anything exists in the current line after trimming.
+                    const currentLine = editor.document.lineAt(selection.start.line).text.trim();
+                    console.log("currentLine", currentLine)
+                    if (currentLine.length > 0) {
+                      // show error message
+                      vscode.window.showErrorMessage('Please select any text to use this command.');
+                      return;
+                    }
+                    // this.handleCodeFactorCommandForNoSelection(selection);
+                }else{
+                    this.expandSelectionToLine()
+                    selection = editor.selection;
+                    this.codeInsertionManager.selectionContext = selection
+                    const selectedText = editor.document.getText(selection).trim();
+                    this.selectionContext.clearHoverCache();
+                    this.selectionContext.clearHover(editor);
+                    vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
+                    editor.setDecorations(this.selectionContext.decorationType, []);
+                    await this.handleCodeFactorCommand(selection);
                 }
-                console.log(selectedText)
-                editor.setDecorations(this.selectionContext.decorationType, []);
-                this.selectionContext.clearHoverCache();
-                this.selectionContext.clearHover(editor);
-
-                if (selection.isEmpty && selectedText.length === 0) {
-                  // console.log("No text selected.");
-                  this.handleCodeFactorCommandForNoSelection(selection);
-                  return;
-                }
-
-                await this.handleCodeFactorCommand(selection);
-                vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
             }
         ),
         vscode.commands.registerCommand(
@@ -133,10 +162,9 @@ export class CodeSelectionCommandHandler {
         if (data.isLineComplete) {
           console.log("Line complete");
           const tempText: string = this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.nextLineCharacter);
-          this.codeInsertionManager.insertSnippetLineByLine(
+          this.codeInsertionManager.enqueueSnippetLineByLine(
             tempText,
             data.id,
-            this.currentSelectionContext,
             this.nextLineCharacter,
             false
           );
@@ -145,10 +173,9 @@ export class CodeSelectionCommandHandler {
 
         if (data.isComplete) {
           console.log("complete");
-          this.codeInsertionManager.insertSnippetLineByLine(
+          this.codeInsertionManager.enqueueSnippetLineByLine(
             "",
             data.id,
-            this.currentSelectionContext,
             this.nextLineCharacter,
             true
           );
@@ -164,6 +191,7 @@ export class CodeSelectionCommandHandler {
    * Handles the "Code Factor" command.
    */
   private async handleCodeFactorCommand(selection: vscode.Selection) {
+    console.log("With Selection");
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       vscode.window.showErrorMessage('No active editor found.');
@@ -224,15 +252,22 @@ export class CodeSelectionCommandHandler {
  * Handles the "Code Factor" command.
  */
 private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection) {
-  const editor = vscode.window.activeTextEditor;
+  console.log("Without Selection");
+
+  const editor = this.codeInsertionManager.currentEditor;
   if (!editor) {
     vscode.window.showErrorMessage('No active editor found.');
     return;
   }
 
-  
-  const position = editor.selection.active; // Get the current cursor position
-  const currentLineText = editor.document.lineAt(position.line).text; // Get the line where the cursor is currently positioned
+    this.codeInsertionManager.reinitialize()
+    this.currentSelectionContext = selection;
+    this.nextLineCharacter = this.getLineSeparator()
+
+    // Get selected text
+    const selectedText = editor.document.getText(selection);
+    const position = editor.selection.active; // Get the current cursor position
+    const currentLineText = editor.document.lineAt(position.line).text; // Get the line where the cursor is currently positioned
 
   // Check if the current line is empty after trimming
   if (currentLineText.trim() === '') {
@@ -274,7 +309,7 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
       'The current line is not empty. Select some text or move to an empty line to use the edit functionality.'
     );
   }
-}
+  }
   
   /**
    * Handles the "Code Factor" command.
@@ -305,9 +340,7 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
       const position = editor.selection.start; // You can also use editor.selection.start
       editor.selection = new vscode.Selection(position, position);
     }
-
   }
-
 }
 
 
