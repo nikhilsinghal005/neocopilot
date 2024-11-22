@@ -24,6 +24,7 @@ export class SmartInsertionManager {
   public uniqueId: string = '';
   public currentCodeBlockId: string = '';
   private edit = new vscode.WorkspaceEdit();
+  public currentEditor: vscode.TextEditor | undefined;
 
 
   private insertedDecorationType = vscode.window.createTextEditorDecorationType({
@@ -37,6 +38,11 @@ export class SmartInsertionManager {
   private sameDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(0, 0, 255, 0)',
   });
+  private movingDecorationType = vscode.window.createTextEditorDecorationType({
+    backgroundColor: 'rgba(81, 81, 171, 0.358)',
+    isWholeLine: true
+  });
+
   private responseQueue: Array<{ updatedText: string, id: string, nextLineCharacter: string, isComplete: boolean }> = [];
   private isProcessing = false;
   public decorationsToApply = {
@@ -61,7 +67,7 @@ export class SmartInsertionManager {
     });
 
     // Clear decorations in the editor
-    const editor = vscode.window.activeTextEditor;
+    const editor = this.currentEditor;
     if (editor) {
         editor.setDecorations(this.insertedDecorationType, []);
         editor.setDecorations(this.deletedDecorationType, []);
@@ -116,7 +122,7 @@ export class SmartInsertionManager {
       return;
   }
 
-  const editor = vscode.window.activeTextEditor;
+  const editor = this.currentEditor;
   if (!editor) {
     vscode.window.showErrorMessage('No active editor found.');
     return;
@@ -168,7 +174,7 @@ public rejectInsertion(): void {
     return;
   }
 
-  const editor = vscode.window.activeTextEditor;
+  const editor = this.currentEditor;
   if (!editor) {
     vscode.window.showErrorMessage('No active editor found.');
     return;
@@ -251,7 +257,7 @@ public async enqueueSnippetLineByLine(
       isComplete: boolean = false
   ): Promise<void> {
 
-      const editor = vscode.window.activeTextEditor;
+      const editor = this.currentEditor;
       if (!editor) {
           vscode.window.showErrorMessage('No active editor or valid selection context found.');
           return;
@@ -267,7 +273,7 @@ public async enqueueSnippetLineByLine(
             deletedRanges: this.decorationsToApply.deleted,
             sameRanges: this.decorationsToApply.same,
         };
-
+        editor.setDecorations(this.movingDecorationType, []);
         this.insertions.set(id, insertion);
         console.log("Insertion Process Completed")
         return;
@@ -295,7 +301,8 @@ public async enqueueSnippetLineByLine(
           const startPos = new vscode.Position(this.oldStartLine + updatedIndex, 0);
           const endPos = new vscode.Position(this.oldStartLine + updatedIndex, 1000);
           const lineRange = new vscode.Range(startPos, endPos);
-  
+          editor.setDecorations(this.movingDecorationType, [lineRange]);
+
           // Inserting newLine into Editor
           const edit = new vscode.WorkspaceEdit();
           edit.insert(editor.document.uri, startPos, newLine + nextLineCharacter);
@@ -317,7 +324,8 @@ public async enqueueSnippetLineByLine(
             const startPos = new vscode.Position(this.oldStartLine + updatedIndex, 0);
             const endPos = new vscode.Position(this.oldStartLine + updatedIndex, 1000);
             const lineRange = new vscode.Range(startPos, endPos);
-    
+            editor.setDecorations(this.movingDecorationType, [lineRange]);
+
             if (slicedLines[tempLine] === newLine){
               this.decorationsToApply.same.push(lineRange);
             } else {

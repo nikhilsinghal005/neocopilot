@@ -16,7 +16,7 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
         this.selectionContext = selectionContext;
 
         // Listen for cursor position changes
-        vscode.window.onDidChangeTextEditorSelection((e) => this.onCursorPositionChanged(e));
+        // vscode.window.onDidChangeTextEditorSelection((e) => this.onCursorPositionChanged(e));
     }
 
     public provideHover(
@@ -96,43 +96,43 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
         );
     }
 
-    private addDecoration(editor: vscode.TextEditor, position: vscode.Position) {
-        // Clear any existing timeout to prevent overlapping timers
-        if (this.decorationTimeout) {
-            clearTimeout(this.decorationTimeout);
-        }
+    // private addDecoration(editor: vscode.TextEditor, position: vscode.Position) {
+    //     // Clear any existing timeout to prevent overlapping timers
+    //     if (this.decorationTimeout) {
+    //         clearTimeout(this.decorationTimeout);
+    //     }
 
-        // Add a delay before showing the decoration
-        this.decorationTimeout = setTimeout(() => {
-            const line = editor.document.lineAt(position.line);
-            if (line.isEmptyOrWhitespace && this.socketModule.suggestion === "" && !this.socketModule.predictionRequestInProgress) {
-                const range = new vscode.Range(line.range.start, line.range.start);
-                editor.setDecorations(this.selectionContext.decorationType, [range]);
-            }
-        }, 2500); // 1.5-second delay before showing the decoration
-    }
+    //     // Add a delay before showing the decoration
+    //     this.decorationTimeout = setTimeout(() => {
+    //         const line = editor.document.lineAt(position.line);
+    //         if (line.isEmptyOrWhitespace && this.socketModule.suggestion === "" && !this.socketModule.predictionRequestInProgress) {
+    //             const range = new vscode.Range(line.range.start, line.range.start);
+    //             editor.setDecorations(this.selectionContext.decorationType, [range]);
+    //         }
+    //     }, 2500); // 1.5-second delay before showing the decoration
+    // }
 
-    private clearDecorations(editor: vscode.TextEditor) {
-        // Remove decorations immediately without any delay
-        if (this.decorationTimeout) {
-            clearTimeout(this.decorationTimeout);
-        }
-        editor.setDecorations(this.selectionContext.decorationType, []);
-    }
+    // private clearDecorations(editor: vscode.TextEditor) {
+    //     // Remove decorations immediately without any delay
+    //     if (this.decorationTimeout) {
+    //         clearTimeout(this.decorationTimeout);
+    //     }
+    //     editor.setDecorations(this.selectionContext.decorationType, []);
+    // }
 
-    private onCursorPositionChanged(e: vscode.TextEditorSelectionChangeEvent) {
-        const editor = e.textEditor;
-        const position = editor.selection.active;
+    // private onCursorPositionChanged(e: vscode.TextEditorSelectionChangeEvent) {
+    //     const editor = e.textEditor;
+    //     const position = editor.selection.active;
 
-        // Clear previous decorations immediately
-        this.clearDecorations(editor);
+    //     // Clear previous decorations immediately
+    //     this.clearDecorations(editor);
 
-        if (position.character === 0) {
-            const line = editor.document.lineAt(position.line);
-            if (line.isEmptyOrWhitespace && this.socketModule.suggestion === "" && !this.socketModule.predictionRequestInProgress) {
-                // Add decoration if the cursor is at the beginning of an empty line
-                this.addDecoration(editor, position);
-            }
-        }
-    }
+    //     if (position.character === 0) {
+    //         const line = editor.document.lineAt(position.line);
+    //         if (line.isEmptyOrWhitespace && this.socketModule.suggestion === "" && !this.socketModule.predictionRequestInProgress) {
+    //             // Add decoration if the cursor is at the beginning of an empty line
+    //             this.addDecoration(editor, position);
+    //         }
+    //     }
+    // }
 }
