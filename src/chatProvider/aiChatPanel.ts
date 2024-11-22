@@ -9,7 +9,7 @@ import { getNonce } from '../utilities/chatUtilities';
 import { PanelManager } from './panelManager'
 import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
 import { getExactNewlineCharacter } from '../utilities/basicUtilities';
-import { SmartInsetionManager } from '../codeInsertions/smartCodeInsert';
+import { SmartInsertionManager } from '../codeInsertions/smartCodeInsert';
 
 interface smartInsert {
   uniqueId: string, 
@@ -28,7 +28,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   private socketModule: SocketModule;
   private panelManager: PanelManager;
   private codeInsertionManager: CodeInsertionManager;
-  private smartInsertionManager: SmartInsetionManager = new SmartInsetionManager();;
+  private smartInsertionManager: SmartInsertionManager = new SmartInsertionManager();;
   private updatedtext: string = "";
   private currentSelection: vscode.Selection = new vscode.Selection(new vscode.Position(0, 0), new vscode.Position(0, 0));
 
@@ -173,12 +173,17 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               // get complete text of the current doc
               const editorCode = editor.document.getText();
               const updatedCode = message.data.code
-              this.currentSelection = editor.selection
               this.smartInsertionManager.reinitialize()
-              this.getLineSeparator()
+
+              if (editorCode.trim().length === 0) {
+                this.smartInsertionManager.oldLinesList = [];
+              } else {
+                this.smartInsertionManager.oldLinesList = editorCode.split(this.getLineSeparator());
+              }
+
 
               this.smartInsertionManager.currentCodeBlockId = message.data.codeId
-              this.smartInsertionManager.oldLinesList = editorCode.split(this.getLineSeparator());
+              console.log("oldLinesList", this.smartInsertionManager.oldLinesList)
               this.smartInsertionManager.oldStartLine = 0;
               this.smartInsertionManager.oldEndLine = 1000;
               this.smartInsertionManager.uniqueId = uuidv4();
@@ -352,16 +357,13 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
    * If no webviews are active, the message is queued.
    * @param data - The chat message data received from the backend.
    */
-  public applySmartInsertCode(data: any): void {
+  public async applySmartInsertCode(data: any): Promise<void> {
     this.updatedtext = this.updatedtext + data.response;
 
     if (data.isLineComplete) {
-      console.log("Line complete");
-      const tempText: string = this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.getLineSeparator());
-      this.smartInsertionManager.insertSnippetLineByLine(
-        tempText,
+      this.smartInsertionManager.enqueueSnippetLineByLine(
+        this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.getLineSeparator()),
         data.id,
-        this.currentSelection,
         this.getLineSeparator(),
         false
       );
@@ -369,14 +371,25 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
 
     if (data.isComplete) {
-      console.log("complete");
-      this.smartInsertionManager.insertSnippetLineByLine(
+
+      // if (this.updatedtext.length > 0){
+      //   console.log("complete", this.updatedtext);
+      //   this.smartInsertionManager.enqueueSnippetLineByLine(
+      //     this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.getLineSeparator()),
+      //     data.id,
+      //     this.getLineSeparator(),
+      //     false
+      //   );
+      // }
+      // add a sleep time
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      this.smartInsertionManager.enqueueSnippetLineByLine(
         "",
         data.id,
-        this.currentSelection,
         this.getLineSeparator(),
         true
       );
+
       this.updatedtext = "";
 
       if (this.activePanels.length > 0){

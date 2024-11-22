@@ -6,9 +6,7 @@ import * as vscode from 'vscode';
  */
 interface Insertion {
   id: string;
-  range: vscode.Range;
   decorationType: vscode.TextEditorDecorationType;
-  codeLensRange: vscode.Range;
   deletedDecorationType?: vscode.TextEditorDecorationType;
   sameDecorationType?: vscode.TextEditorDecorationType;
   insertedRanges: vscode.Range[];
@@ -16,8 +14,8 @@ interface Insertion {
   sameRanges: vscode.Range[];
 }
 
-export class SmartInsetionManager {
-  private static instance: SmartInsetionManager | null = null; // Singleton instance
+export class SmartInsertionManager {
+  private static instance: SmartInsertionManager | null = null; // Singleton instance
 
   private insertions: Map<string, Insertion> = new Map();
   public oldLinesList: string[] = [];
@@ -25,6 +23,8 @@ export class SmartInsetionManager {
   public oldEndLine: number = 0;
   public uniqueId: string = '';
   public currentCodeBlockId: string = '';
+  private edit = new vscode.WorkspaceEdit();
+
 
   private insertedDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(92, 248, 1, 0.2)',
@@ -37,7 +37,8 @@ export class SmartInsetionManager {
   private sameDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(0, 0, 255, 0)',
   });
-
+  private responseQueue: Array<{ updatedText: string, id: string, nextLineCharacter: string, isComplete: boolean }> = [];
+  private isProcessing = false;
   public decorationsToApply = {
     deleted: [] as vscode.Range[],
     inserted: [] as vscode.Range[],
@@ -97,11 +98,11 @@ export class SmartInsetionManager {
 }
 
   // Static method to get the singleton instance
-  public static getInstance(): SmartInsetionManager {
-    if (!SmartInsetionManager.instance) {
-      SmartInsetionManager.instance = new SmartInsetionManager(); // Create a new instance if it doesn't exist
+  public static getInstance(): SmartInsertionManager {
+    if (!SmartInsertionManager.instance) {
+      SmartInsertionManager.instance = new SmartInsertionManager(); // Create a new instance if it doesn't exist
     }
-    return SmartInsetionManager.instance; // Return the existing instance
+    return SmartInsertionManager.instance; // Return the existing instance
   }
 
   /**
@@ -210,27 +211,50 @@ public rejectInsertion(): void {
     });
 }
 
-  private countOccurrences(str: string, substring: string): number {
-    // Split the string by the substring and get the length of the resulting array
-    return str.split(substring).length - 1;
+
+
+public async enqueueSnippetLineByLine(
+    updatedText: string,
+    id: string,
+    nextLineCharacter: string,
+    isComplete: boolean = false
+): Promise<void> {
+    // Add the response to the queue
+    this.responseQueue.push({ updatedText, id, nextLineCharacter, isComplete });
+
+    // Start processing if not already processing
+    if (!this.isProcessing) {
+        this.processQueue();
+    }
+}
+
+  private async processQueue(): Promise<void> {
+      this.isProcessing = true;
+
+      while (this.responseQueue.length > 0) {
+          const { updatedText, id, nextLineCharacter, isComplete } = this.responseQueue.shift()!;
+
+          // Call your existing insert function
+          await this.insertSnippetLineByLineInternal(updatedText, id, nextLineCharacter, isComplete);
+      }
+
+      this.isProcessing = false;
   }
 
   /**
    * Inserts a snippet at the specified selection and highlights the deleted and inserted text.
    * @param updatedText The text to be inserted.
    * @param id Unique identifier for the insertion.
-   * @param selectionContext The selection range in the editor.
    */
-  public async insertSnippetLineByLine(
+  public async insertSnippetLineByLineInternal(
       updatedText: string,
       id: string,
-      selectionContext: vscode.Selection | undefined,
       nextLineCharacter: string,
       isComplete: boolean = false
   ): Promise<void> {
 
       const editor = vscode.window.activeTextEditor;
-      if (!editor || !selectionContext) {
+      if (!editor) {
           vscode.window.showErrorMessage('No active editor or valid selection context found.');
           return;
       }
@@ -238,11 +262,9 @@ public rejectInsertion(): void {
       if (isComplete) {
         const insertion: Insertion = {
             id,
-            range: selectionContext,
             decorationType: this.insertedDecorationType,
             deletedDecorationType: this.deletedDecorationType,
             sameDecorationType: this.sameDecorationType,
-            codeLensRange: selectionContext,
             insertedRanges: this.decorationsToApply.inserted,
             deletedRanges: this.decorationsToApply.deleted,
             sameRanges: this.decorationsToApply.same,
@@ -251,51 +273,50 @@ public rejectInsertion(): void {
         this.insertions.set(id, insertion);
         return;
       }
-
+      console.log("------------------------------------------------", JSON.stringify(updatedText))
       // count of occurances
-      const countNextLineCharacter = this.countOccurrences(updatedText, nextLineCharacter);
-      let newLineList = []
-      if (countNextLineCharacter === 1) {
-        newLineList = [updatedText.replace(/\r\n|\r/g, '')]
-      } else {
-        newLineList = updatedText.split(nextLineCharacter).slice(0, 2)
+      let newLineList = updatedText.split(nextLineCharacter)
+      if (newLineList.length > 1) {
+        newLineList.pop()
       }
+      console.log("#######", newLineList)
 
-      // console.log("final new Line", newLine)
       // Required Input Variables
       for (const newLine of newLineList) {
-        const oldText = this.oldLinesList;
-        const startLine = this.oldStartLine
-        const endLine = this.oldEndLine
+        console.log("===============================================")
+        console.log("***************", JSON.stringify(newLine))
         let updatedIndex = 0
   
         // Index of newLine in oldText
-        const index = oldText.indexOf(newLine); 
+        const index = this.oldLinesList.indexOf(newLine); 
+        console.log("***************", JSON.stringify(index))
 
         if (index === -1) {
           // Getting Updated Positions
-          const startPos = new vscode.Position(startLine + updatedIndex, 0);
-          const endPos = new vscode.Position(startLine + updatedIndex, newLine.length - 1);
+          const startPos = new vscode.Position(this.oldStartLine + updatedIndex, 0);
+          const endPos = new vscode.Position(this.oldStartLine + updatedIndex, 1000);
           const lineRange = new vscode.Range(startPos, endPos);
   
           // Inserting newLine into Editor
           const edit = new vscode.WorkspaceEdit();
           edit.insert(editor.document.uri, startPos, newLine + nextLineCharacter);
-          await vscode.workspace.applyEdit(edit);
-  
+          const success = await vscode.workspace.applyEdit(edit)
           // Applying Decorations
           this.decorationsToApply.inserted.push(lineRange);
 
           // Updating Finalize Variables
           updatedIndex += 1
-          this.oldStartLine = startLine + updatedIndex
-          this.oldEndLine = endLine + updatedIndex
+          this.oldStartLine = this.oldStartLine + updatedIndex
+          this.oldEndLine = this.oldEndLine + updatedIndex
+          console.log("***************", JSON.stringify(lineRange), JSON.stringify(newLine))
+
         } else {
-          const slicedLines = oldText.slice(0, index + 1)
-  
+          const slicedLines = this.oldLinesList.slice(0, index + 1)
+          console.log("***************", JSON.stringify(this.oldLinesList))
+
           for (let tempLine in slicedLines) {
-            const startPos = new vscode.Position(startLine + updatedIndex, 0);
-            const endPos = new vscode.Position(startLine + updatedIndex, slicedLines.length - 1);
+            const startPos = new vscode.Position(this.oldStartLine + updatedIndex, 0);
+            const endPos = new vscode.Position(this.oldStartLine + updatedIndex, 1000);
             const lineRange = new vscode.Range(startPos, endPos);
     
             if (slicedLines[tempLine] === newLine){
@@ -303,13 +324,15 @@ public rejectInsertion(): void {
             } else {
               this.decorationsToApply.deleted.push(lineRange);
             }  
-  
             updatedIndex += 1
+            console.log("***************", JSON.stringify(lineRange), JSON.stringify(tempLine))
           }
-          this.oldStartLine = startLine + updatedIndex
-          this.oldEndLine = endLine + updatedIndex
-          this.oldLinesList = oldText.slice(index + 1)
+          this.oldStartLine = this.oldStartLine + updatedIndex
+          this.oldEndLine = this.oldEndLine + updatedIndex
+          this.oldLinesList = this.oldLinesList.slice(index + 1)
         }
+        console.log("***************", JSON.stringify(this.oldLinesList))
+        console.log("***************", JSON.stringify(this.oldStartLine))
 
         // Apply decorations
         editor.setDecorations(this.insertedDecorationType, this.decorationsToApply.inserted);
