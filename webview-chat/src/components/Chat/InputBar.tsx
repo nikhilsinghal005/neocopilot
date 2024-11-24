@@ -218,18 +218,26 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
               <span className="codicon codicon-add text-xs"></span>
             </VSCodeButton>
             {showList && (
-              <div className="absolute bottom-full left-0 mb-2 w-56 bg-var(--vscode-editor-background) border border-var(--vscode-editorGroup-border) rounded shadow-md z-10 p-2 dropdown-container">
+              <div className="absolute bottom-full left-0 mb-2 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
+              style={{
+                backgroundColor: 'var(--vscode-editor-background)',
+                borderColor: 'var(--vscode-editorGroup-border)',
+                color: 'var(--vscode-editor-foreground)'
+              }}
+              >
                 {openEditorFilesList.length > 0 ? (
                   openEditorFilesList.map((file) => (
                     <div
                       key={file.filePath}
                       onClick={() => handleListItemClick(file)}
-                      className="p-1 cursor-pointer rounded-sm hover:bg-var(--vscode-list-hoverBackground)"
+                      className="p-1 cursor-pointer rounded-sm"
                       style={{
-                        color: 'var(--vscode-editor-foreground)',
+                        backgroundColor: 'var(--vscode-editor-background)',
+                        borderColor: 'var(--vscode-editorGroup-border)',
+                        color: 'var(--vscode-editor-foreground)'
                       }}
                     >
-                      {file.fileName}
+                      {file.filePath}
                     </div>
                   ))
                 ) : (

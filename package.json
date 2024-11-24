@@ -3,7 +3,7 @@
   "name": "neocopilot",
   "displayName": "Neo Copilot",
   "description": "CodeAssist provides developers with intelligent, context-sensitive code suggestions designed to boost productivity and simplify the development process. Harness the power of an advanced suggestion engine that understands your code, delivering seamless and efficient workflow support.",
-  "version": "0.100.19",
+  "version": "0.100.20",
   "engines": {
     "vscode": "^1.70.0"
   },
