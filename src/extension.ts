@@ -16,12 +16,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // Disable hover delay
   const config = vscode.workspace.getConfiguration('editor.hover');
-  config.update('delay', 500, vscode.ConfigurationTarget.Global)
+  config.update('delay', 500, vscode.ConfigurationTarget.Global);
 
   // Disable minimap
   const configAll = vscode.workspace.getConfiguration('editor');
   const isMinimapEnabled = configAll.get<boolean>('minimap.enabled');
-  configAll.update('minimap.enabled', !isMinimapEnabled, vscode.ConfigurationTarget.Global)
+  configAll.update('minimap.enabled', !isMinimapEnabled, vscode.ConfigurationTarget.Global);
 
   // Initialize the modules
   const completionProviderModule = new CompletionProviderModule();
@@ -41,18 +41,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   if (isLoggedIn) {
     const currentVersion = context.extension.packageJSON.version;
     const socketConnection: Socket | null = await socketModule.connect(currentVersion, context);
-    
-    if (socketConnection){
-      initializeAppFunctions(
-        vscodeEventsModule, 
-        completionProviderModule, 
-        authManager,  
-        socketModule,
-        context
-      );
-    }else{
-      showLoginNotification();
-    }
+
+    initializeAppFunctions(
+      vscodeEventsModule, 
+      completionProviderModule, 
+      authManager,  
+      socketModule,
+      context
+    );
+
   } else {
     showLoginNotification();
   }

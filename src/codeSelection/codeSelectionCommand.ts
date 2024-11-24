@@ -61,6 +61,40 @@ export class CodeSelectionCommandHandler {
     editor.selection = newSelection;
   }
 
+  private async handleClick() {
+    const editor = vscode.window.activeTextEditor;
+    this.codeInsertionManager.currentEditor = editor;
+    if (!editor) {
+        vscode.window.showErrorMessage('No active editor found.');
+        return;
+    }
+
+    let selection = editor.selection;
+    const isEmpty = selection.isEmpty;
+
+    if (isEmpty) {
+        // check if anything exists in the current line after trimming.
+        const currentLine = editor.document.lineAt(selection.start.line).text.trim();
+        console.log("currentLine", currentLine);
+        if (currentLine.length > 0) {
+          // show error message
+          vscode.window.showErrorMessage('Please select any text to use this command.');
+          return;
+        }
+        // this.handleCodeFactorCommandForNoSelection(selection);
+    }else{
+        this.expandSelectionToLine();
+        selection = editor.selection;
+        this.codeInsertionManager.selectionContext = selection;
+        const selectedText = editor.document.getText(selection).trim();
+        this.selectionContext.clearHoverCache();
+        this.selectionContext.clearHover(editor);
+        vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
+        editor.setDecorations(this.selectionContext.decorationType, []);
+        await this.handleCodeFactorCommand(selection);
+    }
+  }
+
   /**
    * Registers the commands in the context.
    */
@@ -69,37 +103,23 @@ export class CodeSelectionCommandHandler {
         vscode.commands.registerCommand(
             CodeSelectionCommand.CODE_FACTOR,
             async () => {
-                const editor = vscode.window.activeTextEditor;
-                this.codeInsertionManager.currentEditor = editor;
-                if (!editor) {
-                    vscode.window.showErrorMessage('No active editor found.');
-                    return;
+              const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+              let retries = 0;
+              while (retries < 4) {
+                console.log("retries", retries);
+                if (this.socketModule.socket?.connected) {
+                  await this.handleClick();
+                  return; // Exit the loop on success
+                } else {
+                  this.attachSocketListeners();
+                  retries++;
+                  showTextNotification('Trying to connect with system. Please wait', 2);
+                  await delay(5000); // Wait 5 seconds before retrying
                 }
-
-                let selection = editor.selection;
-                const isEmpty = selection.isEmpty;
-
-                if (isEmpty) {
-                    // check if anything exists in the current line after trimming.
-                    const currentLine = editor.document.lineAt(selection.start.line).text.trim();
-                    console.log("currentLine", currentLine)
-                    if (currentLine.length > 0) {
-                      // show error message
-                      vscode.window.showErrorMessage('Please select any text to use this command.');
-                      return;
-                    }
-                    // this.handleCodeFactorCommandForNoSelection(selection);
-                }else{
-                    this.expandSelectionToLine()
-                    selection = editor.selection;
-                    this.codeInsertionManager.selectionContext = selection
-                    const selectedText = editor.document.getText(selection).trim();
-                    this.selectionContext.clearHoverCache();
-                    this.selectionContext.clearHover(editor);
-                    vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
-                    editor.setDecorations(this.selectionContext.decorationType, []);
-                    await this.handleCodeFactorCommand(selection);
-                }
+              }
+              if (retries >= 4) {
+                showTextNotification('Unable to connect with system. Please check internet connection', 2);
+              }
             }
         ),
         vscode.commands.registerCommand(
@@ -198,9 +218,9 @@ export class CodeSelectionCommandHandler {
       vscode.window.showErrorMessage('No active editor found.');
       return;
     }
-    this.codeInsertionManager.reinitialize()
+    this.codeInsertionManager.reinitialize();
     this.currentSelectionContext = selection;
-    this.nextLineCharacter = this.getLineSeparator()
+    this.nextLineCharacter = this.getLineSeparator();
 
     // Get selected text
     const selectedText = editor.document.getText(selection);
@@ -217,8 +237,8 @@ export class CodeSelectionCommandHandler {
 
     // Prompt user for input
     const userInput = await vscode.window.showInputBox({
-      prompt: 'Enter the purpose or label for the selected code',
-      placeHolder: 'e.g., Refactor, Review, Debug',
+      prompt: 'Enter the purpose or action for the selected code',
+      placeHolder: 'e.g., Refactor Code, Add comments',
     });
 
     if (userInput) {
@@ -245,7 +265,7 @@ export class CodeSelectionCommandHandler {
               editor.selection = new vscode.Selection(position, position);
             }
     } else {
-      showTextNotification('No input provided.', 2)
+      vscode.window.showInformationMessage('No input provided.');
     }
   }
 
@@ -261,9 +281,9 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
     return;
   }
 
-    this.codeInsertionManager.reinitialize()
+    this.codeInsertionManager.reinitialize();
     this.currentSelectionContext = selection;
-    this.nextLineCharacter = this.getLineSeparator()
+    this.nextLineCharacter = this.getLineSeparator();
 
     // Get selected text
     const selectedText = editor.document.getText(selection);
@@ -302,14 +322,13 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
         "no_select_action"
       );
     } else {
-      showTextNotification('No input provided.', 2)
+      vscode.window.showInformationMessage('No input provided.');
     }
   } else {
     // If the current line is not empty
-    showTextNotification(
-      'The current line is not empty. Select some text or move to an empty line to use the edit functionality.',
-      3
-    )
+    vscode.window.showInformationMessage(
+      'The current line is not empty. Select some text or move to an empty line to use the edit functionality.'
+    );
   }
   }
   
@@ -334,7 +353,7 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
       this.currentFileName,
       selectedText,
       this.completeText
-    )
+    );
 
     // Send data through SocketModule
     // Show message to user
