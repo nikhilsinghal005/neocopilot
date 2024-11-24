@@ -42,14 +42,14 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
           console.log('message opened in editor'); 
           const newContext: CurrentFileContext = {
             currentSelectedFileName: event.data.currentSelectedFileName,
-            currentSelectedFileCompletePath: event.data.currentSelectedFileCompletePath,
+            currentSelectedFileRelativePath: event.data.currentSelectedFileRelativePath,
             slectionType: event.data.action,
           };
 
           // Check if the file already exists in the context
           const exists = attachedContext.some(context => 
             context.currentSelectedFileName === newContext.currentSelectedFileName &&
-            context.currentSelectedFileCompletePath === newContext.currentSelectedFileCompletePath
+            context.currentSelectedFileRelativePath === newContext.currentSelectedFileRelativePath
           );
           if (!exists) {
             // If it doesn't exist, filter out any context with slectionType "user_opened"
@@ -75,7 +75,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
       if (event.data.command === 'editor_open_files_list_update_event') {
         console.log('List of Files Received:', event.data);
         const updatedOpenFilesList = event.data.openFiles.filter((file: EditorOpenFileList) => 
-          !attachedContext.some(context => context.currentSelectedFileCompletePath === file.filePath)
+          !attachedContext.some(context => context.currentSelectedFileRelativePath === file.filePath)
         );
         setOpenEditorFilesList(updatedOpenFilesList);
       }
@@ -128,15 +128,15 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
   };
 
   const handleRemoveTag = (filePath: string) => {
-    const updatedAttachedContext = attachedContext.filter(context => context.currentSelectedFileCompletePath !== filePath);
+    const updatedAttachedContext = attachedContext.filter(context => context.currentSelectedFileRelativePath !== filePath);
     setAttachedContext(updatedAttachedContext);
 
     // Add the removed item back to openEditorFilesList
-    const removedFile = attachedContext.find(context => context.currentSelectedFileCompletePath === filePath);
+    const removedFile = attachedContext.find(context => context.currentSelectedFileRelativePath === filePath);
     if (removedFile) {
       setOpenEditorFilesList([...openEditorFilesList, {
         fileName: removedFile.currentSelectedFileName,
-        filePath: removedFile.currentSelectedFileCompletePath,
+        filePath: removedFile.currentSelectedFileRelativePath,
         languageId: '' // Assuming languageId is not available, you can adjust this accordingly
       }]);
     }
@@ -153,7 +153,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
 
       const newContext: CurrentFileContext = {
         currentSelectedFileName: item.fileName,
-        currentSelectedFileCompletePath: item.filePath,
+        currentSelectedFileRelativePath: item.filePath,
         slectionType: 'user_selection',
       };
 
@@ -254,7 +254,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                     appearance="icon"
                     aria-label="Remove Context"
                     className="ml-0 p-0 rounded-none h-3 w-3"
-                    onClick={() => handleRemoveTag(context.currentSelectedFileCompletePath)}
+                    onClick={() => handleRemoveTag(context.currentSelectedFileRelativePath)}
                   >
                     <span className="codicon codicon-close text-xxs"></span>
                   </VSCodeButton>

@@ -296,47 +296,22 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     return openFiles;
   }
 
-  public async getFileText(relativePath: string): Promise<string | null> {
-    try {
-        // Convert the relative path to an absolute path
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showErrorMessage('No workspace is open');
-            return null;
-        }
-        
-        // Assume the first workspace folder for the relative path
-        const absolutePath = path.join(workspaceFolders[0].uri.fsPath, relativePath);
-
-        // Create a URI for the file
-        const fileUri = vscode.Uri.file(absolutePath);
-
-        // Open the text document
-        const document = await vscode.workspace.openTextDocument(fileUri);
-
-        // Return the text content
-        return document.getText();
-    } catch (error) {
-        vscode.window.showErrorMessage(`Error reading file: ${error}`);
-        return null;
-    }
-  }
-
   public getCurrentFileName(editor: vscode.TextEditor | undefined, context: vscode.ExtensionContext) {
     if (this.debounceTimeout) {
       clearTimeout(this.debounceTimeout);
     }
     this.debounceTimeout = setTimeout(() => {
       this.currentSelectedFileName = path.basename(handleActiveEditor(editor, context));
+      const currentSelectedFileRelativePath = vscode.workspace.asRelativePath(handleActiveEditor(editor, context));
       console.log(`Current file name: ${this.currentSelectedFileName}`);
       console.log(`File Not Supported: ${handleActiveEditor(editor, context)}`);
-      if (notSupportedFiles(this.currentSelectedFileName)) {
+      if (notSupportedFiles(this.currentSelectedFileName) || currentSelectedFileRelativePath==='tasks') {
         if (this.activePanels.length > 0){
           this.activePanels[0].webview.postMessage(
               {
                 command: 'editor_changed_context_update_event', 
                 currentSelectedFileName:  this.currentSelectedFileName,
-                currentSelectedFileCompletePath: vscode.workspace.asRelativePath(handleActiveEditor(editor, context)),
+                currentSelectedFileRelativePath: currentSelectedFileRelativePath,
                 action: "user_opened_unsupported_file_in_editor"
               }
           );
@@ -348,7 +323,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               {
                 command: 'editor_changed_context_update_event', 
                 currentSelectedFileName:  this.currentSelectedFileName,
-                currentSelectedFileCompletePath: vscode.workspace.asRelativePath(handleActiveEditor(editor, context)),
+                currentSelectedFileRelativePath: currentSelectedFileRelativePath,
                 action: "user_opened_in_editor"
               }
           );

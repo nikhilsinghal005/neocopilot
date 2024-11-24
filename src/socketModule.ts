@@ -360,10 +360,10 @@ export class SocketModule {
         for (const context of lastMessage.attachedContext) {
             try {
                 // Retrieve and update fileText for the current context
-                const fileText = await this.getFileText(context.currentSelectedFileCompletePath);
+                const fileText = await this.getFileText(context.currentSelectedFileRelativePath);
                 context.fileText = fileText || 'Error retrieving file text';
             } catch (error) {
-                console.error(`Failed to fetch file text for ${context.currentSelectedFileCompletePath}:`, error);
+                console.error(`Failed to fetch file text for ${context.currentSelectedFileRelativePath}:`, error);
                 context.fileText = 'Error retrieving file text';
             }
         }
@@ -394,8 +394,8 @@ export class SocketModule {
 
 //     let messageList = chat.messages.slice(-5);
 //     const attachedContext = messageList[-1].attachedContext[0]
-//     attachedContext.currentSelectedFileCompletePath
-//     console.log("-------------------", this.getFileText(attachedContext.currentSelectedFileCompletePath)
+//     attachedContext.currentSelectedFileRelativePath
+//     console.log("-------------------", this.getFileText(attachedContext.currentSelectedFileRelativePath)
 // )
 //     this.predictionRequestInProgress = true;
 //       if (this.socket) {

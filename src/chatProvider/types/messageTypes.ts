@@ -38,7 +38,7 @@ export type MessageInput = {
 
 export type CurrentFileContext = {
   currentSelectedFileName: string;
-  currentSelectedFileCompletePath: string;
+  currentSelectedFileRelativePath: string;
   slectionType: string;
   fileText?: string;
 };

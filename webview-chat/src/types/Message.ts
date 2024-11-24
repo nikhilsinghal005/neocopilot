@@ -17,7 +17,7 @@
 
   export type CurrentFileContext = {
     currentSelectedFileName: string;
-    currentSelectedFileCompletePath: string;
+    currentSelectedFileRelativePath: string;
     slectionType: string;
   };
 
