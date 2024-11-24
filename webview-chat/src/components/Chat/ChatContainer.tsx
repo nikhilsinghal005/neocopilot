@@ -47,13 +47,14 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
 
       {/* Input Container */}
       <div
-        className="input-container fixed left-0 right-0 bg-vscode-editor-background pl-0 pr-0 shadow-md flex items-center"
+        className="input-container absolute left-0 right-0 bg-vscode-editor-background pl-0 pr-0 shadow-md flex items-center"
         style={{
           minHeight: '110px',
           maxHeight: '200px',
           height: 'var(--input-container-height, 130px)',
-          bottom: '0',
-          // transition: 'height 0.3s ease', // Smooth transition
+          bottom: '20px',
+          transform: `translateY(calc(100% - var(--input-container-height, 130px)))`,
+          transition: 'transform 0.3s ease, height 0.3s ease',
         }}
       >
         <InputBar

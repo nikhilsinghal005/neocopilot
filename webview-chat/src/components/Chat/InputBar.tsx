@@ -253,7 +253,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                   <VSCodeButton
                     appearance="icon"
                     aria-label="Remove Context"
-                    className="ml-0 p-0 rounded-none h-3 w-3"
+                    className="mr-1 p-0 rounded-none h-3 w-3"
                     onClick={() => handleRemoveTag(context.currentSelectedFileRelativePath)}
                   >
                     <span className="codicon codicon-close text-xxs"></span>
@@ -362,6 +362,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
             </div>
           )}
         </div>
+
       </div>
     </>
   );
