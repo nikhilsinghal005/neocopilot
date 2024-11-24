@@ -220,6 +220,9 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               showTextNotification(message.data.message, 3)
               // Show vscode information message popup with fixed timeout
               break;
+          case 'toggle_webview':
+              console.log("Received 'toggle_webview' message from webview.");
+              this.panelManager.togglePanelLocationChange()
 
           case 'ready':
             // console.log("Received 'ready' message from webview.");
