@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { FULL_VERIFICATION_URL, FULL_TOKEN_REFRESH_URL, FULL_USER_PROFILE_URL } from '../config';
+import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
 
 export interface UserProfile {
   email: string;
@@ -182,7 +183,7 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
         console.error('Neo Copilot: Error during token refresh, retrying...');
         if (retryCount == 5 || retryCount == 10 || retryCount == 100) {
           // Show a Vscode Information message if the retry count is 10 or 100
-          vscode.window.showInformationMessage('Temporary network issue detected, Please check you internet. retrying...');
+          showTextNotification("'Temporary network issue detected, Please check you internet. retrying...", 4)
         }
         await sleep(5000); // Retry after delay
         return this.refreshAccessToken(retryCount - 1);

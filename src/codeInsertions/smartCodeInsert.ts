@@ -1,5 +1,6 @@
 // src/codeInsertions/CodeInsertionManager.ts
 import * as vscode from 'vscode';
+import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
 
 /**
  * Represents an insertion in the editor.
@@ -156,7 +157,7 @@ export class SmartInsertionManager {
         editor.setDecorations(this.insertedDecorationType, []);
         editor.setDecorations(this.deletedDecorationType, []);
         editor.setDecorations(this.sameDecorationType, []);
-        vscode.window.showInformationMessage('Code accepted.');
+        showTextNotification('Code accepted', 2);
       } else {
         vscode.window.showErrorMessage('Failed to accept the insertion.');
       }
@@ -210,7 +211,6 @@ public rejectInsertion(): void {
         editor.setDecorations(this.insertedDecorationType, []);
         editor.setDecorations(this.deletedDecorationType, []);
         editor.setDecorations(this.sameDecorationType, []);
-        vscode.window.showInformationMessage('Code rejected.');
       } else {
         vscode.window.showErrorMessage('Failed to reject the insertion.');
       }

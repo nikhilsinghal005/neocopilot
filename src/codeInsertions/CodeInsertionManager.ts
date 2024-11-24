@@ -4,6 +4,7 @@ import { CodeInsertionCodeLensProvider } from './CodeInsertionCodeLensProvider';
 import { insertTextAtCursorFunction } from './handleInsertionTypes/insertAtCursor';
 import { insertSnippetAtCursorFunction} from './handleInsertionTypes/inserSnippetAtCursor';
 import {insertTextIntoTerminalFunction} from './handleInsertionTypes/insertCommandTerminal';
+import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
 
 /**
  * Represents an insertion in the editor.
@@ -196,7 +197,7 @@ export class CodeInsertionManager {
         editor.setDecorations(this.insertedDecorationType, []);
         editor.setDecorations(this.deletedDecorationType, []);
         editor.setDecorations(this.sameDecorationType, []);
-        vscode.window.showInformationMessage('Code accepted.');
+        showTextNotification('Code accepted.', 2)
       } else {
         vscode.window.showErrorMessage('Failed to accept the insertion.');
       }
@@ -251,9 +252,10 @@ public rejectInsertion(id: string): void {
         editor.setDecorations(this.insertedDecorationType, []);
         editor.setDecorations(this.deletedDecorationType, []);
         editor.setDecorations(this.sameDecorationType, []);
-        vscode.window.showInformationMessage('Code rejected.');
+        showTextNotification('Code rejected.', 2)
       } else {
-        vscode.window.showErrorMessage('Failed to reject the insertion.');
+        showTextNotification('Failed to reject the insertion.', 2)
+        // vscode.window.showErrorMessage('Failed to reject the insertion.');
       }
     });
 }

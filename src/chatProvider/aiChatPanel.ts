@@ -12,6 +12,7 @@ import { SmartInsertionManager } from '../codeInsertions/smartCodeInsert';
 import { handleActiveEditor } from "../utilities/codeCompletionUtils/editorUtils";
 import * as path from 'path';
 import { isNullOrEmptyOrWhitespace, notSupportedFiles } from "../utilities/codeCompletionUtils/completionUtils";
+import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
 
 interface smartInsert {
   uniqueId: string, 
@@ -216,7 +217,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               }
               break;
           case 'showInfoPopup':
-              vscode.window.showInformationMessage(message.data.message);
+              showTextNotification(message.data.message, 3)
               // Show vscode information message popup with fixed timeout
               break;
 
@@ -252,7 +253,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             }
             break;
           default:
-            vscode.window.showInformationMessage(`Unknown command: ${message.command}`);
+            showTextNotification("Unable to perform provided action", 3);
         }
       });
     }
@@ -410,7 +411,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       }, 5000);
     } else {
       // console.log("Failed to reconnect.");
-      vscode.window.showInformationMessage("Please check your internet connection. or try again")
+      showTextNotification("Please check your internet connection. or try again", 5)
     }
   }
 

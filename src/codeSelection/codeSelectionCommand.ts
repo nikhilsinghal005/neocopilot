@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { AiChatPanel } from '../chatProvider/aiChatPanel';
 import { CodeSelectionCommand } from './selectionContext';
 import { SelectionContext } from './selectionContext';
+import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
 
 export class CodeSelectionCommandHandler {
   private socketModule: SocketModule;
@@ -244,7 +245,7 @@ export class CodeSelectionCommandHandler {
               editor.selection = new vscode.Selection(position, position);
             }
     } else {
-      vscode.window.showInformationMessage('No input provided.');
+      showTextNotification('No input provided.', 2)
     }
   }
 
@@ -301,13 +302,14 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
         "no_select_action"
       );
     } else {
-      vscode.window.showInformationMessage('No input provided.');
+      showTextNotification('No input provided.', 2)
     }
   } else {
     // If the current line is not empty
-    vscode.window.showInformationMessage(
-      'The current line is not empty. Select some text or move to an empty line to use the edit functionality.'
-    );
+    showTextNotification(
+      'The current line is not empty. Select some text or move to an empty line to use the edit functionality.',
+      3
+    )
   }
   }
   
