@@ -14,9 +14,14 @@ import { handleTokenUri } from './authManager/handleTokenUri';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 
-
+  // Disable hover delay
   const config = vscode.workspace.getConfiguration('editor.hover');
   config.update('delay', 500, vscode.ConfigurationTarget.Global)
+
+  // Disable minimap
+  const configAll = vscode.workspace.getConfiguration('editor');
+  const isMinimapEnabled = configAll.get<boolean>('minimap.enabled');
+  configAll.update('minimap.enabled', !isMinimapEnabled, vscode.ConfigurationTarget.Global)
 
   // Initialize the modules
   const completionProviderModule = new CompletionProviderModule();
@@ -63,9 +68,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       authManager
     )
   });
-
   // Register the AI Chat Panel webview view provider
-
 }
 
 export function deactivate(): void {
@@ -73,3 +76,4 @@ export function deactivate(): void {
   const socketModule = new SocketModule(completionProviderModule);
   socketModule.disconnect();
 }
+
