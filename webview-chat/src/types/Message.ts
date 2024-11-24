@@ -5,14 +5,46 @@
     messages: MessageStore[];
   };
 
+  // // For input messages (e.g., when receiving or sending new messages)
+  // export type MessageInput = {
+  //   chatId: string;
+  //   id: string;
+  //   timestamp: string;
+  //   messageType: 'user' | 'system';
+  //   response: string;
+  //   isComplete?: boolean; // Indicates if the message is fully received
+  // };
+
+  export type CurrentFileContext = {
+    currentSelectedFileName: string;
+    currentSelectedFileCompletePath: string;
+    slectionType: string;
+  };
+
   // For input messages (e.g., when receiving or sending new messages)
   export type MessageInput = {
     chatId: string;
     id: string;
     timestamp: string;
-    messageType: 'user' | 'system';
+    messageType: 'system';
     response: string;
     isComplete?: boolean; // Indicates if the message is fully received
+  };
+
+  export type EditorOpenFileList = {
+    fileName: string;
+    filePath: string;
+    languageId: string;
+  };
+
+  export type MessageOutput = {
+    id: string;
+    timestamp: string;
+    messageType: 'user';
+    text: string;
+    isComplete?: boolean; // Indicates if the message is fully received
+    modelSelected: string; // Indicates the model used to generate the response
+    attachedContext: CurrentFileContext[];  // List of file paths attached to the message
   };
 
   // How a message is stored with additional details like files and images
@@ -21,9 +53,11 @@
     timestamp: string;
     messageType: 'user' | 'system';
     text: string;
-    attachedFiles?: string[];  // List of file paths attached to the message
+    attachedFiles?: object[];  // List of file paths attached to the message
     imagePaths?: string[];     // List of image paths associated with the message
     isComplete?: boolean; // Indicates if the message is fully received
+    modelSelected?: string; // Indicates the model used to generate the response
+    attachedContext?: object[];  // List of file paths attached to the message
   };
 
   // Represents a full chat session with a name and list of messages

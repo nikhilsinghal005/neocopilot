@@ -15,6 +15,7 @@ import { getTextBeforeCursor } from "./utilities/codeCompletionUtils/editorCodeU
 import { AuthManager } from './authManager/authManager';
 import { CodeInsertionManager } from './codeInsertions/CodeInsertionManager';
 import { ChatSession, MessageInput} from './chatProvider/types/messageTypes';
+import * as path from 'path';
 
 interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {}
 
@@ -323,23 +324,91 @@ export class SocketModule {
     }
   }
 
-  public sendChatMessage(chat: ChatSession) {
-    // console.log("Message to scoket from backend")
-    this.predictionRequestInProgress = true;
-    // const messageList: MessageInput = chat.messages;
-    // const timestamp = new Date().toISOString();
-    // const messageType = chat.messageType;
-    if (this.socket) {
-      this.socket.emit('generate_chat_response', {
-        chatId: chat.chatId,
-        timestamp: chat.timestamp,
-        messageList: chat.messages.slice(-6),
-        appVersion: this.currentVersion,
-        userEmail: this.email,
-        uniqueId: uuidv4()
-      });
+  public async getFileText(relativePath: string): Promise<string | null> {
+    try {
+        // Convert the relative path to an absolute path
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showErrorMessage('No workspace is open');
+            return null;
+        }
+        
+        // Assume the first workspace folder for the relative path
+        const absolutePath = path.join(workspaceFolders[0].uri.fsPath, relativePath);
+
+        // Create a URI for the file
+        const fileUri = vscode.Uri.file(absolutePath);
+
+        // Open the text document
+        const document = await vscode.workspace.openTextDocument(fileUri);
+
+        // Return the text content
+        return document.getText();
+    } catch (error) {
+        vscode.window.showErrorMessage(`Error reading file: ${error}`);
+        return null;
     }
   }
+
+  public async sendChatMessage(chat: ChatSession) {
+    console.log("Message to socket from backend");
+    let messageList = chat.messages.slice(-5);
+
+    // Process each message in the list
+    const lastMessage = messageList[messageList.length - 1];
+    if (lastMessage && lastMessage.attachedContext?.length > 0) {
+        for (const context of lastMessage.attachedContext) {
+            try {
+                // Retrieve and update fileText for the current context
+                const fileText = await this.getFileText(context.currentSelectedFileCompletePath);
+                context.fileText = fileText || 'Error retrieving file text';
+            } catch (error) {
+                console.error(`Failed to fetch file text for ${context.currentSelectedFileCompletePath}:`, error);
+                context.fileText = 'Error retrieving file text';
+            }
+        }
+    }
+    console.log("------------------", lastMessage)
+    messageList[-1] = lastMessage
+    console.log(messageList)
+
+    // Emit the updated messageList to the socket
+    this.predictionRequestInProgress = true;
+    if (this.socket) {
+        this.socket.emit('generate_chat_response', {
+            chatId: chat.chatId,
+            timestamp: chat.timestamp,
+            messageList, // Updated with fileText for all messages
+            appVersion: this.currentVersion,
+            userEmail: this.email,
+            uniqueId: uuidv4()
+        });
+    }
+  }
+
+
+//   public sendChatMessage(chat: ChatSession) {
+//     // console.log("Message to scoket from backend")
+//     console.log("Message to scoket from backend")
+//     console.log("-------------------", chat.messages.slice(-5))
+
+//     let messageList = chat.messages.slice(-5);
+//     const attachedContext = messageList[-1].attachedContext[0]
+//     attachedContext.currentSelectedFileCompletePath
+//     console.log("-------------------", this.getFileText(attachedContext.currentSelectedFileCompletePath)
+// )
+//     this.predictionRequestInProgress = true;
+//       if (this.socket) {
+//         this.socket.emit('generate_chat_response', {
+//           chatId: chat.chatId,
+//           timestamp: chat.timestamp,
+//           messageList: chat.messages.slice(-5),
+//           appVersion: this.currentVersion,
+//           userEmail: this.email,
+//           uniqueId: uuidv4()
+//         });
+//       }
+//   }
 
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string) {
     // console.log("Sending Message for Completion")

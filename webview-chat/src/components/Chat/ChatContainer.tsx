@@ -49,7 +49,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
       <div
         className="input-container fixed left-0 right-0 bg-vscode-editor-background pl-0 pr-0 shadow-md flex items-center"
         style={{
-          minHeight: '80px',
+          minHeight: '110px',
           maxHeight: '200px',
           height: 'var(--input-container-height, 130px)',
           bottom: '0',

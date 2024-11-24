@@ -9,6 +9,9 @@ import { PanelManager } from './panelManager'
 import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
 import { getExactNewlineCharacter } from '../utilities/basicUtilities';
 import { SmartInsertionManager } from '../codeInsertions/smartCodeInsert';
+import { handleActiveEditor } from "../utilities/codeCompletionUtils/editorUtils";
+import * as path from 'path';
+import { isNullOrEmptyOrWhitespace, notSupportedFiles } from "../utilities/codeCompletionUtils/completionUtils";
 
 interface smartInsert {
   uniqueId: string, 
@@ -21,7 +24,8 @@ interface smartInsert {
 export class AiChatPanel implements vscode.WebviewViewProvider {
   public static readonly primaryViewType = 'aiChatPanelPrimary';
   private static primaryInstance: AiChatPanel;
-
+  private currentSelectedFileName: string = "";
+  private currentSelectedFilePath: string = "";
   // Store active (visible) webviews
   private activePanels: vscode.WebviewView[] = [];
   private socketModule: SocketModule;
@@ -29,6 +33,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   private codeInsertionManager: CodeInsertionManager;
   private smartInsertionManager: SmartInsertionManager = new SmartInsertionManager();;
   private updatedtext: string = "";
+  private debounceTimeout: NodeJS.Timeout | undefined;
+  private isFileNotSupported: boolean = false;
 
   // Flags to prevent multiple listeners
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
@@ -210,8 +216,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               }
               break;
           case 'showInfoPopup':
-              // Show vscode information message
               vscode.window.showInformationMessage(message.data.message);
+              // Show vscode information message popup with fixed timeout
               break;
 
           case 'ready':
@@ -261,6 +267,104 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       this.messageQueue = [];
       // console.log("Message queue cleared.");
     }
+  }
+
+
+  public getOpenFiles(): Array<{ 
+    fileName: string;
+    filePath: string; // This will now be relative
+    languageId: string | null;
+}> {
+    const openFiles = vscode.window.tabGroups.all
+        .flatMap(group => group.tabs)
+        .filter(tab => tab.input && tab.input instanceof vscode.TabInputText) // Ensure it's a file tab
+        .map(tab => {
+            const document = (tab.input as vscode.TabInputText).uri;
+            const textDocument = vscode.workspace.textDocuments.find(doc => doc.uri.toString() === document.toString());
+
+            return {
+                fileName: path.basename(document.fsPath),
+                filePath: vscode.workspace.asRelativePath(document.fsPath),
+                languageId: textDocument ? textDocument.languageId : null // Retrieve languageId if available
+            };
+        });
+
+    return openFiles;
+  }
+
+  public async getFileText(relativePath: string): Promise<string | null> {
+    try {
+        // Convert the relative path to an absolute path
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showErrorMessage('No workspace is open');
+            return null;
+        }
+        
+        // Assume the first workspace folder for the relative path
+        const absolutePath = path.join(workspaceFolders[0].uri.fsPath, relativePath);
+
+        // Create a URI for the file
+        const fileUri = vscode.Uri.file(absolutePath);
+
+        // Open the text document
+        const document = await vscode.workspace.openTextDocument(fileUri);
+
+        // Return the text content
+        return document.getText();
+    } catch (error) {
+        vscode.window.showErrorMessage(`Error reading file: ${error}`);
+        return null;
+    }
+  }
+
+  public getCurrentFileName(editor: vscode.TextEditor | undefined, context: vscode.ExtensionContext) {
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+    }
+    this.debounceTimeout = setTimeout(() => {
+      this.currentSelectedFileName = path.basename(handleActiveEditor(editor, context));
+      console.log(`Current file name: ${this.currentSelectedFileName}`);
+      console.log(`File Not Supported: ${handleActiveEditor(editor, context)}`);
+      if (notSupportedFiles(this.currentSelectedFileName)) {
+        if (this.activePanels.length > 0){
+          this.activePanels[0].webview.postMessage(
+              {
+                command: 'editor_changed_context_update_event', 
+                currentSelectedFileName:  this.currentSelectedFileName,
+                currentSelectedFileCompletePath: vscode.workspace.asRelativePath(handleActiveEditor(editor, context)),
+                action: "user_opened_unsupported_file_in_editor"
+              }
+          );
+        }
+      } else {
+
+        if (this.activePanels.length > 0){
+          this.activePanels[0].webview.postMessage(
+              {
+                command: 'editor_changed_context_update_event', 
+                currentSelectedFileName:  this.currentSelectedFileName,
+                currentSelectedFileCompletePath: vscode.workspace.asRelativePath(handleActiveEditor(editor, context)),
+                action: "user_opened_in_editor"
+              }
+          );
+        }
+      }
+
+      let openFiles = this.getOpenFiles();
+      openFiles = openFiles.filter(file => !notSupportedFiles(file.fileName)); // remove not supported files
+      openFiles = openFiles.filter(file => file.filePath !== vscode.workspace.asRelativePath(handleActiveEditor(editor, context)));       // remove current file from list
+      console.log("----------------", openFiles)
+
+      if (this.activePanels.length > 0){
+        this.activePanels[0].webview.postMessage(
+          {
+            command: 'editor_open_files_list_update_event',
+            openFiles: openFiles
+          }
+        );
+      }
+    }, 100);
   }
 
   private attemptSocketConnection(inputChat: ChatSession, retries = 3) {
