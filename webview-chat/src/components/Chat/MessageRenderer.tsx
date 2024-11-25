@@ -19,16 +19,41 @@ interface CodeProps {
 
 const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
   // Define custom components for rendering specific markdown elements
+
+  const convertToObject = (str: string): string => {
+    try {
+      if (str){
+
+        // Preprocess the string to make it valid JSON
+        const jsonString = str
+        .replace(/([\w]+):/g, '"$1":') // Add quotes around keys
+        .replace(/:([\w.]+)/g, ':"$1"'); // Add quotes around bareword values (including dots)
+
+        // Parse the JSON string
+        const obj = JSON.parse(jsonString);
+        return obj.file_name;
+      }else {
+        return "";
+      }
+    } catch (error) {
+      return "";
+    }
+  };
+
   const components: Components = {
     code({ inline, className, children, ...props }: CodeProps) {
       // Check if the code is an actual code block (block-level with a language class)
       if (!inline && className && className.startsWith('language-')) {
         // Render using the custom `CodeBlock` component for multiline code
+        const dataSource = props.node?.data?.meta ?? "";
+        const fileName = convertToObject(dataSource.trim())
+
         return (
           <CodeBlock
             inline={inline}
             className={className}
             codeContent={children}
+            fileName={fileName}
             {...props}
           />
         );

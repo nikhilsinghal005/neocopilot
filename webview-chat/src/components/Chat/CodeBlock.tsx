@@ -7,10 +7,11 @@ interface CodeBlockProps {
   inline?: boolean;
   className?: string;
   codeContent?: React.ReactNode; // Make sure this is optional
+  fileName?: string,
   [key: string]: any;
 }
 
-const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, ...props }) => {
+const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, fileName,  ...props }) => {
   const vscode = useVscode();
   const [state, setState] = useState<'idle' | 'processing' | 'review'>('idle');
   const [dots, setDots] = useState('');
@@ -61,9 +62,10 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, .
     vscode.postMessage({
       command: 'smartCodeInsert',
       data: {
-        code,
-        codeId,
-        location: 'editor'
+        code: code,
+        codeId: codeId,
+        location: 'editor',
+        filename: fileName
       },
     });
     setState('processing');
@@ -74,7 +76,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, .
       command: 'smartCodeInsertUserAction',
       data: {
         action: 'accepted',
-        codeId,
+        codeId: codeId,
       },
     });
     setState('idle');
@@ -85,7 +87,8 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, .
       command: 'smartCodeInsertUserAction',
       data: {
         action: 'rejected',
-        codeId,
+        codeId: codeId,
+        
       },
     });
     setState('idle');
@@ -93,9 +96,9 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, .
 
   const handleCopyToClipboard = (code: string) => {
     navigator.clipboard.writeText(code).then(() => {
-      console.log('Code copied to clipboard!');
+      // console.log('Code copied to clipboard!');
     }).catch((err) => {
-      console.error('Failed to copy code: ', err);
+      // console.error('Failed to copy code: ', err);
     });
   };
 
@@ -121,7 +124,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, .
 
   const code = extractText(codeContent).trim();
   const language = className ? className.replace(/language-|code-highlight/g, '').trim() : '';
-  console.log(language)
+  // console.log(language)
 
   return (
     <div className="my-4 p-0 rounded-lg shadow-lg border"
@@ -133,7 +136,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, .
       <div className="flex justify-between items-center bg-vscode-chat-message-incoming text-vscode-editor-foreground px-4 py-1 rounded-t-md border"
         style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
       >
-        <span className="text-xs font-semibold uppercase">{language}</span>
+        <span className="text-xs font-semibold">{fileName}</span>
         <div className="flex">
           {state === 'idle' && (
             <>
