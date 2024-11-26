@@ -1,10 +1,11 @@
 import React from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import rehypePrism from 'rehype-prism-plus';
-import './prism-nord.css';
+import './prism-tomorrow.css';
 import './custom-overrides.css';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from './CodeBlock';
+import * as path from 'path';
 
 interface MessageRendererProps {
   text: string;
@@ -20,21 +21,21 @@ interface CodeProps {
 const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
   // Define custom components for rendering specific markdown elements
 
-  const convertToObject = (str: string): string => {
+  const getFileName = (relativePath: string): string => {
     try {
-      if (str){
+      // Replace backslashes with forward slashes for consistency
+      const normalizedPath = relativePath.replace(/\\/g, '/');
+      const parts = normalizedPath.split('/');
+      return parts.pop() || '';
+    } catch (error) {
+      return "";
+    }
+  }
 
-        // Preprocess the string to make it valid JSON
-        const jsonString = str
-        .replace(/([\w]+):/g, '"$1":') // Add quotes around keys
-        .replace(/:([\w.]+)/g, ':"$1"'); // Add quotes around bareword values (including dots)
-
-        // Parse the JSON string
-        const obj = JSON.parse(jsonString);
-        return obj.file_name;
-      }else {
-        return "";
-      }
+  const getParams = (str: string): string => {
+    try {
+      const query = new URLSearchParams(str);
+      return query.get('file_name') || ""
     } catch (error) {
       return "";
     }
@@ -44,16 +45,24 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
     code({ inline, className, children, ...props }: CodeProps) {
       // Check if the code is an actual code block (block-level with a language class)
       if (!inline && className && className.startsWith('language-')) {
-        // Render using the custom `CodeBlock` component for multiline code
-        const dataSource = props.node?.data?.meta ?? "";
-        const fileName = convertToObject(dataSource.trim())
 
+        const dataSource = props.node?.data?.meta ?? "";
+        const relativePath = getParams(dataSource.trim())
+
+        let fileName : string = ""
+        if (relativePath) {
+          fileName = getFileName(relativePath)
+        }
+
+        console.log(relativePath)
+        console.log(fileName)
         return (
           <CodeBlock
             inline={inline}
             className={className}
             codeContent={children}
             fileName={fileName}
+            relativePath={relativePath}
             {...props}
           />
         );

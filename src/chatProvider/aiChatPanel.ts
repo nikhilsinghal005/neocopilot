@@ -567,33 +567,34 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
 
+  public async insertMessagesToChat(inputFile: string, inputText: string, selectedText: string, documentLanguage: string): Promise<void> {
 
-  public async insertMessagesToChat(inputFile: string, inputText: string, completeText: string): Promise<void> {
     await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
-    // add sleep time
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // Save the logged-in status in workspace state
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const relativePath = vscode.workspace.asRelativePath(inputFile);
+    inputFile = path.basename(relativePath);
+    const output = { 
+      command: 'insert_messages', 
+      fileName: inputFile,
+      relativePath: relativePath,
+      inputText: inputText,
+      completeCode: selectedText
+     }
+
+//     inputText = 
+// `\`\`\`${documentLanguage} ?file_name=${relativePath}
+// ${inputText}
+// \`\`\``;
     if (this.activePanels.length > 0){
       this.activePanels[0].webview.postMessage(
-        { 
-          command: 'insert_messages', 
-          fileName: inputFile,
-          inputText: inputText,
-          completeCode: completeText
-         }
+        output
       );
     } else {
       await new Promise(resolve => setTimeout(resolve, 4000));
       this.activePanels[0].webview.postMessage(
-        { 
-          command: 'insert_messages', 
-          fileName: inputFile,
-          inputText: inputText,
-          completeCode: completeText
-         }
+        output
       );
     }
-
   }
 
   /**
@@ -614,7 +615,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         }
       });
     } catch (error) {
-      // console.log("Failed to post queued message to webview:", error);
       console.error("Failed to post queued message to webview");
     }
   }

@@ -8,10 +8,11 @@ interface CodeBlockProps {
   className?: string;
   codeContent?: React.ReactNode; // Make sure this is optional
   fileName?: string,
+  relativePath: string,
   [key: string]: any;
 }
 
-const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, fileName,  ...props }) => {
+const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, fileName, relativePath,  ...props }) => {
   const vscode = useVscode();
   const [state, setState] = useState<'idle' | 'processing' | 'review'>('idle');
   const [dots, setDots] = useState('');
@@ -65,7 +66,8 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, f
         code: code,
         codeId: codeId,
         location: 'editor',
-        filename: fileName
+        filename: fileName,
+        relativePath: relativePath,
       },
     });
     setState('processing');

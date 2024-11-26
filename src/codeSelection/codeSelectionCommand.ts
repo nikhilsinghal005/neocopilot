@@ -162,7 +162,6 @@ export class CodeSelectionCommandHandler {
     return new vscode.Selection(start, end);
   }
 
-
   private getLineSeparator(): string {
 
     const editor = vscode.window.activeTextEditor;
@@ -343,22 +342,25 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
     }
 
     this.currentSelectionContext = selection;
-    // console.log("Code worked")
+
     // Get selected text
     const selectedText = editor.document.getText(selection);
     this.completeText = editor.document.getText();
     this.currentFileName = editor.document.fileName;
 
-    await this.aiChatpanel.insertMessagesToChat(
-      this.currentFileName,
-      selectedText,
-      this.completeText
-    );
+    // Get the language of the document
+    const documentLanguage = editor.document.languageId;
 
-    // Send data through SocketModule
+    await this.aiChatpanel.insertMessagesToChat(
+        this.currentFileName,
+        selectedText,
+        this.completeText,
+        documentLanguage // Pass the language to the function
+    );
+    console.log("File Name----------------", this.currentFileName)
     // Show message to user
     if (editor) {
-      const position = editor.selection.start; // You can also use editor.selection.start
+      const position = editor.selection.start;
       editor.selection = new vscode.Selection(position, position);
     }
   }
