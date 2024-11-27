@@ -37,7 +37,7 @@ export class CodeInsertionManager {
     isWholeLine: true
   });
   private deletedDecorationType = vscode.window.createTextEditorDecorationType({
-    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+    backgroundColor: 'rgba(255, 0, 0, 0.164)',
     isWholeLine: true
   });
   private sameDecorationType = vscode.window.createTextEditorDecorationType({
@@ -98,7 +98,7 @@ export class CodeInsertionManager {
 
     // Reinitialize the decoration types
     this.insertedDecorationType = vscode.window.createTextEditorDecorationType({
-        backgroundColor: 'rgba(92, 248, 1, 0.2)',
+        backgroundColor: 'rgba(92, 248, 1, 0.18)',
         isWholeLine: true,
     });
     this.deletedDecorationType = vscode.window.createTextEditorDecorationType({
@@ -345,6 +345,20 @@ public rejectInsertion(id: string): void {
     }
 
       if (isComplete) {
+        let updatedIndex = 0
+        if (this.oldLinesList.length > 0) {
+          for (const newLine of this.oldLinesList) {
+            const startPos = new vscode.Position(this.oldStartLine + updatedIndex, 0);
+            const endPos = new vscode.Position(this.oldStartLine + updatedIndex, 1000);
+            const lineRange = new vscode.Range(startPos, endPos);
+            editor.setDecorations(this.movingDecorationType, [lineRange]);
+            this.decorationsToApply.deleted.push(lineRange);
+            updatedIndex++;
+          }
+          editor.setDecorations(this.insertedDecorationType, this.decorationsToApply.inserted);
+          editor.setDecorations(this.deletedDecorationType, this.decorationsToApply.deleted);
+          editor.setDecorations(this.sameDecorationType, this.decorationsToApply.same);
+        }
         const insertion: Insertion = {
             id,
             range: this.selectionContext,
