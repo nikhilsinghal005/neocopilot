@@ -134,6 +134,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           case 'login':
             // Handle the login command and open the URL
             vscode.env.openExternal(vscode.Uri.parse(message.url));
+            this.getCurrentFileName(vscode.window.activeTextEditor, this._context)
             break;
           case 'contact_us':
             // Handle the contact us command and open the URL
@@ -317,8 +318,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     this.debounceTimeout = setTimeout(() => {
       this.currentSelectedFileName = path.basename(handleActiveEditor(editor, context));
       const currentSelectedFileRelativePath = vscode.workspace.asRelativePath(handleActiveEditor(editor, context));
-      console.log(`Current file name: ${this.currentSelectedFileName}`);
-      console.log(`File Not Supported: ${handleActiveEditor(editor, context)}`);
       if (notSupportedFiles(this.currentSelectedFileName) || currentSelectedFileRelativePath==='tasks') {
         if (this.activePanels.length > 0){
           this.activePanels[0].webview.postMessage(
@@ -436,6 +435,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     // Save the logged-in status in workspace state
     this._context.workspaceState.update('isLoggedIn', isLoggedIn);
+    this.getCurrentFileName(vscode.window.activeTextEditor, this._context)
 
     this.activePanels.forEach(panel => {
       panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
