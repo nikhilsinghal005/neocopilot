@@ -13,6 +13,9 @@ import { handleActiveEditor } from "../utilities/codeCompletionUtils/editorUtils
 import * as path from 'path';
 import { isNullOrEmptyOrWhitespace, notSupportedFiles } from "../utilities/codeCompletionUtils/completionUtils";
 import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../utilities/statusBarNotifications/showErrorNotification';
+
+
 
 interface smartInsert {
   uniqueId: string, 
@@ -168,7 +171,19 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               this.smartInsertionManager.currentEditor = editor;
               if (!editor) {
                 // show Information
-                vscode.window.showErrorMessage('No active editor found.');
+                showErrorNotification('No active editor found.', 1);
+                if (this.activePanels.length > 0){
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  this.activePanels[0].webview.postMessage(
+                      {
+                      command: 'smart_insert_to_editor_update', 
+                      isComplete:  false,
+                      uniqueId: uuidv4(),
+                      codeId: message.data.codeId,
+                      status: "completed_successfully" 
+                      }
+                  );
+                }
                 return;
               }
               // get complete text of the current doc

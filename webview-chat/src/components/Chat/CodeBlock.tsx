@@ -20,8 +20,15 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, f
 
   useEffect(() => {
     const handleSmartInsertToEditorUpdate = (event: MessageEvent) => {
+      // console.log("smart Inser Call -----------------------------", event.data)
       if (event.data.command === 'smart_insert_to_editor_update' && event.data.codeId === codeId) {
-        setState('review');
+        // console.log('Smart Insert to Editor Update', event.data);
+        if (!event.data.isComplete) {
+          setState('idle');
+        }else{
+          setState('review');
+        }
+        
       }
     };
 

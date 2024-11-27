@@ -356,21 +356,20 @@ export class SocketModule {
 
     // Process each message in the list
     const lastMessage = messageList[messageList.length - 1];
+
     if (lastMessage && lastMessage.attachedContext?.length > 0) {
         for (const context of lastMessage.attachedContext) {
             try {
                 // Retrieve and update fileText for the current context
                 const fileText = await this.getFileText(context.currentSelectedFileRelativePath);
-                context.fileText = fileText || 'Error retrieving file text';
+                context.fileText = fileText || '';
             } catch (error) {
                 console.error(`Failed to fetch file text for ${context.currentSelectedFileRelativePath}:`, error);
                 context.fileText = 'Error retrieving file text';
             }
         }
     }
-    console.log("------------------", lastMessage)
     messageList[-1] = lastMessage
-    console.log(messageList)
 
     // Emit the updated messageList to the socket
     this.predictionRequestInProgress = true;
