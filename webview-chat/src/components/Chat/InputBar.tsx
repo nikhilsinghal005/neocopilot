@@ -146,7 +146,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
     setSelectedItem(item.fileName);
     setShowList(false);
 
-    if (attachedContext.length <= 3) {
+    if (attachedContext.length < 3) {  // Change "<=" to "<" to limit to 3 files max
       // Remove the selected item from openEditorFilesList and add it to attachedContext
       const updatedOpenFilesList = openEditorFilesList.filter(file => file.filePath !== item.filePath);
       setOpenEditorFilesList(updatedOpenFilesList);
@@ -159,7 +159,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
 
       setAttachedContext([...attachedContext, newContext]);
     } else {
-      showUserNotification("Context Information", "You can only allowed to attach 3 files at a time.")
+      showUserNotification("Context Information", "You can only attach up to 3 files at a time.")
     }
   };
 
@@ -222,7 +222,8 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
               style={{
                 backgroundColor: 'var(--vscode-editor-background)',
                 borderColor: 'var(--vscode-editorGroup-border)',
-                color: 'var(--vscode-editor-foreground)'
+                color: 'var(--vscode-editor-foreground)',
+                overflow: 'hidden'
               }}
               >
                 {openEditorFilesList.length > 0 ? (
@@ -230,14 +231,15 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                     <div
                       key={file.filePath}
                       onClick={() => handleListItemClick(file)}
-                      className="p-1 cursor-pointer rounded-sm"
+                      className="p-1 cursor-pointer rounded-sm overflow-hidden text-ellipsis whitespace-nowrap"
                       style={{
                         backgroundColor: 'var(--vscode-editor-background)',
                         borderColor: 'var(--vscode-editorGroup-border)',
                         color: 'var(--vscode-editor-foreground)'
                       }}
+                      title={file.filePath} // Add tooltip with full file path
                     >
-                      {file.filePath}
+                      {file.filePath.length > 30 ? `${file.filePath.slice(0, 7)}...${file.filePath.slice(-23)}` : file.filePath}
                     </div>
                   ))
                 ) : (
@@ -249,7 +251,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
             )}
             {attachedContext.length > 0 ? (
               attachedContext.map((context, index) => (
-                context.currentSelectedFileName && ( // Only render non-empty contexts
+                context.currentSelectedFileName && context.currentSelectedFileRelativePath ? ( // Ensure valid context
                   <span
                     key={index}
                     className="rounded-sm px-1 flex items-center h-5 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
@@ -269,7 +271,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                       <span className="codicon codicon-close text-xxs"></span>
                     </VSCodeButton>
                   </span>
-                )
+                ) : null // Only render valid contexts
               ))
             ) : (
               <span
