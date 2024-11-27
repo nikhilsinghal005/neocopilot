@@ -58,7 +58,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
           }
         }  else {
           const updatedContext = attachedContext.filter(context => context.slectionType !== 'user_opened_in_editor');
-          setAttachedContext([...updatedContext]);
+          setAttachedContext(updatedContext);
         }
       }
     };
@@ -247,28 +247,43 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                 )}
               </div>
             )}
-            {attachedContext.map((context, index) => (
-                <span
-                  key={index} // Use a unique key for each element
-                  className="rounded-sm px-1 flex items-center h-5 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
-                  style={{
-                    backgroundColor: 'var(--vscode-editor-background)',
-                    borderColor: 'var(--vscode-editorGroup-border)',
-                    color: 'var(--vscode-editor-foreground)',
-                  }}
-                >
-                  {context.currentSelectedFileName || 'Current File'}
-                  <VSCodeButton
-                    appearance="icon"
-                    aria-label="Remove Context"
-                    className="mr-1 p-0 rounded-none h-3 w-3"
-                    onClick={() => handleRemoveTag(context.currentSelectedFileRelativePath)}
+            {attachedContext.length > 0 ? (
+              attachedContext.map((context, index) => (
+                context.currentSelectedFileName && ( // Only render non-empty contexts
+                  <span
+                    key={index}
+                    className="rounded-sm px-1 flex items-center h-5 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+                    style={{
+                      backgroundColor: 'var(--vscode-editor-background)',
+                      borderColor: 'var(--vscode-editorGroup-border)',
+                      color: 'var(--vscode-editor-foreground)',
+                    }}
                   >
-                    <span className="codicon codicon-close text-xxs"></span>
-                  </VSCodeButton>
-                </span>
-              ))}
-            </div>
+                    {context.currentSelectedFileName}
+                    <VSCodeButton
+                      appearance="icon"
+                      aria-label="Remove Context"
+                      className="mr-1 p-0 rounded-none h-3 w-3"
+                      onClick={() => handleRemoveTag(context.currentSelectedFileRelativePath)}
+                    >
+                      <span className="codicon codicon-close text-xxs"></span>
+                    </VSCodeButton>
+                  </span>
+                )
+              ))
+            ) : (
+              <span
+                className="rounded-sm px-1 flex items-center h-5 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+                style={{
+                  backgroundColor: 'var(--vscode-editor-background)',
+                  borderColor: 'var(--vscode-editorGroup-border)',
+                  color: 'var(--vscode-editor-foreground)',
+                }}
+              >
+                No file selected
+              </span>
+            )}
+          </div>
         </div>
         <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0">
           {/* Input Container */}
