@@ -14,8 +14,7 @@ import * as path from 'path';
 import { isNullOrEmptyOrWhitespace, notSupportedFiles } from "../utilities/codeCompletionUtils/completionUtils";
 import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
 import { showErrorNotification } from '../utilities/statusBarNotifications/showErrorNotification';
-
-
+import { showCustomNotification } from '../utilities/statusBarNotifications/showCustomNotification';
 
 interface smartInsert {
   uniqueId: string, 
@@ -459,7 +458,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   public async applySmartInsertCode(data: any): Promise<void> {
     this.updatedtext = this.updatedtext + data.response;
 
-    if (data.isLineComplete) {
+    if (data.isLineComplete && !data.isError && !data.isRateLimit) {
       this.smartInsertionManager.enqueueSnippetLineByLine(
         this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.getLineSeparator()),
         data.id,
@@ -470,28 +469,45 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
 
     if (data.isComplete) {
-
-      // add a sleep time
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      this.smartInsertionManager.enqueueSnippetLineByLine(
-        "",
-        data.id,
-        this.getLineSeparator(),
-        true
-      );
-
-      this.updatedtext = "";
-
-      if (this.activePanels.length > 0){
-        this.activePanels[0].webview.postMessage(
-           {
+      if (data.isError) {
+        this.activePanels[0]?.webview.postMessage({
             command: 'smart_insert_to_editor_update', 
-            isComplete:  true,
+            isComplete:  false,
             uniqueId: data.id,
             codeId: this.smartInsertionManager.currentCodeBlockId,
             status: "completed_successfully" 
-           }
+          });
+          this.updatedtext = "";
+          showTextNotification(data.response, 1);
+        }
+      else if (data.isRateLimit) {
+        this.activePanels[0]?.webview.postMessage({
+          command: 'smart_insert_to_editor_update', 
+          isComplete:  false,
+          uniqueId: data.id,
+          codeId: this.smartInsertionManager.currentCodeBlockId,
+          status: "completed_successfully" 
+        });
+        showCustomNotification(data.response)
+        this.updatedtext = "";
+      } else {
+        // add a sleep time
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        this.smartInsertionManager.enqueueSnippetLineByLine(
+          "",
+          data.id,
+          this.getLineSeparator(),
+          true
         );
+
+        this.updatedtext = "";
+        this.activePanels[0]?.webview.postMessage({
+          command: 'smart_insert_to_editor_update', 
+          isComplete:  true,
+          uniqueId: data.id,
+          codeId: this.smartInsertionManager.currentCodeBlockId,
+          status: "completed_successfully" 
+        });
       }
     }
   }

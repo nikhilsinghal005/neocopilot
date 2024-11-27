@@ -6,6 +6,7 @@ import { AiChatPanel } from '../chatProvider/aiChatPanel';
 import { CodeSelectionCommand } from './selectionContext';
 import { SelectionContext } from './selectionContext';
 import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
+import { showCustomNotification } from '../utilities/statusBarNotifications/showCustomNotification';
 
 export class CodeSelectionCommandHandler {
   private socketModule: SocketModule;
@@ -179,7 +180,7 @@ export class CodeSelectionCommandHandler {
       this.socketModule.socket?.on('recieve_editor_code_refactor', (data: any) => {
         this.updatedtext = this.updatedtext + data.response;
 
-        if (data.isLineComplete) {
+        if (data.isLineComplete && !data.isError && !data.isRateLimit) {
           console.log("Line complete");
           const tempText: string = this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.nextLineCharacter);
           this.codeInsertionManager.enqueueSnippetLineByLine(
@@ -192,19 +193,25 @@ export class CodeSelectionCommandHandler {
         }
 
         if (data.isComplete) {
-          console.log("complete");
-          this.codeInsertionManager.enqueueSnippetLineByLine(
-            "",
-            data.id,
-            this.nextLineCharacter,
-            true
-          );
-          this.updatedtext = "";
+          if (data.isError) {
+              this.updatedtext = "";
+              showTextNotification(data.response, 0.9);
+            }
+          else if (data.isRateLimit) {
+            showCustomNotification(data.response)
+            this.updatedtext = "";
+          } else {
+            this.codeInsertionManager.enqueueSnippetLineByLine(
+              "",
+              data.id,
+              this.nextLineCharacter,
+              true
+            );
+            this.updatedtext = "";
+          }
         }
       });
-    } else {
-      console.log("'recieve_editor_code_refactor' listener already exists.");
-    }
+    } 
   }
 
   /**
