@@ -108,13 +108,13 @@ export class CodeSelectionCommandHandler {
               while (retries < 4) {
                 console.log("retries", retries);
                 if (this.socketModule.socket?.connected) {
+                  this.attachSocketListeners();
                   await this.handleClick();
                   return; // Exit the loop on success
                 } else {
-                  this.attachSocketListeners();
                   retries++;
-                  showTextNotification('Trying to connect with system. Please wait', 2);
-                  await delay(5000); // Wait 5 seconds before retrying
+                  showTextNotification('Trying to connect with system. Please wait', 0.9);
+                  await delay(3000); // Wait 5 seconds before retrying
                 }
               }
               if (retries >= 4) {
