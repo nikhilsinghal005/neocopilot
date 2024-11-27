@@ -12,6 +12,12 @@ import { initializeAppFunctions, initializeNonLoginRequiredAppFunctions } from '
 import { AuthManager } from './authManager/authManager';
 import { handleTokenUri } from './authManager/handleTokenUri';
 
+/**
+ * Activates the VSCode extension.
+ * 
+ * @param context - The VSCode extension context, which provides access to the workspace state, subscriptions, and more.
+ * @returns A promise that resolves when the activation process is complete.
+ */
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 
   // Disable hover delay
@@ -68,6 +74,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   // Register the AI Chat Panel webview view provider
 }
 
+/**
+ * Deactivates the VSCode extension.
+ * 
+ * This function is called when the extension is deactivated. It handles cleanup tasks such as disconnecting from services.
+ */
 export function deactivate(): void {
   const completionProviderModule = new CompletionProviderModule();
   const socketModule = new SocketModule(completionProviderModule);

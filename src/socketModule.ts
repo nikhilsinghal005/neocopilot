@@ -225,30 +225,6 @@ export class SocketModule {
       }
     });
 
-    // // Add any other necessary event handlers here
-    // this.socket.on('receive_docstring', (data: any) => {
-    //   this.predictionRequestInProgress = false;
-    //   try {
-    //     const docstring = data.docstring;
-    //     const docstring_id = data.unique_id;
-    //     if (data.complete){
-    //       this.docstring = this.docstring +  data.docstring
-    //       if (this.codeInsertionManager){
-    //         this.codeInsertionManager.insertTextUsingSnippetLocation(this.docstring, data.unique_id, this.docstringData[docstring_id].location);
-    //       }
-    //       this.docstring = ""
-    //     }else{
-    //       this.docstring = this.docstring +  data.docstring
-    //       // console.log(this.docstring)
-    //     }
-
-    //   } catch (error) {
-    //     this.predictionRequestInProgress = false;
-
-    //     this.customInformationMessage('socket_module:receive_message', JSON.stringify(error));
-    //     this.docstring = ""
-    //   }
-    // });
   }
 
   public sendEditorCodeRefactor(
@@ -384,30 +360,6 @@ export class SocketModule {
         });
     }
   }
-
-
-//   public sendChatMessage(chat: ChatSession) {
-//     // console.log("Message to scoket from backend")
-//     console.log("Message to scoket from backend")
-//     console.log("-------------------", chat.messages.slice(-5))
-
-//     let messageList = chat.messages.slice(-5);
-//     const attachedContext = messageList[-1].attachedContext[0]
-//     attachedContext.currentSelectedFileRelativePath
-//     console.log("-------------------", this.getFileText(attachedContext.currentSelectedFileRelativePath)
-// )
-//     this.predictionRequestInProgress = true;
-//       if (this.socket) {
-//         this.socket.emit('generate_chat_response', {
-//           chatId: chat.chatId,
-//           timestamp: chat.timestamp,
-//           messageList: chat.messages.slice(-5),
-//           appVersion: this.currentVersion,
-//           userEmail: this.email,
-//           uniqueId: uuidv4()
-//         });
-//       }
-//   }
 
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string) {
     // console.log("Sending Message for Completion")
