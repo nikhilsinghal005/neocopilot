@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { AiChatPanel } from '../chatProvider/aiChatPanel';
 import { CodeSelectionCommand } from './selectionContext';
 import { SelectionContext } from './selectionContext';
+import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
+import { showCustomNotification } from '../utilities/statusBarNotifications/showCustomNotification';
 
 export class CodeSelectionCommandHandler {
   private socketModule: SocketModule;
@@ -60,6 +62,40 @@ export class CodeSelectionCommandHandler {
     editor.selection = newSelection;
   }
 
+  private async handleClick() {
+    const editor = vscode.window.activeTextEditor;
+    this.codeInsertionManager.currentEditor = editor;
+    if (!editor) {
+        vscode.window.showErrorMessage('No active editor found.');
+        return;
+    }
+
+    let selection = editor.selection;
+    const isEmpty = selection.isEmpty;
+
+    if (isEmpty) {
+        // check if anything exists in the current line after trimming.
+        const currentLine = editor.document.lineAt(selection.start.line).text.trim();
+        console.log("currentLine", currentLine);
+        if (currentLine.length > 0) {
+          // show error message
+          vscode.window.showErrorMessage('Please select any text to use this command.');
+          return;
+        }
+        // this.handleCodeFactorCommandForNoSelection(selection);
+    }else{
+        this.expandSelectionToLine();
+        selection = editor.selection;
+        this.codeInsertionManager.selectionContext = selection;
+        const selectedText = editor.document.getText(selection).trim();
+        this.selectionContext.clearHoverCache();
+        this.selectionContext.clearHover(editor);
+        vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
+        editor.setDecorations(this.selectionContext.decorationType, []);
+        await this.handleCodeFactorCommand(selection);
+    }
+  }
+
   /**
    * Registers the commands in the context.
    */
@@ -68,37 +104,23 @@ export class CodeSelectionCommandHandler {
         vscode.commands.registerCommand(
             CodeSelectionCommand.CODE_FACTOR,
             async () => {
-                const editor = vscode.window.activeTextEditor;
-                this.codeInsertionManager.currentEditor = editor;
-                if (!editor) {
-                    vscode.window.showErrorMessage('No active editor found.');
-                    return;
+              const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+              let retries = 0;
+              while (retries < 4) {
+                console.log("retries", retries);
+                if (this.socketModule.socket?.connected) {
+                  this.attachSocketListeners();
+                  await this.handleClick();
+                  return; // Exit the loop on success
+                } else {
+                  retries++;
+                  showTextNotification('Trying to connect with system. Please wait', 0.9);
+                  await delay(3000); // Wait 5 seconds before retrying
                 }
-
-                let selection = editor.selection;
-                const isEmpty = selection.isEmpty;
-
-                if (isEmpty) {
-                    // check if anything exists in the current line after trimming.
-                    const currentLine = editor.document.lineAt(selection.start.line).text.trim();
-                    console.log("currentLine", currentLine)
-                    if (currentLine.length > 0) {
-                      // show error message
-                      vscode.window.showErrorMessage('Please select any text to use this command.');
-                      return;
-                    }
-                    // this.handleCodeFactorCommandForNoSelection(selection);
-                }else{
-                    this.expandSelectionToLine()
-                    selection = editor.selection;
-                    this.codeInsertionManager.selectionContext = selection
-                    const selectedText = editor.document.getText(selection).trim();
-                    this.selectionContext.clearHoverCache();
-                    this.selectionContext.clearHover(editor);
-                    vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
-                    editor.setDecorations(this.selectionContext.decorationType, []);
-                    await this.handleCodeFactorCommand(selection);
-                }
+              }
+              if (retries >= 4) {
+                showTextNotification('Unable to connect with system. Please check internet connection', 2);
+              }
             }
         ),
         vscode.commands.registerCommand(
@@ -141,7 +163,6 @@ export class CodeSelectionCommandHandler {
     return new vscode.Selection(start, end);
   }
 
-
   private getLineSeparator(): string {
 
     const editor = vscode.window.activeTextEditor;
@@ -159,7 +180,7 @@ export class CodeSelectionCommandHandler {
       this.socketModule.socket?.on('recieve_editor_code_refactor', (data: any) => {
         this.updatedtext = this.updatedtext + data.response;
 
-        if (data.isLineComplete) {
+        if (data.isLineComplete && !data.isError && !data.isRateLimit) {
           console.log("Line complete");
           const tempText: string = this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.nextLineCharacter);
           this.codeInsertionManager.enqueueSnippetLineByLine(
@@ -172,19 +193,25 @@ export class CodeSelectionCommandHandler {
         }
 
         if (data.isComplete) {
-          console.log("complete");
-          this.codeInsertionManager.enqueueSnippetLineByLine(
-            "",
-            data.id,
-            this.nextLineCharacter,
-            true
-          );
-          this.updatedtext = "";
+          if (data.isError) {
+              this.updatedtext = "";
+              showTextNotification(data.response, 0.9);
+            }
+          else if (data.isRateLimit) {
+            showCustomNotification(data.response)
+            this.updatedtext = "";
+          } else {
+            this.codeInsertionManager.enqueueSnippetLineByLine(
+              "",
+              data.id,
+              this.nextLineCharacter,
+              true
+            );
+            this.updatedtext = "";
+          }
         }
       });
-    } else {
-      console.log("'recieve_editor_code_refactor' listener already exists.");
-    }
+    } 
   }
 
   /**
@@ -197,9 +224,9 @@ export class CodeSelectionCommandHandler {
       vscode.window.showErrorMessage('No active editor found.');
       return;
     }
-    this.codeInsertionManager.reinitialize()
+    this.codeInsertionManager.reinitialize();
     this.currentSelectionContext = selection;
-    this.nextLineCharacter = this.getLineSeparator()
+    this.nextLineCharacter = this.getLineSeparator();
 
     // Get selected text
     const selectedText = editor.document.getText(selection);
@@ -216,8 +243,8 @@ export class CodeSelectionCommandHandler {
 
     // Prompt user for input
     const userInput = await vscode.window.showInputBox({
-      prompt: 'Enter the purpose or label for the selected code',
-      placeHolder: 'e.g., Refactor, Review, Debug',
+      prompt: 'Enter the purpose or action for the selected code',
+      placeHolder: 'e.g., Refactor Code, Add comments',
     });
 
     if (userInput) {
@@ -260,9 +287,9 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
     return;
   }
 
-    this.codeInsertionManager.reinitialize()
+    this.codeInsertionManager.reinitialize();
     this.currentSelectionContext = selection;
-    this.nextLineCharacter = this.getLineSeparator()
+    this.nextLineCharacter = this.getLineSeparator();
 
     // Get selected text
     const selectedText = editor.document.getText(selection);
@@ -322,22 +349,25 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
     }
 
     this.currentSelectionContext = selection;
-    // console.log("Code worked")
+
     // Get selected text
     const selectedText = editor.document.getText(selection);
     this.completeText = editor.document.getText();
     this.currentFileName = editor.document.fileName;
 
-    await this.aiChatpanel.insertMessagesToChat(
-      this.currentFileName,
-      selectedText,
-      this.completeText
-    )
+    // Get the language of the document
+    const documentLanguage = editor.document.languageId;
 
-    // Send data through SocketModule
+    await this.aiChatpanel.insertMessagesToChat(
+        this.currentFileName,
+        selectedText,
+        this.completeText,
+        documentLanguage // Pass the language to the function
+    );
+    console.log("File Name----------------", this.currentFileName)
     // Show message to user
     if (editor) {
-      const position = editor.selection.start; // You can also use editor.selection.start
+      const position = editor.selection.start;
       editor.selection = new vscode.Selection(position, position);
     }
   }

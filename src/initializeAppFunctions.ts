@@ -37,6 +37,10 @@ export function initializeAppFunctions(
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   primaryViewProvider.sendAuthStatus(true)
 
+  vscode.window.onDidChangeActiveTextEditor(
+    editor => primaryViewProvider.getCurrentFileName(editor, context), null, context.subscriptions
+  );
+
   const selectionContext = new SelectionContext();
  // Hover Provider 
  const hoverProvider = new FloatingHoverProvider(primaryViewProvider, socketModule, selectionContext);

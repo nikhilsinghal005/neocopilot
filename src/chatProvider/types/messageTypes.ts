@@ -25,7 +25,6 @@ export interface MessageResponseFromBackEnd {
 }
 
 
-
 export type MessageInput = {
   id: string;
   timestamp: string;
@@ -34,8 +33,16 @@ export type MessageInput = {
   attachedFiles?: string[];  // List of file paths attached to the message
   imagePaths?: string[];     // List of image paths associated with the message
   isComplete?: boolean; // Indicates if the message is fully received
+  attachedContext: CurrentFileContext[];  // List of file paths attached to the message
+  modelSelected: string;
 };
 
+export type CurrentFileContext = {
+  currentSelectedFileName: string;
+  currentSelectedFileRelativePath: string;
+  slectionType: string;
+  fileText?: string;
+};
 
 export type ChatSession = {
   chatId: string;

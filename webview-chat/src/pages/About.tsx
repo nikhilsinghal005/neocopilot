@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react'; // Make sure this is correctly imported based on your setup
+import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 
 interface AboutProps {
   vscode: {

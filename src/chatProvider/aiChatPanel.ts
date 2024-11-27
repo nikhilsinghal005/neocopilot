@@ -9,6 +9,12 @@ import { PanelManager } from './panelManager'
 import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
 import { getExactNewlineCharacter } from '../utilities/basicUtilities';
 import { SmartInsertionManager } from '../codeInsertions/smartCodeInsert';
+import { handleActiveEditor } from "../utilities/codeCompletionUtils/editorUtils";
+import * as path from 'path';
+import { isNullOrEmptyOrWhitespace, notSupportedFiles } from "../utilities/codeCompletionUtils/completionUtils";
+import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../utilities/statusBarNotifications/showErrorNotification';
+import { showCustomNotification } from '../utilities/statusBarNotifications/showCustomNotification';
 
 interface smartInsert {
   uniqueId: string, 
@@ -21,7 +27,8 @@ interface smartInsert {
 export class AiChatPanel implements vscode.WebviewViewProvider {
   public static readonly primaryViewType = 'aiChatPanelPrimary';
   private static primaryInstance: AiChatPanel;
-
+  private currentSelectedFileName: string = "";
+  private currentSelectedFilePath: string = "";
   // Store active (visible) webviews
   private activePanels: vscode.WebviewView[] = [];
   private socketModule: SocketModule;
@@ -29,6 +36,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   private codeInsertionManager: CodeInsertionManager;
   private smartInsertionManager: SmartInsertionManager = new SmartInsertionManager();;
   private updatedtext: string = "";
+  private debounceTimeout: NodeJS.Timeout | undefined;
+  private isFileNotSupported: boolean = false;
 
   // Flags to prevent multiple listeners
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
@@ -125,6 +134,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           case 'login':
             // Handle the login command and open the URL
             vscode.env.openExternal(vscode.Uri.parse(message.url));
+            this.getCurrentFileName(vscode.window.activeTextEditor, this._context)
             break;
           case 'contact_us':
             // Handle the contact us command and open the URL
@@ -161,7 +171,19 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               this.smartInsertionManager.currentEditor = editor;
               if (!editor) {
                 // show Information
-                vscode.window.showErrorMessage('No active editor found.');
+                showErrorNotification('No active editor found.', 1);
+                if (this.activePanels.length > 0){
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  this.activePanels[0].webview.postMessage(
+                      {
+                      command: 'smart_insert_to_editor_update', 
+                      isComplete:  false,
+                      uniqueId: uuidv4(),
+                      codeId: message.data.codeId,
+                      status: "completed_successfully" 
+                      }
+                  );
+                }
                 return;
               }
               // get complete text of the current doc
@@ -210,9 +232,12 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               }
               break;
           case 'showInfoPopup':
-              // Show vscode information message
-              vscode.window.showInformationMessage(message.data.message);
+              showTextNotification(message.data.message, 3)
+              // Show vscode information message popup with fixed timeout
               break;
+          case 'toggle_webview':
+              console.log("Received 'toggle_webview' message from webview.");
+              this.panelManager.togglePanelLocationChange()
 
           case 'ready':
             // console.log("Received 'ready' message from webview.");
@@ -246,7 +271,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             }
             break;
           default:
-            vscode.window.showInformationMessage(`Unknown command: ${message.command}`);
+            showTextNotification("Unable to perform provided action", 3);
         }
       });
     }
@@ -261,6 +286,77 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       this.messageQueue = [];
       // console.log("Message queue cleared.");
     }
+  }
+
+
+  public getOpenFiles(): Array<{ 
+    fileName: string;
+    filePath: string; // This will now be relative
+    languageId: string | null;
+}> {
+    const openFiles = vscode.window.tabGroups.all
+        .flatMap(group => group.tabs)
+        .filter(tab => tab.input && tab.input instanceof vscode.TabInputText) // Ensure it's a file tab
+        .map(tab => {
+            const document = (tab.input as vscode.TabInputText).uri;
+            const textDocument = vscode.workspace.textDocuments.find(doc => doc.uri.toString() === document.toString());
+
+            return {
+                fileName: path.basename(document.fsPath),
+                filePath: vscode.workspace.asRelativePath(document.fsPath),
+                languageId: textDocument ? textDocument.languageId : null // Retrieve languageId if available
+            };
+        });
+
+    return openFiles;
+  }
+
+  public getCurrentFileName(editor: vscode.TextEditor | undefined, context: vscode.ExtensionContext) {
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+    }
+    this.debounceTimeout = setTimeout(() => {
+      this.currentSelectedFileName = path.basename(handleActiveEditor(editor, context));
+      const currentSelectedFileRelativePath = vscode.workspace.asRelativePath(handleActiveEditor(editor, context));
+      if (notSupportedFiles(this.currentSelectedFileName) || currentSelectedFileRelativePath==='tasks') {
+        if (this.activePanels.length > 0){
+          this.activePanels[0].webview.postMessage(
+              {
+                command: 'editor_changed_context_update_event', 
+                currentSelectedFileName:  this.currentSelectedFileName,
+                currentSelectedFileRelativePath: currentSelectedFileRelativePath,
+                action: "user_opened_unsupported_file_in_editor"
+              }
+          );
+        }
+      } else {
+
+        if (this.activePanels.length > 0){
+          this.activePanels[0].webview.postMessage(
+              {
+                command: 'editor_changed_context_update_event', 
+                currentSelectedFileName:  this.currentSelectedFileName,
+                currentSelectedFileRelativePath: currentSelectedFileRelativePath,
+                action: "user_opened_in_editor"
+              }
+          );
+        }
+      }
+
+      let openFiles = this.getOpenFiles();
+      openFiles = openFiles.filter(file => !notSupportedFiles(file.fileName)); // remove not supported files
+      openFiles = openFiles.filter(file => file.filePath !== vscode.workspace.asRelativePath(handleActiveEditor(editor, context)));       // remove current file from list
+      console.log("----------------", openFiles)
+
+      if (this.activePanels.length > 0){
+        this.activePanels[0].webview.postMessage(
+          {
+            command: 'editor_open_files_list_update_event',
+            openFiles: openFiles
+          }
+        );
+      }
+    }, 100);
   }
 
   private attemptSocketConnection(inputChat: ChatSession, retries = 3) {
@@ -306,7 +402,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       }, 5000);
     } else {
       // console.log("Failed to reconnect.");
-      vscode.window.showInformationMessage("Please check your internet connection. or try again")
+      showTextNotification("Please check your internet connection. or try again", 5)
     }
   }
 
@@ -339,6 +435,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     // Save the logged-in status in workspace state
     this._context.workspaceState.update('isLoggedIn', isLoggedIn);
+    this.getCurrentFileName(vscode.window.activeTextEditor, this._context)
 
     this.activePanels.forEach(panel => {
       panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
@@ -361,7 +458,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   public async applySmartInsertCode(data: any): Promise<void> {
     this.updatedtext = this.updatedtext + data.response;
 
-    if (data.isLineComplete) {
+    if (data.isLineComplete && !data.isError && !data.isRateLimit) {
       this.smartInsertionManager.enqueueSnippetLineByLine(
         this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.getLineSeparator()),
         data.id,
@@ -372,28 +469,45 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
 
     if (data.isComplete) {
-
-      // add a sleep time
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      this.smartInsertionManager.enqueueSnippetLineByLine(
-        "",
-        data.id,
-        this.getLineSeparator(),
-        true
-      );
-
-      this.updatedtext = "";
-
-      if (this.activePanels.length > 0){
-        this.activePanels[0].webview.postMessage(
-           {
+      if (data.isError) {
+        this.activePanels[0]?.webview.postMessage({
             command: 'smart_insert_to_editor_update', 
-            isComplete:  true,
+            isComplete:  false,
             uniqueId: data.id,
             codeId: this.smartInsertionManager.currentCodeBlockId,
             status: "completed_successfully" 
-           }
+          });
+          this.updatedtext = "";
+          showTextNotification(data.response, 1);
+        }
+      else if (data.isRateLimit) {
+        this.activePanels[0]?.webview.postMessage({
+          command: 'smart_insert_to_editor_update', 
+          isComplete:  false,
+          uniqueId: data.id,
+          codeId: this.smartInsertionManager.currentCodeBlockId,
+          status: "completed_successfully" 
+        });
+        showCustomNotification(data.response)
+        this.updatedtext = "";
+      } else {
+        // add a sleep time
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        this.smartInsertionManager.enqueueSnippetLineByLine(
+          "",
+          data.id,
+          this.getLineSeparator(),
+          true
         );
+
+        this.updatedtext = "";
+        this.activePanels[0]?.webview.postMessage({
+          command: 'smart_insert_to_editor_update', 
+          isComplete:  true,
+          uniqueId: data.id,
+          codeId: this.smartInsertionManager.currentCodeBlockId,
+          status: "completed_successfully" 
+        });
       }
     }
   }
@@ -484,33 +598,34 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
 
+  public async insertMessagesToChat(inputFile: string, inputText: string, selectedText: string, documentLanguage: string): Promise<void> {
 
-  public async insertMessagesToChat(inputFile: string, inputText: string, completeText: string): Promise<void> {
     await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
-    // add sleep time
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // Save the logged-in status in workspace state
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const relativePath = vscode.workspace.asRelativePath(inputFile);
+    inputFile = path.basename(relativePath);
+    const output = { 
+      command: 'insert_messages', 
+      fileName: inputFile,
+      relativePath: relativePath,
+      inputText: inputText,
+      completeCode: selectedText
+     }
+
+//     inputText = 
+// `\`\`\`${documentLanguage} ?file_name=${relativePath}
+// ${inputText}
+// \`\`\``;
     if (this.activePanels.length > 0){
       this.activePanels[0].webview.postMessage(
-        { 
-          command: 'insert_messages', 
-          fileName: inputFile,
-          inputText: inputText,
-          completeCode: completeText
-         }
+        output
       );
     } else {
       await new Promise(resolve => setTimeout(resolve, 4000));
       this.activePanels[0].webview.postMessage(
-        { 
-          command: 'insert_messages', 
-          fileName: inputFile,
-          inputText: inputText,
-          completeCode: completeText
-         }
+        output
       );
     }
-
   }
 
   /**
@@ -531,7 +646,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         }
       });
     } catch (error) {
-      // console.log("Failed to post queued message to webview:", error);
       console.error("Failed to post queued message to webview");
     }
   }

@@ -1,6 +1,6 @@
 // src/context/ChatContext.tsx
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { ChatSession, MessageStore } from '../types/Message';
+import { ChatSession, MessageStore, CurrentFileContext, EditorOpenFileList } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ChatContextProps {
@@ -8,6 +8,12 @@ interface ChatContextProps {
   setChatSession: React.Dispatch<React.SetStateAction<ChatSession>>;
   isTyping: boolean;
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>;
+  chatModel: string; // Add this line
+  setChatModel: React.Dispatch<React.SetStateAction<string>>;
+  attachedContext: CurrentFileContext[],
+  setAttachedContext: React.Dispatch<React.SetStateAction<CurrentFileContext[]>>;
+  openEditorFilesList: EditorOpenFileList[];
+  setOpenEditorFilesList: React.Dispatch<React.SetStateAction<EditorOpenFileList[]>>;
   clearChatSession: () => void;
   addMessage: (newMessage: MessageStore) => void;
 }
@@ -50,7 +56,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
-
+  const [chatModel, setChatModel] = useState<string>('neo-7');
+  const [attachedContext, setAttachedContext] = useState<CurrentFileContext[]>([]);
+  const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
+  
   useEffect(() => {
     sessionStorage.setItem('chatSession', JSON.stringify(chatSession));
   }, [chatSession]);
@@ -60,6 +69,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.setItem('chatSession', JSON.stringify(newSession));
     setChatSession(newSession);
   }, []);
+
+
 
   const addMessage = useCallback((newMessage: MessageStore) => {
     setChatSession((prevSession) => ({
@@ -74,6 +85,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         chatSession, 
         setChatSession, 
         isTyping, setIsTyping, 
+        chatModel, setChatModel,
+        attachedContext, setAttachedContext,
+        openEditorFilesList, setOpenEditorFilesList,
         clearChatSession, 
         addMessage 
       }}>
