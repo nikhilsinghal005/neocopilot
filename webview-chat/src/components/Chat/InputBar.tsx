@@ -13,7 +13,7 @@ interface InputBarProps {
 
 const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage, isTyping }) => {
   const [warningMessage, setWarningMessage] = useState('');
-  const { isTyping: contextIsTyping, chatModel, setChatModel, attachedContext, setAttachedContext, openEditorFilesList, setOpenEditorFilesList } = useChatContext();
+  const { isTyping: contextIsTyping, chatModel, setChatModel, attachedContext, setAttachedContext, openEditorFilesList, setOpenEditorFilesList, setIsTyping, setIsInterrupted } = useChatContext();
   const vscode = useVscode();
   const [showList, setShowList] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -38,7 +38,6 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
       if (event.data.command === 'editor_changed_context_update_event') {
         console.log('Received chat message from VS Code changed Editor:', event.data);
         if (event.data.action === 'user_opened_in_editor') {
-          // If the user opened a file in the editor,       
           console.log('message opened in editor'); 
           const newContext: CurrentFileContext = {
             currentSelectedFileName: event.data.currentSelectedFileName,
@@ -46,13 +45,11 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
             slectionType: event.data.action,
           };
 
-          // Check if the file already exists in the context
           const exists = attachedContext.some(context => 
             context.currentSelectedFileName === newContext.currentSelectedFileName &&
             context.currentSelectedFileRelativePath === newContext.currentSelectedFileRelativePath
           );
           if (!exists) {
-            // If it doesn't exist, filter out any context with slectionType "user_opened"
             const updatedContext = attachedContext.filter(context => context.slectionType !== 'user_opened_in_editor');
             setAttachedContext([...updatedContext, newContext]);
           }
@@ -86,7 +83,6 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
     };
   }, [attachedContext, setOpenEditorFilesList]);
 
-  // Function to sanitize input to prevent code execution
   const sanitizeInput = (input: string): string => {
     return input.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   };
@@ -97,10 +93,18 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
       setTimeout(() => setWarningMessage(''), 3000);
       return;
     }
-
+    setIsInterrupted(false);
     const sanitizedInput = sanitizeInput(input);
     setInput(sanitizedInput);
     handleSendMessage();
+    setIsTyping(true); // Set typing to true when a message is sent
+  };
+
+  const handleStopClick = () => {
+    // Logic to handle stop action
+    setIsTyping(false); // Set typing to false to stop the process
+    setIsInterrupted(true)
+    // Additional logic to stop the ongoing process can be added here
   };
 
   const handleCodeInsertClick = () => {
@@ -131,13 +135,12 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
     const updatedAttachedContext = attachedContext.filter(context => context.currentSelectedFileRelativePath !== filePath);
     setAttachedContext(updatedAttachedContext);
 
-    // Add the removed item back to openEditorFilesList
     const removedFile = attachedContext.find(context => context.currentSelectedFileRelativePath === filePath);
     if (removedFile) {
       setOpenEditorFilesList([...openEditorFilesList, {
         fileName: removedFile.currentSelectedFileName,
         filePath: removedFile.currentSelectedFileRelativePath,
-        languageId: '' // Assuming languageId is not available, you can adjust this accordingly
+        languageId: ''
       }]);
     }
   };
@@ -146,8 +149,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
     setSelectedItem(item.fileName);
     setShowList(false);
 
-    if (attachedContext.length < 3) {  // Change "<=" to "<" to limit to 3 files max
-      // Remove the selected item from openEditorFilesList and add it to attachedContext
+    if (attachedContext.length < 3) {
       const updatedOpenFilesList = openEditorFilesList.filter(file => file.filePath !== item.filePath);
       setOpenEditorFilesList(updatedOpenFilesList);
 
@@ -166,12 +168,10 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
   const handleResize = useCallback(() => {
     const textarea = document.querySelector('.input-textarea') as HTMLTextAreaElement;
     if (textarea) {
-      textarea.style.height = 'auto'; // Reset height to calculate the scroll height
-      const newHeight = Math.min(Math.max(textarea.scrollHeight, 50), 140); // Keep within min/max, reduced overall height slightly
+      textarea.style.height = 'auto';
+      const newHeight = Math.min(Math.max(textarea.scrollHeight, 50), 140);
       textarea.style.height = `${newHeight}px`;
-
-      // Update the CSS variable for `input-container`
-      document.documentElement.style.setProperty('--input-container-height', `${newHeight + 40}px`); // Adding padding/margin as needed
+      document.documentElement.style.setProperty('--input-container-height', `${newHeight + 40}px`);
     }
   }, []);
 
@@ -206,7 +206,6 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
             height: 'var(--input-container-height, 35px)',
           }}
         >
-          {/* Enhanced Code Insert Button and Tag */}
           <div className="flex items-center gap-1 relative">
             <VSCodeButton
               onClick={handlePlusIconClick}
@@ -237,7 +236,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                         borderColor: 'var(--vscode-editorGroup-border)',
                         color: 'var(--vscode-editor-foreground)'
                       }}
-                      title={file.filePath} // Add tooltip with full file path
+                      title={file.filePath}
                     >
                       {file.filePath.length > 30 ? `${file.filePath.slice(0, 7)}...${file.filePath.slice(-23)}` : file.filePath}
                     </div>
@@ -251,7 +250,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
             )}
             {attachedContext.length > 0 ? (
               attachedContext.map((context, index) => (
-                context.currentSelectedFileName && context.currentSelectedFileRelativePath ? ( // Ensure valid context
+                context.currentSelectedFileName && context.currentSelectedFileRelativePath ? (
                   <span
                     key={index}
                     className="rounded-sm px-1 flex items-center h-5 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
@@ -271,7 +270,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                       <span className="codicon codicon-close text-xxs"></span>
                     </VSCodeButton>
                   </span>
-                ) : null // Only render valid contexts
+                ) : null
               ))
             ) : (
               <span
@@ -288,7 +287,6 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
           </div>
         </div>
         <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0">
-          {/* Input Container */}
           <div 
             className="input-container flex flex-col gap-0 w-full max-w-2xl p-0 border rounded-sm"
             style={{
@@ -297,7 +295,6 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
               color: 'var(--vscode-editor-foreground)',
             }}
           >
-            {/* Top Section: Text Input */}
             <div className="top-section flex items-center gap-2">
               <textarea
                 value={input}
@@ -322,13 +319,11 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
               />
             </div>
 
-            {/* Bottom Section: Dropdown on Left, Buttons on Right */}
             <div className="bottom-section flex justify-between items-center gap-2 mt-0 p-0"
               style={{
                 borderTop: `1px solid var(--vscode-editorGroup-border)`,
               }}
             >
-              {/* Dropdown Selector on Left */}
               <VSCodeDropdown
                 className="rounded-md p-0 outline-none text-sm"
                 style={{
@@ -347,9 +342,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                 <VSCodeOption value="neo-7">Neo-Expert</VSCodeOption>
               </VSCodeDropdown>
 
-              {/* Right Section: Attachment and Send Buttons */}
               <div className="button-group flex items-center gap-2" style={{ marginRight: '4px' }}>
-                {/* Attachment Icon Button */}
                 <VSCodeButton
                   onClick={handleCodeInsertClick}
                   appearance="icon"
@@ -363,24 +356,36 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                   <span className="codicon codicon-file-media"></span>
                 </VSCodeButton>
 
-                {/* Send Button */}
-                <VSCodeButton
-                  onClick={handleClick}
-                  appearance="icon"
-                  aria-label="Send Message"
-                  disabled={isTyping}
-                  className="rounded-none"
-                  style={{
-                    color: 'var(--vscode-button-foreground)',
-                  }}
-                >
-                  <span className="codicon codicon-send"></span>
-                </VSCodeButton>
+                {isTyping ? (
+                  <VSCodeButton
+                    onClick={handleStopClick}
+                    appearance="icon"
+                    aria-label="Stop"
+                    className="rounded-none"
+                    style={{
+                      color: 'var(--vscode-button-foreground)',
+                    }}
+                  >
+                    <span className="codicon codicon-debug-stop"></span>
+                  </VSCodeButton>
+                ) : (
+                  <VSCodeButton
+                    onClick={handleClick}
+                    appearance="icon"
+                    aria-label="Send Message"
+                    disabled={isTyping}
+                    className="rounded-none"
+                    style={{
+                      color: 'var(--vscode-button-foreground)',
+                    }}
+                  >
+                    <span className="codicon codicon-send"></span>
+                  </VSCodeButton>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Warning message */}
           {warningMessage && (
             <div className="text-sm mt-1" style={{ color: 'var(--vscode-errorForeground)' }}>
               {warningMessage}

@@ -4,13 +4,15 @@ import { MessageStore, MessageInput, ChatSession } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 
 export const useChatListener = () => {
-  const { chatSession, setChatSession, isTyping, setIsTyping } = useChatContext();
+  const { chatSession, setChatSession, isTyping, setIsTyping, isInterrupted } = useChatContext();
   const accumulatedResponseRef = useRef<string>('');
   const messageInProgressRef = useRef<MessageStore | null>(null);
+  const interruptedMessageIdsRef = useRef<Set<string>>(new Set());
+
+  // Sync refs with current state
   const isTypingRef = useRef<boolean>(isTyping);
   const chatSessionRef = useRef<ChatSession | null>(chatSession);
 
-  // Sync refs with current state
   useEffect(() => { isTypingRef.current = isTyping; }, [isTyping]);
   useEffect(() => { chatSessionRef.current = chatSession; }, [chatSession]);
 
@@ -25,6 +27,26 @@ export const useChatListener = () => {
       const { data } = eventData;
       try {
         if (!isValidMessage(data)) return;
+
+        // Check if the message ID is in the interrupted list
+        if (interruptedMessageIdsRef.current.has(data.id)) {
+          console.warn(`Message with ID ${data.id} is interrupted and will not be processed.`);
+          return;
+        }
+
+        // Check if the stream is interrupted
+        if (isInterrupted) {
+          console.warn("Message stream interrupted; stopping message accumulation.");
+          data.isComplete = true;
+          interruptedMessageIdsRef.current.add(data.id);
+          finalizeMessage();
+          return;
+        }
+
+        // Reset message progress if a new message is detected
+        if (data.id !== messageInProgressRef.current?.id) {
+          resetMessageProgress();
+        }
 
         accumulateResponse(data);
         updateSessionWithMessage(data);
@@ -45,10 +67,6 @@ export const useChatListener = () => {
         resetMessageProgress();
         return false;
       }
-      // if (!isTypingRef.current) {
-      //   console.warn("Received message ignored because typing is false.");
-      //   return false;
-      // }
       return true;
     };
 
@@ -63,11 +81,9 @@ export const useChatListener = () => {
           text: accumulatedResponseRef.current,
           isComplete: data.isComplete,
         };
-        // console.log("Created new messageInProgress:", messageInProgressRef.current);
       } else {
         messageInProgressRef.current.text += data.response;
         messageInProgressRef.current.isComplete = data.isComplete;
-        // console.log("Updated messageInProgress:", messageInProgressRef.current);
       }
     };
 
@@ -89,10 +105,19 @@ export const useChatListener = () => {
 
         let updatedMessages;
         if (existingMessageIndex !== -1) {
+          const existingMessage = prevSession.messages[existingMessageIndex];
+
+          // Check if the message is already complete
+          if (existingMessage.isComplete) {
+            console.warn("Attempted to update a completed message; ignoring.");
+            return prevSession;
+          }
+
           if (data.id === 'unknown') {
             console.warn("Received message part with unknown ID; removing this part.");
             return prevSession; // Ignore this specific part if the ID is 'unknown'
           }
+
           updatedMessages = prevSession.messages.map((msg, index) =>
             index === existingMessageIndex
               ? {
@@ -110,7 +135,6 @@ export const useChatListener = () => {
           updatedMessages = [...prevSession.messages, { ...messageInProgressRef.current }];
         }
 
-        // console.log("Updating chat session with messages:", updatedMessages);
         return { ...prevSession, messages: updatedMessages };
       });
     };
@@ -124,18 +148,16 @@ export const useChatListener = () => {
     });
 
     const resetMessageProgress = () => {
-      // console.log("Resetting message progress");
       accumulatedResponseRef.current = '';
       messageInProgressRef.current = null;
     };
 
     const finalizeMessage = () => {
-      // console.log("Finalizing message");
       setIsTyping(false);
       setTimeout(resetMessageProgress, 0);
     };
 
     window.addEventListener('message', handleIncomingMessage);
     return () => window.removeEventListener('message', handleIncomingMessage);
-  }, [setChatSession, setIsTyping]);
+  }, [setChatSession, setIsTyping, isInterrupted]);
 };

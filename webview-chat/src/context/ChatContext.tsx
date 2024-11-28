@@ -16,6 +16,8 @@ interface ChatContextProps {
   setOpenEditorFilesList: React.Dispatch<React.SetStateAction<EditorOpenFileList[]>>;
   clearChatSession: () => void;
   addMessage: (newMessage: MessageStore) => void;
+  isInterrupted: boolean; // Add this line
+  setIsInterrupted: React.Dispatch<React.SetStateAction<boolean>>; // Add this line
 }
 
 const createNewChatSession = (): ChatSession => ({
@@ -39,7 +41,6 @@ export const useChatContext = (): ChatContextProps => {
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [chatSession, setChatSession] = useState<ChatSession>(() => {
     const storedSession = sessionStorage.getItem('chatSession');
-    // console.info("Chat Session Already Exsists: ", storedSession)
     if (storedSession) {
       try {
         return JSON.parse(storedSession) as ChatSession;
@@ -48,7 +49,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return createNewChatSession();
       }
     }else{
-      // console.log("No Chat Session Exists")
       const newSession: ChatSession = createNewChatSession();
       sessionStorage.setItem('chatSession', JSON.stringify(newSession));
       return createNewChatSession();
@@ -59,6 +59,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [chatModel, setChatModel] = useState<string>('neo-7');
   const [attachedContext, setAttachedContext] = useState<CurrentFileContext[]>([]);
   const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
+  const [isInterrupted, setIsInterrupted] = useState<boolean>(false); // Add this line
   
   useEffect(() => {
     sessionStorage.setItem('chatSession', JSON.stringify(chatSession));
@@ -69,8 +70,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.setItem('chatSession', JSON.stringify(newSession));
     setChatSession(newSession);
   }, []);
-
-
 
   const addMessage = useCallback((newMessage: MessageStore) => {
     setChatSession((prevSession) => ({
@@ -89,7 +88,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         attachedContext, setAttachedContext,
         openEditorFilesList, setOpenEditorFilesList,
         clearChatSession, 
-        addMessage 
+        addMessage,
+        isInterrupted, setIsInterrupted, // Add this line
       }}>
       {children}
     </ChatContext.Provider>
