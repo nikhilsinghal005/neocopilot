@@ -22,17 +22,17 @@
   
  
   <!-- Left angle bracket with subtle gradient difference -->
-  <text x="26%" y="50%" dominant-baseline="middle" text-anchor="end" font-size="28" font-weight="bold" font-family="Arial, serif" fill="url(#leftBracketGradient)" filter="url(#textShadow)">
+  <text x="20%" y="47%" dominant-baseline="middle" text-anchor="end" font-size="24" font-weight="bold" font-family="Arial, serif" fill="url(#leftBracketGradient)" filter="url(#textShadow)">
     &lt;
   </text>
   
   <!-- Neo text -->
-  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="32" font-weight="bold" font-family="Comic Sans MS, sans-serif" fill="url(#neoGradient)" filter="url(#textShadow)">
-    N
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="36" font-weight="bold" font-family="Arial, sans-serif" fill="url(#neoGradient)" filter="url(#textShadow)">
+    /N
   </text>
   
   <!-- Right angle bracket with subtle gradient difference -->
-  <text x="74%" y="50%" dominant-baseline="middle" text-anchor="start" font-size="28" font-weight="bold" font-family="Arial, serif" fill="url(#rightBracketGradient)" filter="url(#textShadow)">
+  <text x="81%" y="47%" dominant-baseline="middle" text-anchor="start" font-size="24" font-weight="bold" font-family="Arial, serif" fill="url(#rightBracketGradient)" filter="url(#textShadow)">
     &gt;
   </text>
 </svg>
