@@ -29,7 +29,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   private static primaryInstance: AiChatPanel;
   private currentSelectedFileName: string = "";
   private currentSelectedFilePath: string = "";
-  // Store active (visible) webviews
   private activePanels: vscode.WebviewView[] = [];
   private socketModule: SocketModule;
   private panelManager: PanelManager;
@@ -38,8 +37,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   private updatedtext: string = "";
   private debounceTimeout: NodeJS.Timeout | undefined;
   private isFileNotSupported: boolean = false;
-
-  // Flags to prevent multiple listeners
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
 
   // Message Queue to store incoming messages when no webviews are active
@@ -74,11 +71,9 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ) {
-    // console.log("Webview View is being resolved.");
-    // Add the webview to activePanels if it's initially visible
+
     if (webviewView.visible) {
       this.activePanels.push(webviewView);
-      // console.log(`Webview added to activePanels. Active panels count: ${this.activePanels.length}`);
     }
 
     // Handle visibility changes
@@ -87,21 +82,16 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         // Add to activePanels if not already present
         if (!this.activePanels.includes(webviewView)) {
           this.activePanels.push(webviewView);
-          // console.log(`Webview added to activePanels. Active panels count: ${this.activePanels.length}`);
         }
       } else {
-        // console.log("Webview is now hidden.");
         // Remove from activePanels
         this.activePanels = this.activePanels.filter(panel => panel !== webviewView);
-        // console.log(`Webview removed from activePanels. Active panels count: ${this.activePanels.length}`);
       }
     });
 
     // Remove the webview from the activePanels list when it's disposed (if it ever gets disposed)
     webviewView.onDidDispose(() => {
-      // console.log("Webview disposed.");
       this.activePanels = this.activePanels.filter(panel => panel !== webviewView);
-      // console.log(`Active panels after disposal: ${this.activePanels.length}`);
     });
 
     // Allow scripts in the webview
@@ -165,11 +155,27 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           
           case 'smartCodeInsert':
               const editor = vscode.window.activeTextEditor;
+              if (this.smartInsertionManager.currentEditor) {
+                console.log("test----------------")
+                showErrorNotification('Please Complete the previous code insertion.', 0.7);
+                this.activePanels[0].webview.postMessage(
+                  {
+                  command: 'smart_insert_to_editor_update', 
+                  isComplete:  false,
+                  uniqueId: uuidv4(),
+                  codeId: message.data.codeId,
+                  status: "completed_successfully" 
+                  }
+
+              );
+              return;
+              }
+              
               this.smartInsertionManager.reinitialize()
               this.smartInsertionManager.currentEditor = editor;
               if (!editor) {
                 // show Information
-                showErrorNotification('No active editor found.', 1);
+                showErrorNotification('No active editor found.', 0.7);
                 if (this.activePanels.length > 0){
                   await new Promise(resolve => setTimeout(resolve, 1000));
                   this.activePanels[0].webview.postMessage(
@@ -229,7 +235,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               }
               break;
           case 'showInfoPopup':
-              showTextNotification(message.data.message, 3)
+              showTextNotification(message.data.message, 1)
               // Show vscode information message popup with fixed timeout
               break;
           case 'toggle_webview':
@@ -265,7 +271,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             }
             break;
           default:
-            showTextNotification("Unable to perform provided action", 3);
+            showTextNotification("Unable to perform provided action", 1);
         }
       });
     }
