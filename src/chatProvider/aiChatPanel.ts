@@ -11,7 +11,7 @@ import { getExactNewlineCharacter } from '../utilities/basicUtilities';
 import { SmartInsertionManager } from '../codeInsertions/smartCodeInsert';
 import { handleActiveEditor } from "../utilities/codeCompletionUtils/editorUtils";
 import * as path from 'path';
-import { isNullOrEmptyOrWhitespace, notSupportedFiles } from "../utilities/codeCompletionUtils/completionUtils";
+import { notSupportedFiles } from "../utilities/codeCompletionUtils/completionUtils";
 import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
 import { showErrorNotification } from '../utilities/statusBarNotifications/showErrorNotification';
 import { showCustomNotification } from '../utilities/statusBarNotifications/showCustomNotification';
@@ -84,7 +84,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     // Handle visibility changes
     webviewView.onDidChangeVisibility(() => {
       if (webviewView.visible) {
-        // console.log("Webview is now visible.");
         // Add to activePanels if not already present
         if (!this.activePanels.includes(webviewView)) {
           this.activePanels.push(webviewView);
@@ -126,8 +125,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         // console.log("Received message from webview:", message);
         switch (message.command) {
           case 'send_chat_message':
-            // console.log("Message recived from react app", message.data)
-            // console.log("Chat id for Messages", message.data.chatId)
             const inputChat: ChatSession = message.data
             this.attemptSocketConnection(inputChat)
             break;
@@ -168,6 +165,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           
           case 'smartCodeInsert':
               const editor = vscode.window.activeTextEditor;
+              this.smartInsertionManager.reinitialize()
               this.smartInsertionManager.currentEditor = editor;
               if (!editor) {
                 // show Information
@@ -189,7 +187,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               // get complete text of the current doc
               const editorCode = editor.document.getText().trim();
               const updatedCode = message.data.code
-              this.smartInsertionManager.reinitialize()
 
               if (editorCode.length === 0) {
                 this.smartInsertionManager.oldLinesList = [];
@@ -240,8 +237,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               this.panelManager.togglePanelLocationChange()
 
           case 'ready':
-            // console.log("Received 'ready' message from webview.");
-
             // Webview signals it's ready; send authentication status
               const isLoggedIn = await this._authManager.verifyAccessToken();
               this.sendAuthStatus(isLoggedIn);
@@ -257,7 +252,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 this.attachSocketListeners();
               });
               }
-
 
             // Send any queued messages
             if (this.messageQueue.length > 0) {

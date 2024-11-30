@@ -153,35 +153,43 @@ export class CodeSelectionCommandHandler {
     });
   }
 
-  private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.TextEditor): vscode.Selection {
+private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.TextEditor): vscode.Selection {
+    // Get the start and end line numbers of the selection
     const startLine = selection.start.line;
     const endLine = selection.end.line;
 
+    // Get the start position of the start line and the end position of the end line
     const start = editor.document.lineAt(startLine).range.start;
     const end = editor.document.lineAt(endLine).range.end;
 
+    // Return a new selection that spans from the start of the start line to the end of the end line
     return new vscode.Selection(start, end);
   }
 
   private getLineSeparator(): string {
-
+    // Get the active text editor
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       return '\n'; // Default to LF if no editor is active
     }
+    // Determine the end-of-line character used in the document
     const eol = editor.document.eol;
     return eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
   }
   
   private attachSocketListeners(): void {
+    // Check if there are no listeners for 'recieve_editor_code_refactor' event
     if (this.socketModule.socket?.listeners('recieve_editor_code_refactor').length === 0) {
 
-      // ##### Add check for verify chat id's and response.
+      // Add a listener for 'recieve_editor_code_refactor' event
       this.socketModule.socket?.on('recieve_editor_code_refactor', (data: any) => {
+        // Append the response to updatedtext
         this.updatedtext = this.updatedtext + data.response;
 
+        // Check if the line is complete and there are no errors or rate limits
         if (data.isLineComplete && !data.isError && !data.isRateLimit) {
           console.log("Line complete");
+          // Replace line endings and enqueue the snippet line by line
           const tempText: string = this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, this.nextLineCharacter);
           this.codeInsertionManager.enqueueSnippetLineByLine(
             tempText,
@@ -192,6 +200,7 @@ export class CodeSelectionCommandHandler {
           this.updatedtext = "";
         }
 
+        // Check if the data is complete
         if (data.isComplete) {
           if (data.isError) {
               this.updatedtext = "";
@@ -232,6 +241,9 @@ export class CodeSelectionCommandHandler {
     const selectedText = editor.document.getText(selection);
     this.completeText = editor.document.getText();
 
+    // Split the selected text into lines and store the start and end line numbers
+    this.codeInsertionManager.currentEditor = editor;
+    console.log("nnnnnnnnnnnnnnnnnnnnn", this.codeInsertionManager.currentEditor)
     this.codeInsertionManager.oldLinesList = selectedText.split(this.nextLineCharacter);
     this.codeInsertionManager.oldStartLine = selection.start.line;
     this.codeInsertionManager.oldEndLine = selection.end.line;

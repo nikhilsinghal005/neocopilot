@@ -53,6 +53,24 @@ export class SmartInsertionManager {
   };
 
   constructor() {
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      if (vscode.window.activeTextEditor && this.currentEditor) {
+        if (vscode.window.activeTextEditor.document.uri.toString() === this.currentEditor.document.uri.toString()) {
+          this.reinitializeDecorations();
+        }
+      }
+    });
+  }
+
+  public async reinitializeDecorations(): Promise<void> {
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+        console.log("Which Editor");
+        this.currentEditor = vscode.window.activeTextEditor;
+        this.currentEditor?.setDecorations(this.insertedDecorationType, this.decorationsToApply.inserted);
+        this.currentEditor?.setDecorations(this.deletedDecorationType, this.decorationsToApply.deleted);
+        this.currentEditor?.setDecorations(this.sameDecorationType, this.decorationsToApply.same);
+    }
   }
 
   public reinitialize(): void {
@@ -102,6 +120,7 @@ export class SmartInsertionManager {
         inserted: [],
         same: [],
     };
+    this.currentEditor = undefined
 }
 
   // Static method to get the singleton instance
@@ -116,72 +135,90 @@ export class SmartInsertionManager {
    * Accepts an insertion, keeping updated and same lines, and removing deleted lines.
    * @param id Unique identifier for the insertion.
    */
-  public acceptInsertion(): void {
+  public async acceptInsertion(): Promise<void> {
     const insertion = this.insertions.get(this.uniqueId);
     if (!insertion) {
       vscode.window.showErrorMessage('Insertion not found.');
       return;
   }
 
-  const editor = this.currentEditor;
-  if (!editor) {
+  if (!this.currentEditor) {
     vscode.window.showErrorMessage('No active editor found.');
     return;
   }
 
-  editor
-    .edit((editBuilder) => {
-      // Delete ranges for deleted lines
-      insertion.deletedRanges.forEach((range) => {
-        const fullLineRange = new vscode.Range(
-          range.start.line,
-          0,
-          range.start.line + 1,
-          0 // Move to the start of the next line to capture the newline
-        ); 
-        editBuilder.delete(fullLineRange);
-      });
-    })
-    .then((success) => {
-      if (success) {
-        // Dispose of decorations
-        insertion.decorationType.dispose();
-        if (insertion.deletedDecorationType) {
-          insertion.deletedDecorationType.dispose();
-        }
-        if (insertion.sameDecorationType) {
-          insertion.sameDecorationType.dispose();
-        }
+  if (vscode.window.activeTextEditor?.document.uri) {
+      if (vscode.window.activeTextEditor.document.uri.toString() !== this.currentEditor.document.uri.toString()) {
+        const document = await vscode.workspace.openTextDocument(this.currentEditor.document.uri);
+        await vscode.window.showTextDocument(document);
+        // add a sleep
+        await new Promise(resolve => setTimeout(resolve, 300));
+        this.currentEditor = vscode.window.activeTextEditor;
+      }  
+  }
 
-        this.insertions.delete(this.uniqueId);
-        editor.setDecorations(this.insertedDecorationType, []);
-        editor.setDecorations(this.deletedDecorationType, []);
-        editor.setDecorations(this.sameDecorationType, []);
-        showTextNotification('Code accepted', 2);
-      } else {
-        vscode.window.showErrorMessage('Failed to accept the insertion.');
-      }
+  const success = await this.currentEditor.edit((editBuilder) => {
+    // Delete ranges for deleted lines
+    insertion.deletedRanges.forEach((range) => {
+      const fullLineRange = new vscode.Range(
+        range.start.line,
+        0,
+        range.start.line + 1,
+        0 // Move to the start of the next line to capture the newline
+      ); 
+      editBuilder.delete(fullLineRange);
     });
-}
+  });
 
+  if (success) {
+    // Dispose of decorations
+    insertion.decorationType.dispose();
+    if (insertion.deletedDecorationType) {
+      insertion.deletedDecorationType.dispose();
+    }
+    if (insertion.sameDecorationType) {
+      insertion.sameDecorationType.dispose();
+    }
+
+    this.insertions.delete(this.uniqueId);
+    this.currentEditor?.setDecorations(this.insertedDecorationType, []);
+    this.currentEditor?.setDecorations(this.deletedDecorationType, []);
+    this.currentEditor?.setDecorations(this.sameDecorationType, []);
+    showTextNotification('Code accepted', 2);
+    this.reinitialize()
+  } else {
+    this.reinitialize()
+    vscode.window.showErrorMessage('Failed to accept the insertion.');
+  }
+}
 /**
  * Rejects an insertion, keeping only the same lines and removing updated and deleted lines.
  * @param id Unique identifier for the insertion.
  */
-public rejectInsertion(): void {
+public async rejectInsertion(): Promise<void> {
   const insertion = this.insertions.get(this.uniqueId);
   if (!insertion) {
     vscode.window.showErrorMessage('Insertion not found.');
     return;
   }
 
-  const editor = this.currentEditor;
-  if (!editor) {
+  if (!this.currentEditor) {
     vscode.window.showErrorMessage('No active editor found.');
     return;
   }
 
-  editor
+  if (vscode.window.activeTextEditor?.document.uri) {
+    if (vscode.window.activeTextEditor.document.uri.toString() !== this.currentEditor.document.uri.toString()) {
+      const document = await vscode.workspace.openTextDocument(this.currentEditor.document.uri);
+      await vscode.window.showTextDocument(document);
+      // add a sleep
+      await new Promise(resolve => setTimeout(resolve, 300));
+      this.currentEditor = vscode.window.activeTextEditor;
+    }  
+}
+
+
+this.currentEditor
     .edit((editBuilder) => {
       // Delete ranges for inserted and deleted lines
       insertion.insertedRanges.forEach((range) => {
@@ -208,10 +245,12 @@ public rejectInsertion(): void {
         }
 
         this.insertions.delete(this.uniqueId);
-        editor.setDecorations(this.insertedDecorationType, []);
-        editor.setDecorations(this.deletedDecorationType, []);
-        editor.setDecorations(this.sameDecorationType, []);
+        this.currentEditor?.setDecorations(this.insertedDecorationType, []);
+        this.currentEditor?.setDecorations(this.deletedDecorationType, []);
+        this.currentEditor?.setDecorations(this.sameDecorationType, []);
+        this.reinitialize()
       } else {
+        this.reinitialize()
         vscode.window.showErrorMessage('Failed to reject the insertion.');
       }
     });
