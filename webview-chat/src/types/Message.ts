@@ -19,6 +19,8 @@
     currentSelectedFileName: string;
     currentSelectedFileRelativePath: string;
     slectionType: string;
+    isCurrentlyOpen: boolean;
+    isUserSelected: boolean;
   };
 
   // For input messages (e.g., when receiving or sending new messages)

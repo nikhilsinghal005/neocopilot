@@ -35,26 +35,42 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
 
   useEffect(() => {
     const handleIncomingMessage = (event: MessageEvent) => {
+
       if (event.data.command === 'editor_changed_context_update_event') {
         console.log('Received chat message from VS Code changed Editor:', event.data);
-        if (event.data.action === 'user_opened_in_editor') {
-          console.log('message opened in editor'); 
-          const newContext: CurrentFileContext = {
-            currentSelectedFileName: event.data.currentSelectedFileName,
-            currentSelectedFileRelativePath: event.data.currentSelectedFileRelativePath,
-            slectionType: event.data.action,
-          };
 
+        if (event.data.action === 'user_opened_in_editor') {
+
+          // check if file already exists in the context
           const exists = attachedContext.some(context => 
-            context.currentSelectedFileName === newContext.currentSelectedFileName &&
-            context.currentSelectedFileRelativePath === newContext.currentSelectedFileRelativePath
+            context.currentSelectedFileName === event.data.currentSelectedFileName &&
+            context.currentSelectedFileRelativePath === event.data.currentSelectedFileRelativePath
           );
-          if (!exists) {
-            const updatedContext = attachedContext.filter(context => context.slectionType !== 'user_opened_in_editor');
-            setAttachedContext([...updatedContext, newContext]);
+
+          if (exists) {
+            // Update the isCurrentlyOpen value to true for the current file and false for others
+            setAttachedContext(attachedContext.map(context => 
+              context.currentSelectedFileName === event.data.currentSelectedFileName &&
+              context.currentSelectedFileRelativePath === event.data.currentSelectedFileRelativePath
+                ? { ...context, isCurrentlyOpen: true }
+                : { ...context, isCurrentlyOpen: false }
+            ));
+          } else {
+            const newContext: CurrentFileContext = {
+              currentSelectedFileName: event.data.currentSelectedFileName,
+              currentSelectedFileRelativePath: event.data.currentSelectedFileRelativePath,
+              slectionType: event.data.action,
+              isCurrentlyOpen: true,
+              isUserSelected: false
+            };
+
+            const updatedContext = attachedContext.filter(context => context.isUserSelected).map(context => ({ ...context, isCurrentlyOpen: false }));
+            setAttachedContext([newContext , ...updatedContext]);
           }
         }  else {
-          const updatedContext = attachedContext.filter(context => context.slectionType !== 'user_opened_in_editor');
+          const updatedContext = attachedContext
+            .filter(context => context.slectionType === 'user_opened_in_editor')
+            .map(context => ({ ...context, isCurrentlyOpen: false }));
           setAttachedContext(updatedContext);
         }
       }
@@ -157,6 +173,8 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
         currentSelectedFileName: item.fileName,
         currentSelectedFileRelativePath: item.filePath,
         slectionType: 'user_selection',
+        isCurrentlyOpen: false,
+        isUserSelected: true
       };
 
       setAttachedContext([...attachedContext, newContext]);
@@ -258,8 +276,21 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                       backgroundColor: 'var(--vscode-editor-background)',
                       borderColor: 'var(--vscode-editorGroup-border)',
                       color: 'var(--vscode-editor-foreground)',
+                      position: 'relative'
                     }}
                   >
+                    {context.isCurrentlyOpen && (
+                      <span
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          backgroundColor: 'green',
+                          borderRadius: '50%',
+                          display: 'inline-block',
+                          marginRight: '4px'
+                        }}
+                      ></span>
+                    )}
                     {context.currentSelectedFileName}
                     <VSCodeButton
                       appearance="icon"
