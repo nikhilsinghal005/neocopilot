@@ -16,6 +16,7 @@ import { AuthManager } from './authManager/authManager';
 import { CodeInsertionManager } from './codeInsertions/CodeInsertionManager';
 import { ChatSession, MessageInput} from './chatProvider/types/messageTypes';
 import * as path from 'path';
+import { getFileText } from './utilities/editorUtils/getFileText';
 
 interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {}
 
@@ -300,48 +301,23 @@ export class SocketModule {
     }
   }
 
-  public async getFileText(relativePath: string): Promise<string | null> {
-    try {
-        // Convert the relative path to an absolute path
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showErrorMessage('No workspace is open');
-            return null;
-        }
-        
-        // Assume the first workspace folder for the relative path
-        const absolutePath = path.join(workspaceFolders[0].uri.fsPath, relativePath);
-
-        // Create a URI for the file
-        const fileUri = vscode.Uri.file(absolutePath);
-
-        // Open the text document
-        const document = await vscode.workspace.openTextDocument(fileUri);
-
-        // Return the text content
-        return document.getText();
-    } catch (error) {
-        vscode.window.showErrorMessage(`Error reading file: ${error}`);
-        return null;
-    }
-  }
 
   public async sendChatMessage(chat: ChatSession) {
-    console.log("Message to socket from backend");
     let messageList = chat.messages.slice(-5);
 
     // Process each message in the list
     const lastMessage = messageList[messageList.length - 1];
 
     if (lastMessage && lastMessage.attachedContext?.length > 0) {
-        for (const context of lastMessage.attachedContext) {
+        for (const contextTemp of lastMessage.attachedContext) {
             try {
                 // Retrieve and update fileText for the current context
-                const fileText = await this.getFileText(context.currentSelectedFileRelativePath);
-                context.fileText = fileText || '';
+                console.log("context", contextTemp.currentSelectedFileRelativePath)
+                const fileText = await getFileText(contextTemp.currentSelectedFileRelativePath);
+                contextTemp.fileText = fileText || '';
             } catch (error) {
-                console.error(`Failed to fetch file text for ${context.currentSelectedFileRelativePath}:`, error);
-                context.fileText = 'Error retrieving file text';
+                console.error(`Failed to fetch file text for ${contextTemp.currentSelectedFileRelativePath}:`, error);
+                contextTemp.fileText = '';
             }
         }
     }
