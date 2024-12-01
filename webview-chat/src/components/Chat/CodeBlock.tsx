@@ -136,7 +136,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, f
   // console.log(language)
 
   return (
-    <div className="my-4 p-0 rounded-lg shadow-lg border"
+    <div className="my-4 p-0 rounded-lg shadow-lg border w-full min-w-[400px]"
       style={{
         backgroundColor: 'var(--vscode-editor-background)',
         borderColor: 'var(--vscode-editorGroup-border)',
@@ -217,3 +217,5 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ inline, className, codeContent, f
 };
 
 export default CodeBlock;
+
+
