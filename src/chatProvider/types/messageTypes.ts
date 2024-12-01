@@ -50,3 +50,11 @@ export type ChatSession = {
   chatName: string;
   messages: MessageInput[];
 };
+
+export interface smartInsert {
+  uniqueId: string, 
+  uniqueChatId: string, 
+  editorCode: string, 
+  updatedCode: string,
+  actionType: string
+}
