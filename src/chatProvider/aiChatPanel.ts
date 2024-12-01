@@ -156,7 +156,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           case 'smartCodeInsert':
               const editor = vscode.window.activeTextEditor;
               if (this.smartInsertionManager.currentEditor) {
-                console.log("test----------------")
+                // console.log("test----------------")
                 showErrorNotification('Please Complete the previous code insertion.', 0.7);
                 this.activePanels[0].webview.postMessage(
                   {
@@ -346,7 +346,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       let openFiles = this.getOpenFiles();
       openFiles = openFiles.filter(file => !notSupportedFiles(file.fileName)); // remove not supported files
       openFiles = openFiles.filter(file => file.filePath !== vscode.workspace.asRelativePath(handleActiveEditor(editor, context)));       // remove current file from list
-      console.log("----------------", openFiles)
 
       if (this.activePanels.length > 0){
         this.activePanels[0].webview.postMessage(
@@ -421,7 +420,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
   
-
   private async togglePanelLocation(): Promise<void> {
     this.panelManager.togglePanelLocationChange()
   }

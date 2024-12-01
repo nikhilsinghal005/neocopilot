@@ -22,7 +22,7 @@ interface Insertion {
 
 export class CodeInsertionManager {
   private static instance: CodeInsertionManager | null = null; // Singleton instance
-
+  public leftOver: string = '';
   private disposables: vscode.Disposable[] = [];
   private insertions: Map<string, Insertion> = new Map();
   private codeLensProvider: CodeInsertionCodeLensProvider;
@@ -124,6 +124,8 @@ export class CodeInsertionManager {
     // Refresh CodeLens provider
     this.codeLensProvider.refresh(this.currentEditor);
     this.currentEditor = undefined
+    this.leftOver = '';
+
 
 }
 
@@ -380,12 +382,12 @@ public rejectInsertion(id: string): void {
       this.codeLensProvider.refresh(this.currentEditor);
       return;
     }
-
+    updatedText = this.leftOver + updatedText
     // console.log("------------------------------------------------", JSON.stringify(updatedText))
     // count of occurances
     let newLineList = updatedText.split(nextLineCharacter)
     if (newLineList.length > 1) {
-      newLineList.pop()
+      this.leftOver = newLineList.pop() || ""
     }
     // console.log("#######", newLineList)
 

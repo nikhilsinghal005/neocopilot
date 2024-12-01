@@ -26,7 +26,7 @@ export class SmartInsertionManager {
   public currentCodeBlockId: string = '';
   private edit = new vscode.WorkspaceEdit();
   public currentEditor: vscode.TextEditor | undefined;
-
+  public leftOver: string = '';
 
   private insertedDecorationType = vscode.window.createTextEditorDecorationType({
     backgroundColor: 'rgba(92, 248, 1, 0.2)',
@@ -120,7 +120,8 @@ export class SmartInsertionManager {
         inserted: [],
         same: [],
     };
-    this.currentEditor = undefined
+    this.currentEditor = undefined;
+    this.leftOver = '';
 }
 
   // Static method to get the singleton instance
@@ -331,11 +332,13 @@ public async enqueueSnippetLineByLine(
         console.log("Insertion Process Completed")
         return;
       }
+
+      updatedText = this.leftOver + updatedText
       // console.log("------------------------------------------------", JSON.stringify(updatedText))
       // count of occurances
       let newLineList = updatedText.split(nextLineCharacter)
       if (newLineList.length > 1) {
-        newLineList.pop()
+        this.leftOver = newLineList.pop() || ""
       }
       // console.log("#######", newLineList)
 
