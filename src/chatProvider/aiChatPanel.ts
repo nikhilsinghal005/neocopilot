@@ -205,7 +205,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             showTextNotification(message.data.message, 1);
             break;
           case 'toggle_webview':
-            console.log("Received 'toggle_webview' message from webview.");
             this.panelManager.togglePanelLocationChange();
             break;
           case 'ready':
@@ -227,6 +226,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               });
               this.messageQueue = [];
             }
+            this.socketModule.getModelDetails()
             break;
           default:
             showTextNotification("Unable to perform provided action", 1);
@@ -241,7 +241,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       this.messageQueue = [];
     }
   }
-
 
   public getCurrentFileName(editor: vscode.TextEditor | undefined, context: vscode.ExtensionContext) {
     if (this.debounceTimeout) {
@@ -346,19 +345,29 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       this.socketModule.socket?.on('recieve_editor_smart_insert', (data: any) => {
         this.applySmartInsertCode(data);
       });
+      // Handle app version updates
+      this.socketModule.socket?.on('basic_app_details', (data: any) => {
+        const chatData = data.chat_model_limits
+        this.chatDetailsUpdate(chatData)
+      });
     } else {
       // console.log("'receive_chat_response' listener already exists.");
     }
   }
   
+  public chatDetailsUpdate(model_details: any) {
+    this.activePanels[0]?.webview.postMessage(
+        {
+          command: 'update_chat_details', 
+          model_details: model_details
+        }
+    );
+  }
+
   private async togglePanelLocation(): Promise<void> {
     this.panelManager.togglePanelLocationChange()
   }
 
-  /**
-   * Sends the authentication status to all active aiChatPanel webviews.
-   * @param isLoggedIn - Boolean indicating if the user is logged in.
-   */
   public sendAuthStatus(isLoggedIn: boolean): void {
     // Save the logged-in status in workspace state
     this._context.workspaceState.update('isLoggedIn', isLoggedIn);
@@ -517,10 +526,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       completeCode: selectedText
      }
 
-//     inputText = 
-// `\`\`\`${documentLanguage} ?file_name=${relativePath}
-// ${inputText}
-// \`\`\``;
+    inputText = 
+`\`\`\`${documentLanguage} ?file_name=${relativePath}
+${inputText}
+\`\`\``;
     if (this.activePanels.length > 0){
       this.activePanels[0].webview.postMessage(
         output

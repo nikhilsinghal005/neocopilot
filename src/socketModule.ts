@@ -225,7 +225,6 @@ export class SocketModule {
         this.isUpdatePopupShown = true;
       }
     });
-
   }
 
   public sendEditorCodeRefactor(
@@ -336,6 +335,16 @@ export class SocketModule {
         });
     }
   }
+
+  public async getModelDetails() {
+    if (this.socket) {
+        this.socket.emit('get_model_details', {
+            userEmail: this.email,
+        });
+    }
+  }
+
+  
 
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string) {
     // console.log("Sending Message for Completion")
