@@ -3,7 +3,6 @@ import { VSCodeButton, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-t
 import { useChatContext } from '../../context/ChatContext';
 import { useVscode } from '../../context/VscodeContext';
 import { CurrentFileContext, EditorOpenFileList } from '../../types/Message';
-import MessageRenderer from './MessageRenderer';
 
 interface InputBarProps {
   input: string;
@@ -328,7 +327,6 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
             }}
           >
             <div className="top-section flex items-center gap-2">
-              <MessageRenderer text={input} /> {/* Using MessageRenderer */}
               <textarea
                 value={input}
                 onChange={(e) => {
