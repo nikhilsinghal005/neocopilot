@@ -120,7 +120,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
   };
 
   return (
-    <div className="prose max-w-full text-sm leading-6 space-y-4">
+    <div className="prose max-w-full text-xs leading-6 space-y-4">
       <ReactMarkdown
         children={text}
         remarkPlugins={[remarkGfm]}

@@ -24,7 +24,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
           <div className="flex items-center mr-1 mt-1">
             <span 
             className="codicon codicon-person text-vscode-editor-foreground"
-            style={{ fontSize: '14px' }}
+            style={{ fontSize: '10px' }}
             ></span>
           </div>
         )}
@@ -44,7 +44,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               : {}
           }
         >
-          <span className={`block text-sm font-semibold mb-2 opacity-75 ${message.messageType === 'user' ? 'text-right' : 'text-left'}`}>
+          <span className={`block text-xs font-semibold mb-2 opacity-75 ${message.messageType === 'user' ? 'text-right' : 'text-left'}`}>
             {message.messageType === 'user' ? 'YOU' : 'NEO'} ·{' '}
             {new Date(message.timestamp).toLocaleTimeString([], {
               hour: '2-digit',
@@ -59,7 +59,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
           <div className="flex items-center ml-1 mt-1">
             <span 
             className="codicon codicon-account text-vscode-editor-foreground mr-1"
-            style={{ fontSize: '14px' }}
+            style={{ fontSize: '10px' }}
             ></span>
           </div>
         )}
