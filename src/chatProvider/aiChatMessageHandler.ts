@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 export class AiChatMessageHandler {
   private socketModule: SocketModule;
   private messageQueue: MessageResponse[] = [];
+  private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
 
   constructor(
     private aiChatPanel: AiChatPanel,
@@ -16,6 +17,25 @@ export class AiChatMessageHandler {
     private context: vscode.ExtensionContext
   ) {
     this.socketModule = SocketModule.getInstance();
+  }
+
+  // Add this function inside your class
+  public initializeWebviewListener(webviewView: vscode.WebviewView) {
+    // Check if this is the first time adding the listener for the current active panel
+    if (!this.webviewListeners.has(this.aiChatPanel.activePanels[0])) {
+      this.webviewListeners.add(webviewView);
+
+      // Handle messages received from the webview
+      webviewView.webview.onDidReceiveMessage(async (message: any) => {
+        switch (message.command) {
+          // Handles sending a chat message
+          case 'send_chat_message':
+            const inputChat: ChatSession = message.data;
+            this.attemptSendChatMessage(inputChat);
+            break;
+        }
+      });
+    }
   }
 
   /**

@@ -15,6 +15,7 @@ export class AiChatSmartInsertHandler {
   private socketModule: SocketModule;
   private smartInsertionManager: SmartInsertionManager = new SmartInsertionManager();;
   private updatedtext: string = "";
+  private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
 
   constructor(
     private aiChatPanel: AiChatPanel,
@@ -47,6 +48,30 @@ export class AiChatSmartInsertHandler {
         });
     }
   }
+
+  // Add this function inside your class
+  public initializeWebviewListener(webviewView: vscode.WebviewView) {
+    // Check if this is the first time adding the listener for the current active panel
+    if (!this.webviewListeners.has(this.aiChatPanel.activePanels[0])) {
+      this.webviewListeners.add(webviewView);
+
+      // Handle messages received from the webview
+      webviewView.webview.onDidReceiveMessage(async (message: any) => {
+        switch (message.command) {
+          // Handles smart code insertion requests
+          case 'smartCodeInsert':
+            this.processSmartInsert(message);
+            break;
+
+          // Handles user actions in smart code insertion
+          case 'smartCodeInsertUserAction':
+            this.handleUserAction(message);
+            break;
+        }
+      });
+    }
+  }
+
 
   public async processSmartInsert(message: any) {
     const editor = vscode.window.activeTextEditor;

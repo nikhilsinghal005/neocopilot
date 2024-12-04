@@ -2,7 +2,6 @@
 import * as vscode from 'vscode';
 import { AuthManager } from '../authManager/authManager';
 import { SocketModule } from '../socketModule';
-import { ChatSession } from './types/messageTypes';
 import { v4 as uuidv4 } from 'uuid';
 import { getNonce } from '../utilities/chatUtilities';
 import { PanelManager } from './panelManager';
@@ -96,14 +95,11 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     // Add a listener for messages from the webview (e.g., user actions like sending messages)
     if (!this.webviewListeners.has(webviewView)) {
       this.webviewListeners.add(webviewView);
+      this.aiChatMessageHandler.initializeWebviewListener(webviewView)
+      this.aiChatSmartInsertHandler.initializeWebviewListener(webviewView)
 
       webviewView.webview.onDidReceiveMessage(async (message: any) => {
         switch (message.command) {
-          // Handles sending a chat message
-          case 'send_chat_message':
-            const inputChat: ChatSession = message.data;
-            this.aiChatMessageHandler.attemptSendChatMessage(inputChat);
-            break;
 
           // Handles login action (opens external URL)
           case 'login':
@@ -138,16 +134,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                 uuidv4()
               );
             }
-            break;
-
-          // Handles smart code insertion requests
-          case 'smartCodeInsert':
-            this.aiChatSmartInsertHandler.processSmartInsert(message);
-            break;
-
-          // Handles user actions in smart code insertion
-          case 'smartCodeInsertUserAction':
-            this.aiChatSmartInsertHandler.handleUserAction(message);
             break;
 
           // Shows a simple notification message in the status bar
