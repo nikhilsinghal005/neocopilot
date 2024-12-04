@@ -1,0 +1,118 @@
+// src/chatProvider/aiChatPanelSocketHandler.ts
+import { AuthManager } from '../authManager/authManager';
+import { SocketModule } from '../socketModule';
+import { v4 as uuidv4 } from 'uuid';
+import { ChatSession, MessageResponse, MessageResponseFromBackEnd, smartInsert } from './types/messageTypes';
+import { AiChatPanel } from './aiChatPanel';
+import * as vscode from 'vscode';
+
+export class AiChatMessageHandler {
+  private socketModule: SocketModule;
+  private messageQueue: MessageResponse[] = [];
+
+  constructor(
+    private aiChatPanel: AiChatPanel,
+    private authManager: AuthManager,
+    private context: vscode.ExtensionContext
+  ) {
+    this.socketModule = SocketModule.getInstance();
+  }
+
+  /**
+   * Initialize the socket connection and attach listeners.
+   */
+  public initializeSockets(): void {
+    this.socketModule = SocketModule.getInstance();
+    this.attachSocketListeners();
+    if (this.messageQueue.length > 0) {
+      this.messageQueue.forEach(data => {
+        this.postMessageToWebview(this.aiChatPanel.activePanels[0], data);
+      });
+      this.messageQueue = [];
+    }
+    // Making sure the socket is connected everytime socket connects.
+    this.socketModule.socket?.on('connect', () => {
+      this.attachSocketListeners();
+    });
+  }
+
+  /**
+   * Attempt to establish a socket connection with retries.
+   * @param inputChat The chat session data to send.
+   * @param retries Number of remaining retries.
+   */
+  public attemptSendChatMessage(inputChat: ChatSession, retries = 3): void {
+    if (this.socketModule.socket?.connected) {
+      this.socketModule.sendChatMessage(inputChat);
+    } else if (retries > 0) {
+      setTimeout(() => {
+        this.attemptSendChatMessage(inputChat, retries - 1);
+      }, 5000);
+    } else {
+      this.forwardMessageToWebviews({
+        chatId: inputChat.chatId,
+        id: uuidv4(),
+        response: "Please check your internet connection or try again.",
+        isComplete: true,
+      });
+    }
+  }
+
+  /**
+   * Attach necessary socket listeners.
+   */
+  private attachSocketListeners(): void {
+    if (this.socketModule.socket?.listeners('receive_chat_response').length === 0) {
+      this.socketModule.socket?.on('receive_chat_response', (data: MessageResponseFromBackEnd) => {
+        this.forwardMessageToWebviews(data);
+      });
+    }
+  }
+
+  private postMessageToWebview(webviewView: vscode.WebviewView, data: MessageResponse): void {
+    try {
+      // // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
+      webviewView.webview.postMessage({
+        command: 'receive_chat_message',
+        data: {
+          chatId: data.chatId,
+          response: data.response,
+          unique_id: data.id,
+          isComplete: data.isComplete
+        }
+      });
+    } catch (error) {
+      console.error("Failed to post queued message to webview");
+    }
+  }
+
+  public forwardMessageToWebviews(data: MessageResponseFromBackEnd): void {
+    if (this.aiChatPanel.activePanels.length > 0) {
+      if (this.messageQueue.length > 0) {
+        this.messageQueue.forEach(q_data => {
+          this.postMessageToWebview(this.aiChatPanel.activePanels[0], q_data);
+        });
+        this.messageQueue = [];
+      }
+
+      this.aiChatPanel.activePanels.forEach(panel => {
+        try {
+          panel.webview.postMessage({
+            command: 'receive_chat_message',
+            data: {
+              chatId: data.chatId,
+              response: data.response,
+              id: data.id,
+              isComplete: data.isComplete
+            }
+          });
+        } catch (error) {
+          console.error("Failed to post message to webview");
+        }
+      });
+    } else {
+      this.messageQueue.push(data);
+    }
+  }
+
+}

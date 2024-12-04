@@ -38,7 +38,7 @@ export function initializeAppFunctions(
   primaryViewProvider.sendAuthStatus(true)
 
   vscode.window.onDidChangeActiveTextEditor(
-    editor => primaryViewProvider.getCurrentFileName(editor, context), null, context.subscriptions
+    editor => primaryViewProvider.aiChatContextHandler.getCurrentFileName(editor, context), null, context.subscriptions
   );
 
   const selectionContext = new SelectionContext();
