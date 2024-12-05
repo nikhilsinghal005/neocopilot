@@ -26,10 +26,10 @@ const TypingIndicator: React.FC = () => {
     <div className="message flex justify-start mb-4">
       <span className="codicon codicon-person text-vscode-editor-foreground mr-1"></span>
       <div
-        className="p-3 rounded-lg max-w-full break-words shadow-md text-vscode-editor-foreground"
-        style={{
-          backgroundColor: 'var(--vscode-editor-background)',
-        }}
+        className="p-2 rounded-lg max-w-full break-words shadow-md text-vscode-editor-foreground"
+        // style={{
+        //   backgroundColor: 'var(--vscode-editor-background)',
+        // }}
       >
         <div className="flex items-center space-x-2">
           <span>{input}</span>
