@@ -21,7 +21,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   public activePanels: vscode.WebviewView[] = [];
   private socketModule: SocketModule;
   private panelManager: PanelManager;
-  private codeInsertionManager: CodeInsertionManager;
+  public codeInsertionManager: CodeInsertionManager;
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
   private aiChatMessageHandler: AiChatMessageHandler;
   private aiChatSmartInsertHandler: AiChatSmartInsertHandler;

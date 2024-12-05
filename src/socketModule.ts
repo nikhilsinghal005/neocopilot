@@ -37,7 +37,7 @@ export class SocketModule {
   public predictionWaitText = "";
   private tempUniqueIdentifier: string = "NA";
   private debounceTimer: NodeJS.Timeout | null = null;
-  private currentVersion = versionConfig.getCurrentVersion();
+  public currentVersion = versionConfig.getCurrentVersion();
   public currentSuggestionId: string = "";
   public rateLimitExceeded: boolean = false;
   private rateLimitTimer: NodeJS.Timeout | null = null;
@@ -46,7 +46,7 @@ export class SocketModule {
   private deleteSpecialCharacters = ['()', '{}', '[]', '""', "''"];
   public startTime: number = performance.now();
   public previousText: string = "";
-  private email: string = "";
+  public email: string = "";
   private pingInterval: NodeJS.Timeout | null = null;
   private userId: string = "";
   private codeInsertionManager: CodeInsertionManager| null = null;
@@ -297,42 +297,6 @@ export class SocketModule {
         appVersion: this.currentVersion,
         userEmail: this.email
       });
-    }
-  }
-
-
-  public async sendChatMessage(chat: ChatSession) {
-    let messageList = chat.messages.slice(-5);
-
-    // Process each message in the list
-    const lastMessage = messageList[messageList.length - 1];
-
-    if (lastMessage && lastMessage.attachedContext?.length > 0) {
-        for (const contextTemp of lastMessage.attachedContext) {
-            try {
-                // Retrieve and update fileText for the current context
-                console.log("context", contextTemp.currentSelectedFileRelativePath)
-                const fileText = await getFileText(contextTemp.currentSelectedFileRelativePath);
-                contextTemp.fileText = fileText || '';
-            } catch (error) {
-                console.error(`Failed to fetch file text for ${contextTemp.currentSelectedFileRelativePath}:`, error);
-                contextTemp.fileText = '';
-            }
-        }
-    }
-    messageList[-1] = lastMessage
-
-    // Emit the updated messageList to the socket
-    this.predictionRequestInProgress = true;
-    if (this.socket) {
-        this.socket.emit('generate_chat_response', {
-            chatId: chat.chatId,
-            timestamp: chat.timestamp,
-            messageList, // Updated with fileText for all messages
-            appVersion: this.currentVersion,
-            userEmail: this.email,
-            uniqueId: uuidv4()
-        });
     }
   }
 

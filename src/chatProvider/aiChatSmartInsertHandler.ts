@@ -10,11 +10,13 @@ import { showErrorNotification } from '../utilities/statusBarNotifications/showE
 import { GetLineSeparator } from '../utilities/editorUtils/getLineSeparator';
 import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
 import { showCustomNotification } from '../utilities/statusBarNotifications/showCustomNotification';
+import { openAndHighlightFile } from '../utilities/editorUtils/openAndHighlightFile';
+import { createFile } from '../utilities/editorUtils/createFile';
 
 export class AiChatSmartInsertHandler {
   private socketModule: SocketModule;
-  private smartInsertionManager: SmartInsertionManager = new SmartInsertionManager();;
-  private updatedtext: string = "";
+  private smartInsertionManager: SmartInsertionManager = new SmartInsertionManager();
+  private updatedText: string = "";
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
 
   constructor(
@@ -31,8 +33,8 @@ export class AiChatSmartInsertHandler {
   public initializeSockets(): void {
     this.socketModule = SocketModule.getInstance();
     this.attachSocketListeners();
-    
-    // Making sure the socket is connected everytime socket connects.
+
+    // Reattach listeners on every socket reconnection
     this.socketModule.socket?.on('connect', () => {
       this.attachSocketListeners();
     });
@@ -42,136 +44,248 @@ export class AiChatSmartInsertHandler {
    * Attach necessary socket listeners.
    */
   private attachSocketListeners(): void {
-    if (!this.socketModule.socket?.listeners('recieve_editor_smart_insert').length) {
-        this.socketModule.socket?.on('recieve_editor_smart_insert', (data: any) => {
-          this.applySmartInsertCode(data);
-        });
-    }
-  }
-
-  // Add this function inside your class
-  public initializeWebviewListener(webviewView: vscode.WebviewView) {
-    // Check if this is the first time adding the listener for the current active panel
-    if (!this.webviewListeners.has(this.aiChatPanel.activePanels[0])) {
-      this.webviewListeners.add(webviewView);
-
-      // Handle messages received from the webview
-      webviewView.webview.onDidReceiveMessage(async (message: any) => {
-        switch (message.command) {
-          // Handles smart code insertion requests
-          case 'smartCodeInsert':
-            this.processSmartInsert(message);
-            break;
-
-          // Handles user actions in smart code insertion
-          case 'smartCodeInsertUserAction':
-            this.handleUserAction(message);
-            break;
-        }
+    const event = 'recieve_editor_smart_insert';
+    if (!this.socketModule.socket?.listeners(event).length) {
+      this.socketModule.socket?.on(event, (data: any) => {
+        this.applySmartInsertCode(data);
       });
     }
   }
 
+  /**
+   * Initialize webview listener for a given webview view.
+   * @param webviewView The webview view to initialize.
+   */
+  public initializeWebviewListener(webviewView: vscode.WebviewView): void {
+    const activePanel = this.aiChatPanel.activePanels[0];
+    if (!activePanel || this.webviewListeners.has(activePanel)) return;
 
-  public async processSmartInsert(message: any) {
-    const editor = vscode.window.activeTextEditor;
+    this.webviewListeners.add(webviewView);
 
-    if (this.smartInsertionManager.currentEditor) {
-      showErrorNotification('Please Complete the previous code insertion.', 0.7);
-      if (this.aiChatPanel.activePanels.length > 0) {
-        this.aiChatPanel.activePanels[0].webview.postMessage({
+    webviewView.webview.onDidReceiveMessage(async (message: any) => {
+      switch (message.command) {
+        case 'smartCodeInsert':
+          await this.insertProcessVerification(message);
+          break;
+        case 'createNewFile':
+          await this.handleCreateNewFile(message);
+          break;
+        case 'addToFileCurrentlyOpen':
+          await this.processSmartInsert(message);
+          break;
+        case 'smartCodeInsertUserAction':
+          this.handleUserAction(message);
+          break;
+        default:
+          console.warn(`Unhandled message command: ${message.command}`);
+      }
+    });
+  }
+
+  /**
+   * Helper method to send messages to the active webview.
+   * @param payload The message payload.
+   */
+  private sendMessageToWebview(payload: any): void {
+    const activePanel = this.aiChatPanel.activePanels[0];
+    if (activePanel) {
+      activePanel.webview.postMessage(payload);
+    }
+  }
+
+  /**
+   * Handle the 'createNewFile' command.
+   * @param message The message data.
+   */
+  private async handleCreateNewFile(message: any): Promise<void> {
+    const { relativePath, code, codeId } = message.data;
+    try {
+      const isFileCreated = await createFile(relativePath);
+      if (isFileCreated) {
+        const isOpenFile = await openAndHighlightFile(relativePath);
+        if (isOpenFile) {
+          this.aiChatPanel.codeInsertionManager.insertTextUsingSnippetAtCursorWithoutDecoration(
+            `${code}${GetLineSeparator() || ''}`,
+            uuidv4()
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error in handleCreateNewFile:", error);
+      showErrorNotification('An error occurred while creating a new file.', 0.7);
+    }
+  }
+
+  /**
+   * Verify and process the smart insert request.
+   * @param message The message data.
+   */
+  public async insertProcessVerification(message: any): Promise<void> {
+    try {
+      if (this.smartInsertionManager.currentEditor) {
+        showErrorNotification('Please complete the previous code insertion.', 0.7);
+        this.sendMessageToWebview({
           command: 'smart_insert_to_editor_update',
           isComplete: false,
           uniqueId: uuidv4(),
           codeId: message.data.codeId,
           status: "completed_successfully"
         });
+        return;
       }
-      return;
-    }
 
-    this.smartInsertionManager.reinitialize();
-    this.smartInsertionManager.currentEditor = editor;
+      const editor = vscode.window.activeTextEditor;
+      const currentFile = vscode.workspace.asRelativePath(editor?.document.fileName || '');
+      const smartFilePath: string = message.data.relativePath;
 
-    if (!editor) {
-      showErrorNotification('No active editor found.', 0.7);
-      if (this.aiChatPanel.activePanels.length > 0) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        this.aiChatPanel.activePanels[0].webview.postMessage({
-          command: 'smart_insert_to_editor_update',
-          isComplete: false,
+      if (currentFile === smartFilePath) {
+        this.processSmartInsert(message);
+        return;
+      }
+
+      const isOpenFile = await openAndHighlightFile(smartFilePath);
+
+      if (!isOpenFile && !vscode.window.activeTextEditor) {
+        showErrorNotification('File does not exist.', 0.7);
+        this.sendMessageToWebview({
+          command: 'file_does_not_exist',
+          isAnyFileOpen: false,
           uniqueId: uuidv4(),
           codeId: message.data.codeId,
-          status: "completed_successfully"
         });
+        return;
       }
-      return;
-    }
 
-    const editorCode = editor.document.getText().trim();
-    const updatedCode = message.data.code;
+      if (!isOpenFile && vscode.window.activeTextEditor) {
+        showErrorNotification('File does not exist.', 0.7);
+        this.sendMessageToWebview({
+          command: 'file_does_not_exist',
+          isAnyFileOpen: true,
+          uniqueId: uuidv4(),
+          codeId: message.data.codeId,
+        });
+        return;
+      }
 
-    const output: smartInsert = {
-      uniqueId: uuidv4(),
-      uniqueChatId: uuidv4(),
-      editorCode: editorCode,
-      updatedCode: updatedCode,
-      actionType: "smart_update"
-    };
-
-    this.smartInsertionManager.oldLinesList = editorCode ? editorCode.split(GetLineSeparator()) : [];
-    this.smartInsertionManager.currentCodeBlockId = message.data.codeId;
-    this.smartInsertionManager.oldStartLine = 0;
-    this.smartInsertionManager.oldEndLine = 2000;
-    this.smartInsertionManager.uniqueId = output.uniqueId;
-
-    if (editorCode.length === 0) {
-      this.smartInsertionManager.oldLinesList = [];
-      this.applyDirectSmartInsertCode(output);
-    } else {
-      this.sendSmartinsertCode(output);
+      this.processSmartInsert(message);
+    } catch (error) {
+      console.error("Error in insertProcessVerification:", error);
+      this.sendMessageToWebview({
+        command: 'smart_insert_to_editor_update',
+        isComplete: false,
+        uniqueId: uuidv4(),
+        codeId: message.data.codeId,
+        status: "completed_successfully"
+      });
+      showErrorNotification('An error occurred during code insertion.', 0.7);
     }
   }
 
-  public async applyDirectSmartInsertCode(data: any): Promise<void> {
-    console.log("Applying direct smart insert code")
-    const updated_code = data.updatedCode.replace(/\r\n|\r/g, '\n').replace(/\n/g, GetLineSeparator());
-    const updated_code_split = updated_code.split(GetLineSeparator());
+  /**
+   * Process the smart insert by sending it to the backend or applying directly.
+   * @param message The message data.
+   */
+  public async processSmartInsert(message: any): Promise<void> {
+    try {
 
-    for (let i = 0; i < updated_code_split.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 10));
-      const line = updated_code_split[i];
-      this.smartInsertionManager.enqueueSnippetLineByLine(
-        line,
-        data.uniqueId,
-        GetLineSeparator(),
-        false
-      );
-    }
+      const editor = vscode.window.activeTextEditor;
+      this.smartInsertionManager.reinitialize();
+      this.smartInsertionManager.currentEditor = editor;
 
-    // add a sleep time
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    this.smartInsertionManager.enqueueSnippetLineByLine(
-      "",
-      data.uniqueId,
-      GetLineSeparator(),
-      true
-    );
+      if (!editor) {
+        showErrorNotification('No active editor found.', 0.7);
+        if (this.aiChatPanel.activePanels.length > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          this.sendMessageToWebview({
+            command: 'smart_insert_to_editor_update',
+            isComplete: false,
+            uniqueId: uuidv4(),
+            codeId: message.data.codeId,
+            status: "completed_successfully"
+          });
+        }
+        return;
+      }
 
-    if (this.aiChatPanel.activePanels.length > 0){
-      this.aiChatPanel.activePanels[0].webview.postMessage(
-          {
-          command: 'smart_insert_to_editor_update', 
-          isComplete:  true,
-          uniqueId: data.uniqueId,
-          codeId: this.smartInsertionManager.currentCodeBlockId,
-          status: "completed_successfully" 
-          }
-      );
+      const editorCode = editor.document.getText().trim();
+      const updatedCode = message.data.code;
+
+      const output: smartInsert = {
+        uniqueId: uuidv4(),
+        uniqueChatId: uuidv4(),
+        editorCode: editorCode,
+        updatedCode: updatedCode,
+        actionType: "smart_update"
+      };
+
+      this.smartInsertionManager.oldLinesList = editorCode ? editorCode.split(GetLineSeparator()) : [];
+      this.smartInsertionManager.currentCodeBlockId = message.data.codeId;
+      this.smartInsertionManager.oldStartLine = 0;
+      this.smartInsertionManager.oldEndLine = 2000;
+      this.smartInsertionManager.uniqueId = output.uniqueId;
+
+      if (editorCode.replace(/\s+/g, '').trim().length === 0 || editorCode.replace(/\s+/g, '').trim() === updatedCode.replace(/\s+/g, '').trim()) {
+        this.applyDirectSmartInsertCode(output);
+      } else {
+        this.sendSmartInsertCode(output);
+      }    
+    } catch (error) {
+      console.error("Error in insertProcessVerification:", error);
+      this.sendMessageToWebview({
+        command: 'smart_insert_to_editor_update',
+        isComplete: false,
+        uniqueId: uuidv4(),
+        codeId: message.data.codeId,
+        status: "completed_successfully"
+      });
+      showErrorNotification('An error occurred during code insertion.', 0.7);
     }
   }
 
-  private sendSmartinsertCode(inputMessages: smartInsert, retries = 3) {
+  /**
+   * Apply smart insert code directly to the editor.
+   * @param data The smart insert data.
+   */
+  public async applyDirectSmartInsertCode(data: smartInsert): Promise<void> {
+    try {
+      const updatedCodeFormatted = data.updatedCode.replace(/\r\n|\r/g, '\n').replace(/\n/g, GetLineSeparator());
+      const updatedCodeLines = updatedCodeFormatted.split(GetLineSeparator());
+
+      for (const line of updatedCodeLines) {
+        await new Promise(resolve => setTimeout(resolve, 10));
+        this.smartInsertionManager.enqueueSnippetLineByLine(line, data.uniqueId, GetLineSeparator(), false);
+      }
+
+      // Finalize insertion
+      await new Promise(resolve => setTimeout(resolve, 100));
+      this.smartInsertionManager.enqueueSnippetLineByLine("", data.uniqueId, GetLineSeparator(), true);
+
+      this.sendMessageToWebview({
+        command: 'smart_insert_to_editor_update',
+        isComplete: true,
+        uniqueId: data.uniqueId,
+        codeId: this.smartInsertionManager.currentCodeBlockId,
+        status: "completed_successfully"
+      });
+    } catch (error) {
+      console.error("Error in insertProcessVerification:", error);
+      this.sendMessageToWebview({
+        command: 'smart_insert_to_editor_update',
+        isComplete: false,
+        uniqueId: data.uniqueId,
+        codeId: this.smartInsertionManager.currentCodeBlockId,
+        status: "completed_successfully"
+      });
+      showErrorNotification('An error occurred during code insertion.', 0.7);
+    }
+  }
+
+  /**
+   * Send smart insert code via socket with retry logic.
+   * @param inputMessages The smart insert messages.
+   * @param retries Number of retry attempts.
+   */
+  private sendSmartInsertCode(inputMessages: smartInsert, retries = 3): void {
     if (this.socketModule.socket?.connected) {
       this.attachSocketListeners();
       this.socketModule.sendEditorSmartInsert(
@@ -182,81 +296,93 @@ export class AiChatSmartInsertHandler {
         inputMessages.actionType
       );
     } else if (retries > 0) {
-      // console.log(`Attempting to reconnect... (${4 - retries}/3)`);
-      
       setTimeout(() => {
-        this.sendSmartinsertCode(inputMessages, retries - 1);
+        this.sendSmartInsertCode(inputMessages, retries - 1);
       }, 5000);
     } else {
-      // console.log("Failed to reconnect.");
-      showTextNotification("Please check your internet connection. or try again", 5)
+      showTextNotification("Please check your internet connection or try again", 5);
     }
   }
 
-
+  /**
+   * Apply smart insert code received from the backend.
+   * @param data The data from the backend.
+   */
   public async applySmartInsertCode(data: any): Promise<void> {
-    this.updatedtext = this.updatedtext + data.response;
+    try {
+      this.updatedText += data.response;
 
-    if (data.isLineComplete && !data.isError && !data.isRateLimit) {
-      this.smartInsertionManager.enqueueSnippetLineByLine(
-        this.updatedtext.replace(/\r\n|\r/g, '\n').replace(/\n/g, GetLineSeparator()),
-        data.id,
-        GetLineSeparator(),
-        false
-      );
-      this.updatedtext = "";
-    }
-
-    if (data.isComplete) {
-      if (data.isError) {
-        this.aiChatPanel.activePanels[0]?.webview.postMessage({
-            command: 'smart_insert_to_editor_update', 
-            isComplete:  false,
-            uniqueId: data.id,
-            codeId: this.smartInsertionManager.currentCodeBlockId,
-            status: "completed_successfully" 
-          });
-          this.updatedtext = "";
-          showTextNotification(data.response, 1);
-        }
-      else if (data.isRateLimit) {
-        this.aiChatPanel.activePanels[0]?.webview.postMessage({
-          command: 'smart_insert_to_editor_update', 
-          isComplete:  false,
-          uniqueId: data.id,
-          codeId: this.smartInsertionManager.currentCodeBlockId,
-          status: "completed_successfully" 
-        });
-        showCustomNotification(data.response)
-        this.updatedtext = "";
-      } else {
-        // add a sleep time
-        await new Promise(resolve => setTimeout(resolve, 1000));
+      if (data.isLineComplete && !data.isError && !data.isRateLimit) {
         this.smartInsertionManager.enqueueSnippetLineByLine(
-          "",
+          this.updatedText.replace(/\r\n|\r/g, '\n').replace(/\n/g, GetLineSeparator()),
           data.id,
           GetLineSeparator(),
-          true
+          false
         );
-
-        this.updatedtext = "";
-        this.aiChatPanel.activePanels[0]?.webview.postMessage({
-          command: 'smart_insert_to_editor_update', 
-          isComplete:  true,
-          uniqueId: data.id,
-          codeId: this.smartInsertionManager.currentCodeBlockId,
-          status: "completed_successfully" 
-        });
+        this.updatedText = "";
       }
+
+      if (data.isComplete) {
+        if (data.isError) {
+          this.sendMessageToWebview({
+            command: 'smart_insert_to_editor_update',
+            isComplete: false,
+            uniqueId: data.id,
+            codeId: this.smartInsertionManager.currentCodeBlockId,
+            status: "completed_successfully"
+          });
+          this.updatedText = "";
+          showTextNotification(data.response, 1);
+        } else if (data.isRateLimit) {
+          this.sendMessageToWebview({
+            command: 'smart_insert_to_editor_update',
+            isComplete: false,
+            uniqueId: data.id,
+            codeId: this.smartInsertionManager.currentCodeBlockId,
+            status: "completed_successfully"
+          });
+          showCustomNotification(data.response);
+          this.updatedText = "";
+        } else {
+          // Finalize insertion
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          this.smartInsertionManager.enqueueSnippetLineByLine("", data.id, GetLineSeparator(), true);
+
+          this.updatedText = "";
+          this.sendMessageToWebview({
+            command: 'smart_insert_to_editor_update',
+            isComplete: true,
+            uniqueId: data.id,
+            codeId: this.smartInsertionManager.currentCodeBlockId,
+            status: "completed_successfully"
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error in insertProcessVerification:", error);
+      this.sendMessageToWebview({
+        command: 'smart_insert_to_editor_update',
+        isComplete: false,
+        uniqueId: data.uniqueId,
+        codeId: this.smartInsertionManager.currentCodeBlockId,
+        status: "completed_successfully"
+      });
+      showErrorNotification('An error occurred during code insertion.', 0.7);
     }
   }
 
-  public async handleUserAction(message: any) {
-    if (message.data.action == "accepted") {
-        this.smartInsertionManager.acceptInsertion();
-    } else if (message.data.action == "rejected") {
-        this.smartInsertionManager.rejectInsertion();
+  /**
+   * Handle user actions related to smart code insertion.
+   * @param message The message data.
+   */
+  public handleUserAction(message: any): void {
+    const action = message.data.action;
+    if (action === "accepted") {
+      this.smartInsertionManager.acceptInsertion();
+    } else if (action === "rejected") {
+      this.smartInsertionManager.rejectInsertion();
+    } else {
+      console.warn(`Unhandled user action: ${action}`);
     }
   }
-
 }

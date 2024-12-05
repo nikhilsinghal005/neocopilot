@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ChatSession, MessageResponse, MessageResponseFromBackEnd, smartInsert } from './types/messageTypes';
 import { AiChatPanel } from './aiChatPanel';
 import * as vscode from 'vscode';
+import { getFileText } from '../utilities/editorUtils/getFileText';
 
 export class AiChatMessageHandler {
   private socketModule: SocketModule;
@@ -31,6 +32,7 @@ export class AiChatMessageHandler {
           // Handles sending a chat message
           case 'send_chat_message':
             const inputChat: ChatSession = message.data;
+            console.log("----------------", inputChat)
             this.attemptSendChatMessage(inputChat);
             break;
         }
@@ -63,7 +65,7 @@ export class AiChatMessageHandler {
    */
   public attemptSendChatMessage(inputChat: ChatSession, retries = 3): void {
     if (this.socketModule.socket?.connected) {
-      this.socketModule.sendChatMessage(inputChat);
+      this.sendChatMessage(inputChat);
     } else if (retries > 0) {
       setTimeout(() => {
         this.attemptSendChatMessage(inputChat, retries - 1);
@@ -155,4 +157,39 @@ export class AiChatMessageHandler {
     }
   }
 
+  public async sendChatMessage(chat: ChatSession) {
+
+    let messageList = chat.messages.slice(-5);
+
+    // Process each message in the list
+    const lastMessage = messageList[messageList.length - 1]; 
+
+    if (lastMessage && lastMessage.attachedContext?.length > 0) {
+        for (const contextTemp of lastMessage.attachedContext) {
+            try {
+                // Retrieve and update fileText for the current context
+                console.log("context", contextTemp.filePath)
+                const fileText = await getFileText(contextTemp.filePath );
+                contextTemp.fileText = fileText || '';
+            } catch (error) {
+                console.error(`Failed to fetch file text for ${contextTemp.filePath}:`, error);
+                contextTemp.fileText = '';
+            }
+        }
+    }
+    messageList[-1] = lastMessage
+
+    // Emit the updated messageList to the socket
+    this.socketModule.predictionRequestInProgress = true;
+    if (this.socketModule.socket) {
+      this.socketModule.socket.emit('generate_chat_response', {
+            chatId: chat.chatId,
+            timestamp: chat.timestamp,
+            messageList, // Updated with fileText for all messages
+            appVersion: this.socketModule.currentVersion,
+            userEmail: this.socketModule.email,
+            uniqueId: uuidv4()
+        });
+    }
+  }
 }
