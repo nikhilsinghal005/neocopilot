@@ -3,6 +3,7 @@ import { VSCodeButton, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-t
 import { useChatContext } from '../../context/ChatContext';
 import { useVscode } from '../../context/VscodeContext';
 import { CurrentFileContext, EditorOpenFileList } from '../../types/Message';
+import MessageRenderer from './MessageRenderer';
 
 interface InputBarProps {
   input: string;
@@ -37,40 +38,48 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
     const handleIncomingMessage = (event: MessageEvent) => {
 
       if (event.data.command === 'editor_changed_context_update_event') {
-        console.log('Received chat message from VS Code changed Editor:', event.data);
 
         if (event.data.action === 'user_opened_in_editor') {
 
-          // check if file already exists in the context
-          const exists = attachedContext.some(context => 
-            context.currentSelectedFileName === event.data.currentSelectedFileName &&
-            context.currentSelectedFileRelativePath === event.data.currentSelectedFileRelativePath
+          // List of context manually added by user
+          const updatedContext = attachedContext.filter(context => context.isManuallyAddedByUser);
+
+          // Check if the file is already exisits 
+          const isFileAlreadyAttached = attachedContext.some(context => 
+            context.fileName === event.data.currentSelectedFileName &&
+            context.filePath === event.data.currentSelectedFileRelativePath
           );
 
-          if (exists) {
+          if (isFileAlreadyAttached) {
             // Update the isCurrentlyOpen value to true for the current file and false for others
             setAttachedContext(attachedContext.map(context => 
-              context.currentSelectedFileName === event.data.currentSelectedFileName &&
-              context.currentSelectedFileRelativePath === event.data.currentSelectedFileRelativePath
-                ? { ...context, isCurrentlyOpen: true }
-                : { ...context, isCurrentlyOpen: false }
+              context.fileName === event.data.currentSelectedFileName &&
+              context.filePath === event.data.currentSelectedFileRelativePath
+                ? { ...context, isSelected: true }
+                : { ...context, isSelected: false }
             ));
           } else {
             const newContext: CurrentFileContext = {
-              currentSelectedFileName: event.data.currentSelectedFileName,
-              currentSelectedFileRelativePath: event.data.currentSelectedFileRelativePath,
-              slectionType: event.data.action,
-              isCurrentlyOpen: true,
-              isUserSelected: false
+              fileName: event.data.currentSelectedFileName,
+              filePath: event.data.currentSelectedFileRelativePath,
+              languageId: event.data.languageId,
+              isActive: true,
+              isOpened: true,
+              isSelected: true,
+              isManuallyAddedByUser: false,
+              isAttachedInContextList: true
             };
-
-            const updatedContext = attachedContext.filter(context => context.isUserSelected).map(context => ({ ...context, isCurrentlyOpen: false }));
             setAttachedContext([newContext , ...updatedContext]);
           }
-        }  else {
-          const updatedContext = attachedContext
-            .filter(context => context.slectionType === 'user_opened_in_editor')
-            .map(context => ({ ...context, isCurrentlyOpen: false }));
+
+        } else if (event.data.action === 'user_opened_unsupported_file_in_editor') {
+
+          // set isSelected value false for all the context
+          const updatedContext = attachedContext.filter(context => context.isManuallyAddedByUser);
+          setAttachedContext(updatedContext.map(context => ({ ...context, isSelected: false })));
+        }
+        else if (event.data.action === 'remove_all_selected') {
+          const updatedContext: CurrentFileContext[] = []
           setAttachedContext(updatedContext);
         }
       }
@@ -83,12 +92,13 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
     };
   }, [attachedContext, setAttachedContext]);
 
+
   useEffect(() => {
     const handleIncomingMessage = (event: MessageEvent) => {
       if (event.data.command === 'editor_open_files_list_update_event') {
         console.log('List of Files Received:', event.data);
         const updatedOpenFilesList = event.data.openFiles.filter((file: EditorOpenFileList) => 
-          !attachedContext.some(context => context.currentSelectedFileRelativePath === file.filePath)
+          !attachedContext.some(context => context.filePath === file.filePath)
         );
         setOpenEditorFilesList(updatedOpenFilesList);
       }
@@ -148,38 +158,47 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
   };
 
   const handleRemoveTag = (filePath: string) => {
-    const updatedAttachedContext = attachedContext.filter(context => context.currentSelectedFileRelativePath !== filePath);
-    setAttachedContext(updatedAttachedContext);
 
-    const removedFile = attachedContext.find(context => context.currentSelectedFileRelativePath === filePath);
+    const removedFile = attachedContext.find(context => context.filePath === filePath);
     if (removedFile) {
       setOpenEditorFilesList([...openEditorFilesList, {
-        fileName: removedFile.currentSelectedFileName,
-        filePath: removedFile.currentSelectedFileRelativePath,
-        languageId: ''
+        fileName: removedFile.fileName,
+        filePath: removedFile.filePath,
+        languageId: removedFile.languageId,
+        isActive: removedFile.isActive,
+        isOpened: removedFile.isOpened,
+        isSelected: removedFile.isSelected
       }]);
     }
+    const updatedAttachedContext = attachedContext.filter(context => context.filePath !== filePath);
+    setAttachedContext(updatedAttachedContext);
   };
 
   const handleListItemClick = (item: EditorOpenFileList) => {
     setSelectedItem(item.fileName);
     setShowList(false);
 
-    if (attachedContext.length < 3) {
+    if (attachedContext.length <= 3) {
       const updatedOpenFilesList = openEditorFilesList.filter(file => file.filePath !== item.filePath);
       setOpenEditorFilesList(updatedOpenFilesList);
 
       const newContext: CurrentFileContext = {
-        currentSelectedFileName: item.fileName,
-        currentSelectedFileRelativePath: item.filePath,
-        slectionType: 'user_selection',
-        isCurrentlyOpen: false,
-        isUserSelected: true
+        fileName: item.fileName,
+        filePath: item.filePath,
+        languageId: item.languageId,
+        isActive: item.isActive,
+        isOpened: item.isOpened,
+        isSelected: item.isSelected,
+        isAttachedInContextList: true,
+        isManuallyAddedByUser: true
       };
 
       setAttachedContext([...attachedContext, newContext]);
     } else {
-      showUserNotification("Context Information", "You can only attach up to 3 files at a time.")
+      showUserNotification(
+        "Context Information", 
+        "You can only attach up to 3 files at a time."
+      )
     }
   };
 
@@ -268,7 +287,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
             )}
             {attachedContext.length > 0 ? (
               attachedContext.map((context, index) => (
-                context.currentSelectedFileName && context.currentSelectedFileRelativePath ? (
+                context.fileName && context.filePath ? (
                   <span
                     key={index}
                     className="rounded-sm px-1 flex items-center h-5 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
@@ -279,7 +298,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                       position: 'relative'
                     }}
                   >
-                    {context.isCurrentlyOpen && (
+                    {context.isSelected && (
                       <span
                         style={{
                           width: '8px',
@@ -291,12 +310,16 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                         }}
                       ></span>
                     )}
-                    {context.currentSelectedFileName}
+                    {context.isManuallyAddedByUser && (
+                      <span className="codicon codicon-bookmark" style={{ marginRight: '4px', fontSize: '12px' }}></span>
+                    )}
+
+                    {context.fileName}
                     <VSCodeButton
                       appearance="icon"
                       aria-label="Remove Context"
                       className="mr-1 p-0 rounded-none h-3 w-3"
-                      onClick={() => handleRemoveTag(context.currentSelectedFileRelativePath)}
+                      onClick={() => handleRemoveTag(context.filePath)}
                     >
                       <span className="codicon codicon-close text-xxs"></span>
                     </VSCodeButton>

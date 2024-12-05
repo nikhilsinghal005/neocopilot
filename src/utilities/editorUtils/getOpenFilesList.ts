@@ -1,24 +1,30 @@
-import * as vscode from 'vscode'; // Ensure vscode is imported
-import * as path from 'path'; // Ensure path is imported
+import * as vscode from 'vscode';
+import * as path from 'path';
 
-export function getOpenFilesList(): Array<{ 
+export function getOpenFilesList(): Array<{
     fileName: string;
-    filePath: string; // This will now be relative
+    filePath: string;
     languageId: string | null;
+    isActive: boolean;
+    isOpened: boolean;
+    isSelected: boolean;
 }> {
     const openFiles = vscode.window.tabGroups.all
         .flatMap(group => group.tabs)
-        .filter(tab => tab.input && tab.input instanceof vscode.TabInputText) // Ensure it's a file tab
+        .filter(tab => tab.input instanceof vscode.TabInputText)
         .map(tab => {
-            const document = (tab.input as vscode.TabInputText).uri;
-            const textDocument = vscode.workspace.textDocuments.find(doc => doc.uri.toString() === document.toString());
+            const documentUri = (tab.input as vscode.TabInputText).uri;
+            const textDocument = vscode.workspace.textDocuments.find(doc => doc.uri.toString() === documentUri.toString());
 
             return {
-                fileName: path.basename(document.fsPath),
-                filePath: vscode.workspace.asRelativePath(document.fsPath),
-                languageId: textDocument ? textDocument.languageId : null // Retrieve languageId if available
+                fileName: path.basename(documentUri.fsPath),
+                filePath: vscode.workspace.asRelativePath(documentUri.fsPath),
+                languageId: textDocument ? textDocument.languageId : null,
+                isActive: tab.isActive,
+                isOpened: true,
+                isSelected: false
             };
         });
 
     return openFiles;
-  }
+}

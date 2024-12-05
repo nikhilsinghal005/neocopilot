@@ -6,11 +6,14 @@
   };
 
   export type CurrentFileContext = {
-    currentSelectedFileName: string;
-    currentSelectedFileRelativePath: string;
-    slectionType: string;
-    isCurrentlyOpen: boolean;
-    isUserSelected: boolean;
+    fileName: string;
+    filePath: string;
+    languageId: string;
+    isActive: boolean;
+    isOpened: boolean;
+    isSelected: boolean;
+    isAttachedInContextList: boolean;
+    isManuallyAddedByUser: boolean;
   };
 
   // For input messages (e.g., when receiving or sending new messages)
@@ -27,6 +30,9 @@
     fileName: string;
     filePath: string;
     languageId: string;
+    isActive: boolean;
+    isOpened: boolean;
+    isSelected: boolean;
   };
 
   export type MessageOutput = {
