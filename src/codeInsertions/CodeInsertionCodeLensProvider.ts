@@ -1,5 +1,3 @@
-// src/codeInsertion/CodeInsertionCodeLensProvider.ts
-
 import * as vscode from 'vscode';
 import { CodeInsertionManager } from './CodeInsertionManager';
 
@@ -30,14 +28,14 @@ export class CodeInsertionCodeLensProvider implements vscode.CodeLensProvider {
     insertions.forEach((insertion) => {
       // Create "Accept" CodeLens with emoji
       const acceptCodeLens = new vscode.CodeLens(insertion.codeLensRange, {
-        title: '✅ <<<<<<<< ACCEPT >>>>>>>>>',
+        title: '✅ <<<<<<<<<<<<<<<< ACCEPT >>>>>>>>>>>>>>>>>>',
         command: 'codeInsertion.accept',
         arguments: [insertion.id],
       });
 
       // Create "Reject" CodeLens with emoji
       const rejectCodeLens = new vscode.CodeLens(insertion.codeLensRange, {
-        title: '❌ <<<<<<<< REJECT >>>>>>>>>',
+        title: '❌ <<<<<<<<<<<<<<<< REJECT >>>>>>>>>>>>>>>>>>',
         command: 'codeInsertion.reject',
         arguments: [insertion.id],
       });
@@ -52,7 +50,9 @@ export class CodeInsertionCodeLensProvider implements vscode.CodeLensProvider {
    * Triggers a refresh of CodeLenses for a specific editor.
    */
   public refresh(editor?: vscode.TextEditor): void {
-    this.currentEditor = editor;
+    if (editor) {
+      this.currentEditor = editor; // Ensure currentEditor is set
+    }
     this._onDidChangeCodeLenses.fire();
   }
 }

@@ -5,20 +5,15 @@
     messages: MessageStore[];
   };
 
-  // // For input messages (e.g., when receiving or sending new messages)
-  // export type MessageInput = {
-  //   chatId: string;
-  //   id: string;
-  //   timestamp: string;
-  //   messageType: 'user' | 'system';
-  //   response: string;
-  //   isComplete?: boolean; // Indicates if the message is fully received
-  // };
-
   export type CurrentFileContext = {
-    currentSelectedFileName: string;
-    currentSelectedFileRelativePath: string;
-    slectionType: string;
+    fileName: string;
+    filePath: string;
+    languageId: string;
+    isActive: boolean;
+    isOpened: boolean;
+    isSelected: boolean;
+    isAttachedInContextList: boolean;
+    isManuallyAddedByUser: boolean;
   };
 
   // For input messages (e.g., when receiving or sending new messages)
@@ -35,6 +30,9 @@
     fileName: string;
     filePath: string;
     languageId: string;
+    isActive: boolean;
+    isOpened: boolean;
+    isSelected: boolean;
   };
 
   export type MessageOutput = {
@@ -45,6 +43,10 @@
     isComplete?: boolean; // Indicates if the message is fully received
     modelSelected: string; // Indicates the model used to generate the response
     attachedContext: CurrentFileContext[];  // List of file paths attached to the message
+    useInternet: boolean;
+    isProblemsSelected: boolean;
+    isTerminalSelected: boolean;
+    imagePaths: []
   };
 
   // How a message is stored with additional details like files and images
@@ -58,6 +60,9 @@
     isComplete?: boolean; // Indicates if the message is fully received
     modelSelected?: string; // Indicates the model used to generate the response
     attachedContext?: object[];  // List of file paths attached to the message
+    useInternet?: boolean;
+    isProblemsSelected?: boolean;
+    isTerminalSelected?: boolean;
   };
 
   // Represents a full chat session with a name and list of messages

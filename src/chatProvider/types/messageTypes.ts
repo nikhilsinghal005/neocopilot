@@ -37,12 +37,17 @@ export type MessageInput = {
   modelSelected: string;
 };
 
-export type CurrentFileContext = {
-  currentSelectedFileName: string;
-  currentSelectedFileRelativePath: string;
-  slectionType: string;
-  fileText?: string;
-};
+  export type CurrentFileContext = {
+    fileName: string;
+    filePath: string;
+    languageId: string;
+    isActive: boolean;
+    isOpened: boolean;
+    isSelected: boolean;
+    isAttachedInContextList: boolean;
+    isManuallyAddedByUser: boolean;
+    fileText?: string;
+  };
 
 export type ChatSession = {
   chatId: string;
@@ -50,3 +55,11 @@ export type ChatSession = {
   chatName: string;
   messages: MessageInput[];
 };
+
+export interface smartInsert {
+  uniqueId: string, 
+  uniqueChatId: string, 
+  editorCode: string, 
+  updatedCode: string,
+  actionType: string
+}

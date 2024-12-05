@@ -16,6 +16,7 @@ import { AuthManager } from './authManager/authManager';
 import { CodeInsertionManager } from './codeInsertions/CodeInsertionManager';
 import { ChatSession, MessageInput} from './chatProvider/types/messageTypes';
 import * as path from 'path';
+import { getFileText } from './utilities/editorUtils/getFileText';
 
 interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {}
 
@@ -36,7 +37,7 @@ export class SocketModule {
   public predictionWaitText = "";
   private tempUniqueIdentifier: string = "NA";
   private debounceTimer: NodeJS.Timeout | null = null;
-  private currentVersion = versionConfig.getCurrentVersion();
+  public currentVersion = versionConfig.getCurrentVersion();
   public currentSuggestionId: string = "";
   public rateLimitExceeded: boolean = false;
   private rateLimitTimer: NodeJS.Timeout | null = null;
@@ -45,7 +46,7 @@ export class SocketModule {
   private deleteSpecialCharacters = ['()', '{}', '[]', '""', "''"];
   public startTime: number = performance.now();
   public previousText: string = "";
-  private email: string = "";
+  public email: string = "";
   private pingInterval: NodeJS.Timeout | null = null;
   private userId: string = "";
   private codeInsertionManager: CodeInsertionManager| null = null;
@@ -224,31 +225,6 @@ export class SocketModule {
         this.isUpdatePopupShown = true;
       }
     });
-
-    // // Add any other necessary event handlers here
-    // this.socket.on('receive_docstring', (data: any) => {
-    //   this.predictionRequestInProgress = false;
-    //   try {
-    //     const docstring = data.docstring;
-    //     const docstring_id = data.unique_id;
-    //     if (data.complete){
-    //       this.docstring = this.docstring +  data.docstring
-    //       if (this.codeInsertionManager){
-    //         this.codeInsertionManager.insertTextUsingSnippetLocation(this.docstring, data.unique_id, this.docstringData[docstring_id].location);
-    //       }
-    //       this.docstring = ""
-    //     }else{
-    //       this.docstring = this.docstring +  data.docstring
-    //       // console.log(this.docstring)
-    //     }
-
-    //   } catch (error) {
-    //     this.predictionRequestInProgress = false;
-
-    //     this.customInformationMessage('socket_module:receive_message', JSON.stringify(error));
-    //     this.docstring = ""
-    //   }
-    // });
   }
 
   public sendEditorCodeRefactor(
@@ -324,90 +300,15 @@ export class SocketModule {
     }
   }
 
-  public async getFileText(relativePath: string): Promise<string | null> {
-    try {
-        // Convert the relative path to an absolute path
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (!workspaceFolders || workspaceFolders.length === 0) {
-            vscode.window.showErrorMessage('No workspace is open');
-            return null;
-        }
-        
-        // Assume the first workspace folder for the relative path
-        const absolutePath = path.join(workspaceFolders[0].uri.fsPath, relativePath);
-
-        // Create a URI for the file
-        const fileUri = vscode.Uri.file(absolutePath);
-
-        // Open the text document
-        const document = await vscode.workspace.openTextDocument(fileUri);
-
-        // Return the text content
-        return document.getText();
-    } catch (error) {
-        vscode.window.showErrorMessage(`Error reading file: ${error}`);
-        return null;
-    }
-  }
-
-  public async sendChatMessage(chat: ChatSession) {
-    console.log("Message to socket from backend");
-    let messageList = chat.messages.slice(-5);
-
-    // Process each message in the list
-    const lastMessage = messageList[messageList.length - 1];
-
-    if (lastMessage && lastMessage.attachedContext?.length > 0) {
-        for (const context of lastMessage.attachedContext) {
-            try {
-                // Retrieve and update fileText for the current context
-                const fileText = await this.getFileText(context.currentSelectedFileRelativePath);
-                context.fileText = fileText || '';
-            } catch (error) {
-                console.error(`Failed to fetch file text for ${context.currentSelectedFileRelativePath}:`, error);
-                context.fileText = 'Error retrieving file text';
-            }
-        }
-    }
-    messageList[-1] = lastMessage
-
-    // Emit the updated messageList to the socket
-    this.predictionRequestInProgress = true;
+  public async getModelDetails() {
     if (this.socket) {
-        this.socket.emit('generate_chat_response', {
-            chatId: chat.chatId,
-            timestamp: chat.timestamp,
-            messageList, // Updated with fileText for all messages
-            appVersion: this.currentVersion,
+        this.socket.emit('get_model_details', {
             userEmail: this.email,
-            uniqueId: uuidv4()
         });
     }
   }
 
-
-//   public sendChatMessage(chat: ChatSession) {
-//     // console.log("Message to scoket from backend")
-//     console.log("Message to scoket from backend")
-//     console.log("-------------------", chat.messages.slice(-5))
-
-//     let messageList = chat.messages.slice(-5);
-//     const attachedContext = messageList[-1].attachedContext[0]
-//     attachedContext.currentSelectedFileRelativePath
-//     console.log("-------------------", this.getFileText(attachedContext.currentSelectedFileRelativePath)
-// )
-//     this.predictionRequestInProgress = true;
-//       if (this.socket) {
-//         this.socket.emit('generate_chat_response', {
-//           chatId: chat.chatId,
-//           timestamp: chat.timestamp,
-//           messageList: chat.messages.slice(-5),
-//           appVersion: this.currentVersion,
-//           userEmail: this.email,
-//           uniqueId: uuidv4()
-//         });
-//       }
-//   }
+  
 
   public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string) {
     // console.log("Sending Message for Completion")

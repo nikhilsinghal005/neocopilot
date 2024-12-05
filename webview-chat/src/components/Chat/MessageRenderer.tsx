@@ -9,6 +9,7 @@ import * as path from 'path';
 
 interface MessageRendererProps {
   text: string;
+  type: string;
 }
 
 interface CodeProps {
@@ -18,7 +19,7 @@ interface CodeProps {
   [key: string]: any;  // Allow other arbitrary props
 }
 
-const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
+const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type }) => {
   // Define custom components for rendering specific markdown elements
 
   const getFileName = (relativePath: string): string => {
@@ -118,17 +119,30 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text }) => {
       <em className="text-vscode-editor-foreground italic">{children}</em>
     ),
   };
+  if (type === 'user') {
+    return (
+      <div className="prose max-w-full text-sm leading-6 space-y-4">
+        <ReactMarkdown
+          children={text}
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+          components={components}
+        />
+      </div>
+    );
+  } else {
+    return (
+      <div className="prose max-w-full text-sm leading-6 space-y-4">
+        <ReactMarkdown
+          children={text}
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+          components={components}
+        />
+      </div>
+    );
+  }
 
-  return (
-    <div className="prose max-w-full text-sm leading-6 space-y-4">
-      <ReactMarkdown
-        children={text}
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-        components={components}
-      />
-    </div>
-  );
 };
 
 export default MessageRenderer;

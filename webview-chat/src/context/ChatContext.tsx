@@ -1,6 +1,7 @@
 // src/context/ChatContext.tsx
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { ChatSession, MessageStore, CurrentFileContext, EditorOpenFileList } from '../types/Message';
+import { chatModelDetail } from '../types/AppDetails';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ChatContextProps {
@@ -8,7 +9,7 @@ interface ChatContextProps {
   setChatSession: React.Dispatch<React.SetStateAction<ChatSession>>;
   isTyping: boolean;
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>;
-  chatModel: string; // Add this line
+  chatModel: string;
   setChatModel: React.Dispatch<React.SetStateAction<string>>;
   attachedContext: CurrentFileContext[],
   setAttachedContext: React.Dispatch<React.SetStateAction<CurrentFileContext[]>>;
@@ -16,6 +17,10 @@ interface ChatContextProps {
   setOpenEditorFilesList: React.Dispatch<React.SetStateAction<EditorOpenFileList[]>>;
   clearChatSession: () => void;
   addMessage: (newMessage: MessageStore) => void;
+  isInterrupted: boolean;
+  setIsInterrupted: React.Dispatch<React.SetStateAction<boolean>>;
+  chatModelList: chatModelDetail[];
+  setChatModelList: React.Dispatch<React.SetStateAction<chatModelDetail[]>>;
 }
 
 const createNewChatSession = (): ChatSession => ({
@@ -39,7 +44,6 @@ export const useChatContext = (): ChatContextProps => {
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [chatSession, setChatSession] = useState<ChatSession>(() => {
     const storedSession = sessionStorage.getItem('chatSession');
-    // console.info("Chat Session Already Exsists: ", storedSession)
     if (storedSession) {
       try {
         return JSON.parse(storedSession) as ChatSession;
@@ -48,7 +52,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return createNewChatSession();
       }
     }else{
-      // console.log("No Chat Session Exists")
       const newSession: ChatSession = createNewChatSession();
       sessionStorage.setItem('chatSession', JSON.stringify(newSession));
       return createNewChatSession();
@@ -59,6 +62,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [chatModel, setChatModel] = useState<string>('neo-7');
   const [attachedContext, setAttachedContext] = useState<CurrentFileContext[]>([]);
   const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
+  const [isInterrupted, setIsInterrupted] = useState<boolean>(false);
+  const [chatModelList, setChatModelList] = useState<chatModelDetail[]>([]);
   
   useEffect(() => {
     sessionStorage.setItem('chatSession', JSON.stringify(chatSession));
@@ -69,8 +74,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionStorage.setItem('chatSession', JSON.stringify(newSession));
     setChatSession(newSession);
   }, []);
-
-
 
   const addMessage = useCallback((newMessage: MessageStore) => {
     setChatSession((prevSession) => ({
@@ -89,7 +92,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         attachedContext, setAttachedContext,
         openEditorFilesList, setOpenEditorFilesList,
         clearChatSession, 
-        addMessage 
+        addMessage,
+        isInterrupted, setIsInterrupted,
+        chatModelList, setChatModelList,
       }}>
       {children}
     </ChatContext.Provider>
