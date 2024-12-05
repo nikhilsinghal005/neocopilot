@@ -87,6 +87,26 @@ export class AiChatMessageHandler {
         this.forwardMessageToWebviews(data);
       });
     }
+  
+    if (this.socketModule.socket?.listeners('typing_indicator').length === 0) {
+      this.socketModule.socket?.on('typing_indicator', (data: any) => {
+        this.postTypingIndicatorMessageToWebview(this.aiChatPanel.activePanels[0], data.processingState);
+      });
+    }
+  }
+
+  private postTypingIndicatorMessageToWebview(webviewView: vscode.WebviewView, processingState: string): void {
+    try {
+      // // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
+      webviewView.webview.postMessage({
+        command: 'chat_response_state_info',
+        data: {
+          inputState: processingState
+        }
+      });
+    } catch (error) {
+      console.error("Failed to post queued message to webview");
+    }
   }
 
   private postMessageToWebview(webviewView: vscode.WebviewView, data: MessageResponse): void {
