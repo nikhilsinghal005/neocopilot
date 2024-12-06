@@ -180,7 +180,6 @@ export class AiChatMessageHandler {
     messageList[-1] = lastMessage
 
     // Emit the updated messageList to the socket
-    this.socketModule.predictionRequestInProgress = true;
     if (this.socketModule.socket) {
       this.socketModule.socket.emit('generate_chat_response', {
             chatId: chat.chatId,

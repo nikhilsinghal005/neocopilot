@@ -7,6 +7,7 @@ import { getDeletedText } from "../utilities/codeCompletionUtils/completionUtils
 import { v4 as uuidv4 } from 'uuid';
 import { DeletionHandler } from '../codeCompletion/handleActions/deleteActionHandler';
 import { UpdateHandler } from '../codeCompletion/handleActions/updateActionHandler';
+import { StatusBarManager } from '../StatusBarManager';
 
 export class SuggestionManager {
   private socketModule: SocketModule;
@@ -22,7 +23,7 @@ export class SuggestionManager {
   public deleteSpecialCharacters: string[];
   public uniqueIdentifier: string = uuidv4();
   private debounceTimeout: NodeJS.Timeout | undefined;
-  public predictionDelay: number = 300;
+  public predictionDelay: number = 50;
 
   constructor(socketModule: SocketModule) {
     this.socketModule = socketModule;
@@ -58,7 +59,7 @@ export class SuggestionManager {
     try {
       // console.log("============ NeoCopilot: Text Prediction Handling ===============");
       if (isNullOrEmptyOrWhitespace(currentText) || !editor) { // strip white spaces from current text
-        // console.log("Input text is short");
+        console.log("Input text is short");
         this.reinitialize();
         return;
       }
@@ -79,11 +80,6 @@ export class SuggestionManager {
 
       if (event.contentChanges.length > 1) { // If there are more than one changes in the editor
         // console.log("More than one changes in the editor");
-        const multipleChange = event.contentChanges[0].text;
-        if (["// ", "# "].includes(multipleChange)) {
-          this.reinitialize();
-          return;
-        }
         this.reinitialize();
         return;
       }
@@ -96,11 +92,11 @@ export class SuggestionManager {
 
       // Check if Prediction is Already in Progress
       if (this.socketModule.predictionRequestInProgress) {
-        // console.log("Prediction is in progress");
+        console.log("Prediction is in progress");
         this.handlePredictionInProgress(updatedText);
         return;
       } else {
-        // console.log("Prediction is not in progress");
+        console.log("Prediction is not in progress");
         this.predictionWaitText = "";
         this.socketModule.predictionWaitText = "";
       }
@@ -136,12 +132,13 @@ export class SuggestionManager {
           // console.log("Prediction does not exist");
           this.reinitialize();
           if (this.deleteActionHandler.isTextDeleted(updatedText)) {
-              this.deleteActionHandler.handleAllDeletion(
-                currentStartLineNumber, 
-                currentEndLineNumber,
-                currentEndCharacterPosition,
-                currentStartCharacterPosition
-              );
+              // this.deleteActionHandler.handleAllDeletion(
+              //   currentStartLineNumber, 
+              //   currentEndLineNumber,
+              //   currentEndCharacterPosition,
+              //   currentStartCharacterPosition
+              // );
+              return;
           } else {
               this.updateActionHandler.handleUpdateWhenNoPrediction(
                   updatedText
@@ -218,7 +215,7 @@ export class SuggestionManager {
           return;
         } else {
           // Emit the prediction request
-          this.socketModule.emitMessage(
+          this.emitMessage(
             this.uniqueIdentifier,
             getTextBeforeCursor(vscode.window.activeTextEditor),
             getTextAfterCursor(vscode.window.activeTextEditor),
@@ -228,5 +225,35 @@ export class SuggestionManager {
         }
       }
     }, this.predictionDelay);
+  }
+
+  public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string) {
+    this.socketModule.predictionRequestInProgress = true;
+
+    if (this.socketModule.rateLimitExceeded) {
+      this.socketModule.reinitializeSocket();
+      return;
+    }
+
+    this.socketModule.suggestion = "";
+    this.socketModule.socketListSuggestion = [];
+    this.socketModule.completionProvider.updateSuggestion("");
+    StatusBarManager.updateMessage(`$(loading~spin) Neo Copilot`);
+    this.socketModule.tempUniqueIdentifier = uuid;
+
+    if (this.socketModule.socket) {
+      const timestamp = new Date().toISOString();
+      this.socketModule.socket.emit('send_message', {
+        prefix,
+        suffix,
+        inputType,
+        uuid,
+        appVersion: this.socketModule.currentVersion,
+        language,
+        timestamp,
+        userEmail: this.socketModule.email,
+      });
+    }
+    this.socketModule.previousText = prefix;
   }
 }  

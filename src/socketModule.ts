@@ -14,9 +14,7 @@ import {
 import { getTextBeforeCursor } from "./utilities/codeCompletionUtils/editorCodeUtils";
 import { AuthManager } from './authManager/authManager';
 import { CodeInsertionManager } from './codeInsertions/CodeInsertionManager';
-import { ChatSession, MessageInput} from './chatProvider/types/messageTypes';
 import * as path from 'path';
-import { getFileText } from './utilities/editorUtils/getFileText';
 
 interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {}
 
@@ -35,7 +33,7 @@ export class SocketModule {
   public completionProvider: CompletionProviderModule;
   public predictionRequestInProgress = false;
   public predictionWaitText = "";
-  private tempUniqueIdentifier: string = "NA";
+  public tempUniqueIdentifier: string = "NA";
   private debounceTimer: NodeJS.Timeout | null = null;
   public currentVersion = versionConfig.getCurrentVersion();
   public currentSuggestionId: string = "";
@@ -51,6 +49,7 @@ export class SocketModule {
   private userId: string = "";
   private codeInsertionManager: CodeInsertionManager| null = null;
   private docstring: string = "";
+  public nextLineCharacter: string = "\n";
   private docstringData: { [key: string]: { 
       id: string;
       location: { line: number; character: number } 
@@ -225,122 +224,6 @@ export class SocketModule {
         this.isUpdatePopupShown = true;
       }
     });
-  }
-
-  public sendEditorCodeRefactor(
-    uniqueId: string, 
-    uniqueChatId: string, 
-    userInput: string, 
-    selectedText: string,
-    beforeText: string,
-    afterText: string,
-    completeText: string, 
-    nextLineCharacter: string,
-    actionType: string
-  ) {
-    console.log("Message to scoket from backend")
-    this.predictionRequestInProgress = true;
-    if (this.socket) {
-      this.socket.emit('generate_editor_code_refactor', {
-        uniqueId: uniqueId,
-        chatId: uniqueChatId,
-        userInput: userInput,
-        selectedText: selectedText,
-        beforeText: beforeText,
-        afterText: afterText,
-        completeText: completeText,
-        nextLineCharacter: nextLineCharacter,
-        actionType: actionType,
-        appVersion: this.currentVersion,
-        userEmail: this.email
-      });
-    }
-  }
-
-  public sendEditorSmartInsert(
-    uniqueId: string, 
-    uniqueChatId: string, 
-    editorCode: string, 
-    updatedCode: string,
-    actionType: string
-  ) {
-    console.log("Message to scoket from backend")
-    this.predictionRequestInProgress = true;
-    if (this.socket) {
-      this.socket.emit('generate_editor_smart_insert', {
-        uniqueId: uniqueId,
-        chatId: uniqueChatId,
-        editorCode: editorCode,
-        updatedCode: updatedCode,
-        actionType: actionType,
-        appVersion: this.currentVersion,
-        userEmail: this.email
-      });
-    }
-  }
-
-  public emitDocstringFunction(uuid: string, input_code: string, language: string, location: { line: number; character: number }) {
-    this.predictionRequestInProgress = true;
-    this.docstringData[uuid] = {id: uuid, location: location}
-    if (this.rateLimitExceeded) {
-      this.reinitializeSocket();
-      return;
-    }
-    // console.log("UUID for docstring", uuid)
-    // StatusBarManager.updateMessage(`$(loading~spin) Neo Copilot`);
-    if (this.socket) {
-      const timestamp = new Date().toISOString();
-      this.socket.emit('generate_docstring', {
-        uuid,
-        input_code,
-        language,
-        appVersion: this.currentVersion,
-        userEmail: this.email
-      });
-    }
-  }
-
-  public async getModelDetails() {
-    if (this.socket) {
-        this.socket.emit('get_model_details', {
-            userEmail: this.email,
-        });
-    }
-  }
-
-  
-
-  public emitMessage(uuid: string, prefix: string, suffix: string, inputType: string, language: string) {
-    // console.log("Sending Message for Completion")
-    this.predictionRequestInProgress = true;
-
-    if (this.rateLimitExceeded) {
-      this.reinitializeSocket();
-      return;
-    }
-
-    this.suggestion = "";
-    this.socketListSuggestion = [];
-    this.completionProvider.updateSuggestion("");
-    StatusBarManager.updateMessage(`$(loading~spin) Neo Copilot`);
-    this.tempUniqueIdentifier = uuid;
-
-    if (this.socket) {
-      const timestamp = new Date().toISOString();
-      this.socket.emit('send_message', {
-        prefix,
-        suffix,
-        inputType,
-        uuid,
-        appVersion: this.currentVersion,
-        language,
-        timestamp,
-        userEmail: this.email,
-      });
-    }
-    this.previousText = prefix;
-    // console.log("Sending Message for Completion", uuid)
-
   }
 
   public chatCompletionMessage(completion_type: string, completion_comment: string, completion_size: number) {

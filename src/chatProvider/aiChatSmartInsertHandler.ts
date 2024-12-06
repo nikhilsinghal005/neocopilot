@@ -288,7 +288,7 @@ export class AiChatSmartInsertHandler {
   private sendSmartInsertCode(inputMessages: smartInsert, retries = 3): void {
     if (this.socketModule.socket?.connected) {
       this.attachSocketListeners();
-      this.socketModule.sendEditorSmartInsert(
+      this.sendEditorSmartInsert(
         inputMessages.uniqueId,
         inputMessages.uniqueChatId,
         inputMessages.editorCode,
@@ -357,6 +357,7 @@ export class AiChatSmartInsertHandler {
             status: "completed_successfully"
           });
         }
+        this.socketModule.predictionRequestInProgress = false;
       }
     } catch (error) {
       console.error("Error in insertProcessVerification:", error);
@@ -383,6 +384,28 @@ export class AiChatSmartInsertHandler {
       this.smartInsertionManager.rejectInsertion();
     } else {
       console.warn(`Unhandled user action: ${action}`);
+    }
+  }
+
+  private sendEditorSmartInsert(
+    uniqueId: string, 
+    uniqueChatId: string, 
+    editorCode: string, 
+    updatedCode: string,
+    actionType: string
+  ) {
+    console.log("Message to scoket from backend")
+    this.socketModule.predictionRequestInProgress = true;
+    if (this.socketModule.socket) {
+      this.socketModule.socket.emit('generate_editor_smart_insert', {
+        uniqueId: uniqueId,
+        chatId: uniqueChatId,
+        editorCode: editorCode,
+        updatedCode: updatedCode,
+        actionType: actionType,
+        appVersion: this.socketModule.currentVersion,
+        userEmail: this.socketModule.email
+      });
     }
   }
 }
