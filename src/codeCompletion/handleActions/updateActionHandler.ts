@@ -92,20 +92,30 @@ export class UpdateHandler {
     updatedText: string,
     updatedTextLength: number
   ): boolean {
+
+    console.log("Attempting to handle special character insertion.");
     if (this.suggestionManager.deleteSpecialCharacters.includes(updatedText)) {
-      const expectedStartText = this.completionSocketManager.previousText + this.suggestionManager.mainSuggestion;
-      const actualStartText = this.suggestionManager.textBeforeCursor + updatedText[0];
+
+      const {mainSuggestion, tempSuggestion, textBeforeCursor} = this.suggestionManager;
+      console.log("Special character deletion detected.");
+      console.log(`Main Suggestion: ${mainSuggestion}`);
+      console.log(`Temp Suggestion: ${tempSuggestion}`);
+      console.log(`Text Before Cursor: ${textBeforeCursor}`);
+      console.log(`Updated Text: ${updatedText}`);
+
+      const expectedStartText = this.completionSocketManager.previousText + mainSuggestion;
+      const actualStartText = textBeforeCursor + updatedText[0];
 
       if (expectedStartText.startsWith(actualStartText)) {
         const updatedSuggestion = handleAddedSpecialCharacters(
-          this.suggestionManager.mainSuggestion,
-          this.suggestionManager.tempSuggestion,
+          mainSuggestion,
+          tempSuggestion,
           updatedText
         );
 
         if (updatedSuggestion) {
           this.suggestionManager.tempSuggestion = updatedSuggestion;
-          this.completionProviderModule.updateSuggestion(this.suggestionManager.tempSuggestion);
+          this.completionProviderModule.updateSuggestion(updatedSuggestion);
           this.completionSocketManager.chatCompletionMessage(
             "partial_completion",
             "special_character",

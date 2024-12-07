@@ -227,7 +227,7 @@ export class CompletionSocketManager {
     this.suggestion = this.extractSuggestion(prediction.message);
     this.socketListSuggestion = prediction.message_list;
     // console.log("Received suggestion",  JSON.stringify(this.socketListSuggestion));
-    // console.log("Received suggestion", this.suggestion);
+    console.log("Received suggestion--", this.suggestion);
     // console.log("Received suggestion", this.currentSuggestionId);
     
     console.log("-------------------------", this.predictionWaitText)

@@ -13,8 +13,8 @@ export class CompletionProviderModule implements vscode.InlineCompletionItemProv
     private debouncedTriggerInlineSuggestion: () => void;
 
     private constructor() {
-        // Initialize the debounced function with a 100ms delay
-        this.debouncedTriggerInlineSuggestion = debounce(this.triggerInlineSuggestion.bind(this), 100);
+        // Initialize the debounced function with a 5ms delay
+        this.debouncedTriggerInlineSuggestion = debounce(this.triggerInlineSuggestion.bind(this), 5);
     }
 
     public static getInstance(): CompletionProviderModule {
