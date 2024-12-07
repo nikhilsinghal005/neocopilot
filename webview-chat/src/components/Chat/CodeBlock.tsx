@@ -3,6 +3,7 @@ import { useVscode } from '../../context/VscodeContext';
 import CodeButton from '../Common/CodeButton';
 import CodeButtonNormal from '../Common/CodeButtonNormal';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
+// import CodeButtonWithName from '../Common/CodeButtonWithName';
 
 interface CodeBlockProps {
   inline?: boolean;
@@ -204,7 +205,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         borderColor: 'var(--vscode-editorGroup-border)',
       }}
     >
-      <div className="flex justify-between items-center bg-vscode-chat-message-incoming text-vscode-editor-foreground px-4 py-1 rounded-t-md border"
+      <div className="flex justify-between items-center bg-vscode-chat-message-incoming text-vscode-editor-foreground pl-2 pr-6 py-0 rounded-t-md border"
         style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
       >
         <span className="text-xs font-semibold">{fileName}</span>
@@ -354,9 +355,9 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           )}
         </div>
       </div>
-      <div className="rounded-b-md overflow-auto bg-vscode-chat-message-incoming !p-0 !m-0">
+      <div className="rounded-b-md overflow-hidden hover:overflow-auto transition-all duration-300 bg-vscode-chat-message-incoming !p-0 !m-0">
         <pre className="!m-0">
-          <code className={`${className} block p-4 text-vscode-editor-foreground`} {...props}>
+          <code className={`${className} block p-2 text-vscode-editor-foreground`} {...props}>
             {codeContent}
           </code>
         </pre>

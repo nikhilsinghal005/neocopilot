@@ -29,10 +29,10 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
 
         {/* Message box */}
         <div
-          className={`px-2 rounded-md flex items-center max-w-[93%] break-words ${
+          className={`rounded-md flex items-center  break-words ${
             message.messageType === 'user'
-              ? 'bg-vscode-chat-message-outgoing text-vscode-editor-foreground'
-              : 'bg-vscode-chat-message-incoming text-vscode-editor-foreground'
+              ? 'px-2 max-w-[94%] bg-vscode-chat-message-outgoing text-vscode-editor-foreground'
+              : 'px-0 max-w-[96%] bg-vscode-chat-message-incoming text-vscode-editor-foreground'
           }`}
           style={{
             backgroundColor:
