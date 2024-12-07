@@ -157,7 +157,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               this.aiChatSmartInsertHandler.initializeSockets();
               this.aiChatModelDetails.initializeSockets();
             }
-            this.socketModule.getModelDetails();
+            this.getModelDetails();
             break;
 
           // Default case for any unknown messages
@@ -168,6 +168,14 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
 
+  public async getModelDetails() {
+    if (this.socketModule.socket) {
+        this.socketModule.socket.emit('get_model_details', {
+            userEmail: this.socketModule.email,
+        });
+    }
+  }
+  
   // Toggle the location of the panel (e.g., from sidebar to main window)
   private async togglePanelLocation(): Promise<void> {
     this.panelManager.togglePanelLocationChange();

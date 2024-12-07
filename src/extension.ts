@@ -30,11 +30,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   configAll.update('minimap.enabled', !isMinimapEnabled, vscode.ConfigurationTarget.Global);
 
   // Initialize the modules
-  const completionProviderModule = new CompletionProviderModule();
+  const completionProviderModule = CompletionProviderModule.getInstance();
   versionConfig.initialize(context);
   const authManager = new AuthManager(context);
-  const socketModule = SocketModule.getInstance(completionProviderModule);
-  const vscodeEventsModule = new VscodeEventsModule(socketModule);
+  const socketModule = SocketModule.getInstance();
+  const vscodeEventsModule = new VscodeEventsModule();
   const statusBarManager = new StatusBarManager();
 
   StatusBarManager.initializeStatusBar(false, context, vscodeEventsModule);  
@@ -80,8 +80,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
  * This function is called when the extension is deactivated. It handles cleanup tasks such as disconnecting from services.
  */
 export function deactivate(): void {
-  const completionProviderModule = new CompletionProviderModule();
-  const socketModule = new SocketModule(completionProviderModule);
+  const completionProviderModule = CompletionProviderModule.getInstance();
+  const socketModule = new SocketModule();
   socketModule.disconnect();
 }
 

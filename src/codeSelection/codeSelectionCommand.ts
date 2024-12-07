@@ -202,7 +202,7 @@ private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.T
 
         // Check if the data is complete
         if (data.isComplete) {
-          this.socketModule.predictionRequestInProgress = false;
+          // this.socketModule.predictionRequestInProgress = false;
           if (data.isError) {
               this.updatedtext = "";
               showTextNotification(data.response, 0.9);
@@ -333,7 +333,7 @@ private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.T
     actionType: string
   ) {
     console.log("Message to scoket from backend")
-    this.socketModule.predictionRequestInProgress = true;
+    // this.socketModule.predictionRequestInProgress = true;
     if (this.socketModule.socket) {
       this.socketModule.socket.emit('generate_editor_code_refactor', {
         uniqueId: uniqueId,

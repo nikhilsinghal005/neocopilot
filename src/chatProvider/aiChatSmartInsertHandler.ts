@@ -357,7 +357,7 @@ export class AiChatSmartInsertHandler {
             status: "completed_successfully"
           });
         }
-        this.socketModule.predictionRequestInProgress = false;
+        // this.socketModule.predictionRequestInProgress = false;
       }
     } catch (error) {
       console.error("Error in insertProcessVerification:", error);
@@ -395,7 +395,7 @@ export class AiChatSmartInsertHandler {
     actionType: string
   ) {
     console.log("Message to scoket from backend")
-    this.socketModule.predictionRequestInProgress = true;
+    // this.socketModule.predictionRequestInProgress = true;
     if (this.socketModule.socket) {
       this.socketModule.socket.emit('generate_editor_smart_insert', {
         uniqueId: uniqueId,
