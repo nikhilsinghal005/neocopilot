@@ -2,7 +2,7 @@
 import { AuthManager } from '../authManager/authManager';
 import { SocketModule } from '../socketModule';
 import { v4 as uuidv4 } from 'uuid';
-import { ChatSession, MessageResponse, MessageResponseFromBackEnd, smartInsert } from './types/messageTypes';
+import { ChatSession, MessageResponse, MessageResponseFromBackEnd } from './types/messageTypes';
 import { AiChatPanel } from './aiChatPanel';
 import * as vscode from 'vscode';
 import { getFileText } from '../utilities/editorUtils/getFileText';
@@ -54,6 +54,7 @@ export class AiChatMessageHandler {
     }
     // Making sure the socket is connected everytime socket connects.
     this.socketModule.socket?.on('connect', () => {
+      console.log("Socket connected. Attaching listeners for Chat messages.");
       this.attachSocketListeners();
     });
   }

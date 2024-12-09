@@ -1,3 +1,5 @@
+// src/initializeAppFunctions.ts
+
 import * as vscode from 'vscode';
 import { VscodeEventsModule } from './codeCompletion/vscodeEventsModule';
 import { CompletionProviderModule } from './codeCompletion/completionProviderModule';
@@ -54,10 +56,7 @@ export function initializeAppFunctions(
 
 }
 
-export function initializeNonLoginRequiredAppFunctions(
-
-  vscodeEventsModule: VscodeEventsModule,
-  completionProviderModule: CompletionProviderModule,
+ export function initializeNonLoginRequiredAppFunctions(
   authManager: AuthManager,
   context: vscode.ExtensionContext
 ): void {

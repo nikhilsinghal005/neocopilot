@@ -76,10 +76,21 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       } else {
         this.activePanels = this.activePanels.filter(panel => panel !== webviewView);
       }
+    // Save visibility state
+    this._context.workspaceState.update('webviewPanelState', {
+      isVisible: webviewView.visible,
+      viewType: this.viewType,
+    });
     });
 
     webviewView.onDidDispose(() => {
       this.activePanels = this.activePanels.filter(panel => panel !== webviewView);
+
+    // Save state on disposal
+    this._context.workspaceState.update('webviewPanelState', {
+      isVisible: false,
+      viewType: this.viewType,
+    });
     });
 
     // Set options for the webview (enabling scripts and setting local resource roots)
@@ -94,6 +105,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     // Add a listener for messages from the webview (e.g., user actions like sending messages)
     if (!this.webviewListeners.has(webviewView)) {
+      console.log('Adding webview listener');
       this.webviewListeners.add(webviewView);
       this.aiChatMessageHandler.initializeWebviewListener(webviewView)
       this.aiChatSmartInsertHandler.initializeWebviewListener(webviewView)
@@ -152,6 +164,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             this.sendAuthStatus(isLoggedIn);
 
             if (isLoggedIn) {
+              console.log('Initializing sockets');
               this.socketModule = SocketModule.getInstance();
               this.aiChatMessageHandler.initializeSockets();
               this.aiChatSmartInsertHandler.initializeSockets();
@@ -159,10 +172,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             }
             this.getModelDetails();
             break;
-
-          // Default case for any unknown messages
-          default:
-            showTextNotification('Unable to perform provided action', 1);
         }
       });
     }

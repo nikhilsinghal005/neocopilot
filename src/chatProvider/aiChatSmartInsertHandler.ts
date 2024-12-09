@@ -76,8 +76,6 @@ export class AiChatSmartInsertHandler {
         case 'smartCodeInsertUserAction':
           this.handleUserAction(message);
           break;
-        default:
-          console.warn(`Unhandled message command: ${message.command}`);
       }
     });
   }
