@@ -32,7 +32,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
           className={`rounded-md flex items-center  break-words ${
             message.messageType === 'user'
               ? 'px-2 max-w-[94%] bg-vscode-chat-message-outgoing text-vscode-editor-foreground'
-              : 'px-0 max-w-[96%] bg-vscode-chat-message-incoming text-vscode-editor-foreground'
+              : 'px-0 max-w-[95%] bg-vscode-chat-message-incoming text-vscode-editor-foreground'
           }`}
           style={{
             backgroundColor:
