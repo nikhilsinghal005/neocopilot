@@ -11,7 +11,7 @@ export function showErrorNotification(message: string, timeInSeconds: number = 5
   vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: `❌ Error: ${message}`, // Prefix with an error icon and label
+      title: `❌ ${message}`, // Prefix with an error icon and label
       cancellable: true,
     },
     async () => {
