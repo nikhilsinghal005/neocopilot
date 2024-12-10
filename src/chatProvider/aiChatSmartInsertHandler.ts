@@ -113,7 +113,7 @@ export class AiChatSmartInsertHandler {
       }
     } catch (error) {
       console.error("Error in handleCreateNewFile:", error);
-      showErrorNotification('An error occurred while creating a new file.', 0.7);
+      showErrorNotification('An error occurred while creating a new file.', 4);
     }
   }
 
@@ -123,17 +123,17 @@ export class AiChatSmartInsertHandler {
    */
   public async insertProcessVerification(message: any): Promise<void> {
     try {
-      // if (this.smartInsertionManager.currentEditor) {
-      //   showErrorNotification('Please complete the previous code insertion.', 0.7);
-      //   this.sendMessageToWebview({
-      //     command: 'smart_insert_to_editor_update',
-      //     isComplete: false,
-      //     uniqueId: uuidv4(),
-      //     codeId: message.data.codeId,
-      //     status: "completed_successfully"
-      //   });
-      //   return;
-      // }
+      if (this.smartInsertionManager.currentEditor) {
+        showErrorNotification('Please complete the previous code insertion.', 0.7);
+        this.sendMessageToWebview({
+          command: 'smart_insert_to_editor_update',
+          isComplete: false,
+          uniqueId: uuidv4(),
+          codeId: message.data.codeId,
+          status: "completed_successfully"
+        });
+        return;
+      }
 
       const editor = vscode.window.activeTextEditor;
       const currentFile = vscode.workspace.asRelativePath(editor?.document.fileName || '');
@@ -147,7 +147,6 @@ export class AiChatSmartInsertHandler {
       const isOpenFile = await openAndHighlightFile(smartFilePath);
 
       if (!isOpenFile && !vscode.window.activeTextEditor) {
-        showErrorNotification('File does not exist.', 0.7);
         this.sendMessageToWebview({
           command: 'file_does_not_exist',
           isAnyFileOpen: false,
@@ -158,7 +157,6 @@ export class AiChatSmartInsertHandler {
       }
 
       if (!isOpenFile && vscode.window.activeTextEditor) {
-        showErrorNotification('File does not exist.', 0.7);
         this.sendMessageToWebview({
           command: 'file_does_not_exist',
           isAnyFileOpen: true,
@@ -178,7 +176,7 @@ export class AiChatSmartInsertHandler {
         codeId: message.data.codeId,
         status: "completed_successfully"
       });
-      showErrorNotification('An error occurred during code insertion.', 0.7);
+      showErrorNotification('Unable to insert code. Please try again.', 3);
     }
   }
 
@@ -191,10 +189,10 @@ export class AiChatSmartInsertHandler {
 
       const editor = vscode.window.activeTextEditor;
       this.smartInsertionManager.reinitialize();
-      // this.smartInsertionManager.currentEditor = editor;
+      this.smartInsertionManager.currentEditor = editor;
 
       if (!editor) {
-        showErrorNotification('No active editor found.', 0.7);
+        showErrorNotification('No active editor found.', 3);
         if (this.aiChatPanel.activePanels.length > 0) {
           await new Promise(resolve => setTimeout(resolve, 1000));
           this.sendMessageToWebview({
@@ -239,7 +237,7 @@ export class AiChatSmartInsertHandler {
         codeId: message.data.codeId,
         status: "completed_successfully"
       });
-      showErrorNotification('An error occurred during code insertion.', 0.7);
+      showErrorNotification('Unable to insert code. Please try again.', 3);
     }
   }
 
@@ -277,7 +275,7 @@ export class AiChatSmartInsertHandler {
         codeId: this.smartInsertionManager.currentCodeBlockId,
         status: "completed_successfully"
       });
-      showErrorNotification('An error occurred during code insertion.', 0.7);
+      showErrorNotification('An error occurred during code insertion.', 3);
     }
   }
 
@@ -303,7 +301,7 @@ export class AiChatSmartInsertHandler {
         this.sendSmartInsertCode(inputMessages, retries - 1);
       }, 5000);
     } else {
-      showTextNotification("Please check your internet connection or try again", 5);
+      showErrorNotification("Please check your internet connection or try again", 4);
     }
   }
 
@@ -335,7 +333,8 @@ export class AiChatSmartInsertHandler {
             status: "completed_successfully"
           });
           this.updatedText = "";
-          showTextNotification(data.response, 1);
+          // showErrorNotification(data.errorResponse, 1);
+          showErrorNotification("Error occurred during code insertion. Please try again.", 3);
         } else if (data.isRateLimit) {
           this.sendMessageToWebview({
             command: 'smart_insert_to_editor_update',
@@ -371,7 +370,7 @@ export class AiChatSmartInsertHandler {
         codeId: this.smartInsertionManager.currentCodeBlockId,
         status: "completed_successfully"
       });
-      showErrorNotification('An error occurred during code insertion.', 0.7);
+      showErrorNotification("Error occurred during code insertion. Please try again.", 3);
     }
   }
 
