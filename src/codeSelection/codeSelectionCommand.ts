@@ -6,6 +6,7 @@ import { AiChatPanel } from '../chatProvider/aiChatPanel';
 import { CodeSelectionCommand } from './selectionContext';
 import { SelectionContext } from './selectionContext';
 import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../utilities/statusBarNotifications/showErrorNotification';
 import { showCustomNotification } from '../utilities/statusBarNotifications/showCustomNotification';
 
 export class CodeSelectionCommandHandler {
@@ -114,12 +115,12 @@ export class CodeSelectionCommandHandler {
                   return; // Exit the loop on success
                 } else {
                   retries++;
-                  showTextNotification('Trying to connect with system. Please wait', 0.9);
+                  // showErrorNotification('Failed to get response. Retrying...', 0.9);
                   await delay(3000); // Wait 5 seconds before retrying
                 }
               }
               if (retries >= 4) {
-                showTextNotification('Unable to connect with system. Please check internet connection', 2);
+                showErrorNotification('Failed to get response. Please try again.', 2);
               }
             }
         ),
@@ -203,14 +204,17 @@ private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.T
         // Check if the data is complete
         if (data.isComplete) {
           // this.socketModule.predictionRequestInProgress = false;
-          if (data.isError) {
-              this.updatedtext = "";
-              showTextNotification(data.response, 0.9);
-            }
-          else if (data.isRateLimit) {
-            showCustomNotification(data.response)
+          if (data.isRateLimit) {
+            console.log("Rate Limit Exceeded")
+            console.log(data.rateLimitResponse);
+            showCustomNotification(data.rateLimitResponse)
             this.updatedtext = "";
-          } else {
+          } 
+          else if (data.isError) {
+              this.updatedtext = "";
+              showErrorNotification(data.response, 0.9);
+            }
+          else {
             this.codeInsertionManager.enqueueSnippetLineByLine(
               "",
               data.id,

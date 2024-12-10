@@ -123,17 +123,17 @@ export class AiChatSmartInsertHandler {
    */
   public async insertProcessVerification(message: any): Promise<void> {
     try {
-      if (this.smartInsertionManager.currentEditor) {
-        showErrorNotification('Please complete the previous code insertion.', 0.7);
-        this.sendMessageToWebview({
-          command: 'smart_insert_to_editor_update',
-          isComplete: false,
-          uniqueId: uuidv4(),
-          codeId: message.data.codeId,
-          status: "completed_successfully"
-        });
-        return;
-      }
+      // if (this.smartInsertionManager.currentEditor) {
+      //   showErrorNotification('Please complete the previous code insertion.', 0.7);
+      //   this.sendMessageToWebview({
+      //     command: 'smart_insert_to_editor_update',
+      //     isComplete: false,
+      //     uniqueId: uuidv4(),
+      //     codeId: message.data.codeId,
+      //     status: "completed_successfully"
+      //   });
+      //   return;
+      // }
 
       const editor = vscode.window.activeTextEditor;
       const currentFile = vscode.workspace.asRelativePath(editor?.document.fileName || '');
@@ -191,7 +191,7 @@ export class AiChatSmartInsertHandler {
 
       const editor = vscode.window.activeTextEditor;
       this.smartInsertionManager.reinitialize();
-      this.smartInsertionManager.currentEditor = editor;
+      // this.smartInsertionManager.currentEditor = editor;
 
       if (!editor) {
         showErrorNotification('No active editor found.', 0.7);
@@ -344,7 +344,7 @@ export class AiChatSmartInsertHandler {
             codeId: this.smartInsertionManager.currentCodeBlockId,
             status: "completed_successfully"
           });
-          showCustomNotification(data.response);
+          showCustomNotification(data.rateLimitResponse);
           this.updatedText = "";
         } else {
           // Finalize insertion
