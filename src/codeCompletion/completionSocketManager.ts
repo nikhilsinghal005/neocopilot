@@ -218,7 +218,7 @@ export class CompletionSocketManager {
     const expectedText = `${this.previousText}${this.predictionWaitText}`;
 
     if (currentTextBeforeCursor !== expectedText) {
-      console.log("Cursor position changed; suggestion not applied");
+      //console.log("Cursor position changed; suggestion not applied");
       return;
     }
 
@@ -226,16 +226,16 @@ export class CompletionSocketManager {
     this.currentSuggestionId = prediction.unique_Id;
     this.suggestion = this.extractSuggestion(prediction.message);
     this.socketListSuggestion = prediction.message_list;
-    // console.log("Received suggestion",  JSON.stringify(this.socketListSuggestion));
-    console.log("Received suggestion--", this.suggestion);
-    // console.log("Received suggestion", this.currentSuggestionId);
+    // //console.log("Received suggestion",  JSON.stringify(this.socketListSuggestion));
+    //console.log("Received suggestion--", this.suggestion);
+    // //console.log("Received suggestion", this.currentSuggestionId);
     
-    console.log("-------------------------", this.predictionWaitText)
+    //console.log("-------------------------", this.predictionWaitText)
     // Handle prediction wait text
     if (this.predictionWaitText) {
       this.handlePredictionWaitText();
     } else {
-      console.log("Updating suggestion with new prediction");
+      //console.log("Updating suggestion with new prediction");
       this.completionProviderModule.updateSuggestion(this.suggestion);
     }
 
