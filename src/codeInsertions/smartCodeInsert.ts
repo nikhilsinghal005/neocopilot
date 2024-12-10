@@ -318,6 +318,7 @@ public async enqueueSnippetLineByLine(
           editor.setDecorations(this.deletedDecorationType, this.decorationsToApply.deleted);
           editor.setDecorations(this.sameDecorationType, this.decorationsToApply.same);
         }
+
         const insertion: Insertion = {
           id,
           decorationType: this.insertedDecorationType,
@@ -326,7 +327,8 @@ public async enqueueSnippetLineByLine(
           insertedRanges: this.decorationsToApply.inserted,
           deletedRanges: this.decorationsToApply.deleted,
           sameRanges: this.decorationsToApply.same,
-      };
+        };
+
         editor.setDecorations(this.movingDecorationType, []);
         this.insertions.set(id, insertion);
         console.log("Insertion Process Completed")
@@ -335,6 +337,13 @@ public async enqueueSnippetLineByLine(
 
       updatedText = this.leftOver + updatedText
       // console.log("------------------------------------------------", JSON.stringify(updatedText))
+      // console.log("------------------------------------------------", JSON.stringify(this.oldLinesList))
+      if (updatedText.length === 0){
+        return;
+      }
+      // console.log("------------------------------------------------", JSON.stringify(updatedText))
+      // add a sleep time to simulate the delay
+      // await new Promise((resolve) => setTimeout(resolve, 5000));
       // count of occurances
       let newLineList = updatedText.split(nextLineCharacter)
       if (newLineList.length > 1) {

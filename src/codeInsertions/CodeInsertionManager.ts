@@ -383,6 +383,10 @@ public rejectInsertion(id: string): void {
       return;
     }
     updatedText = this.leftOver + updatedText
+    if (updatedText.length === 0){
+      return;
+    }
+
     // console.log("------------------------------------------------", JSON.stringify(updatedText))
     // count of occurances
     let newLineList = updatedText.split(nextLineCharacter)
