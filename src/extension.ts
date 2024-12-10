@@ -40,7 +40,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   StatusBarManager.initializeStatusBar(false, context, vscodeEventsModule);  
 
   const isLoggedIn = await authManager.verifyAccessToken();
-  initializeNonLoginRequiredAppFunctions(vscodeEventsModule, completionProviderModule, authManager, context);
+  await initializeNonLoginRequiredAppFunctions(authManager, context);
 
   context.workspaceState.update('isLoggedIn', false);
 
@@ -48,7 +48,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     const currentVersion = context.extension.packageJSON.version;
     const socketConnection: Socket | null = await socketModule.connect(currentVersion, context);
 
-    initializeAppFunctions(
+    await initializeAppFunctions(
       vscodeEventsModule, 
       completionProviderModule, 
       authManager,  
