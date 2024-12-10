@@ -153,7 +153,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
           // Shows a simple notification message in the status bar
           case 'showInfoPopup':
-            showTextNotification(message.data.message, 1);
+            showTextNotification(message.data.message, 3);
             break;
 
           // Toggles webview location (e.g., panel or sidebar)

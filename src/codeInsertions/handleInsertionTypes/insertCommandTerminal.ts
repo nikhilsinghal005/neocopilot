@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { showTextNotification } from '../../utilities/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../../utilities/statusBarNotifications/showErrorNotification';
 
 /**
  * Inserts text at the current cursor position with a unique ID.
@@ -12,7 +12,7 @@ export function  insertTextIntoTerminalFunction(newText: string): void {
     if (!terminal) {
       // If no terminal is active, create a new terminal
       terminal = vscode.window.createTerminal('Code Snippet Terminal');
-      showTextNotification('No active terminal found. Created a new terminal..', 2)
+      showErrorNotification('No active terminal found. Created a new terminal..', 2)
     }
   
     // Escape special characters in the newText (like $ symbols) if necessary

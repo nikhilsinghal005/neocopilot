@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { Socket } from 'socket.io-client';
 import { CompletionProviderModule } from '../codeCompletion/completionProviderModule';
-import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../utilities/statusBarNotifications/showErrorNotification';
+
 import { AuthManager } from './authManager';
 import { VscodeEventsModule } from '../codeCompletion/vscodeEventsModule';
 import { SocketModule } from '../socketModule';
@@ -42,7 +43,7 @@ export async function handleTokenUri(
 
                     if (userProfile) {
                         await authManager.storeUserProfile(userProfile);
-                        showTextNotification(`Login Successful: Happy Coding ${userProfile.name}`, 10);
+                        showErrorNotification(`Login Successful: Happy Coding ${userProfile.name}`, 10);
                         const currentVersion = context.extension.packageJSON.version;
                         const socketConnection: Socket | null = await socketModule.connect(currentVersion, context);
                         initializeAppFunctions(vscodeEventsModule, completionProviderModule, authManager, socketModule, context);
@@ -51,25 +52,25 @@ export async function handleTokenUri(
                     } else {
                         await authManager.clearTokens();
                         authManager.clearUserProfile();
-                        showTextNotification('Unable to login: Click on status bar to login again', 60);
+                        showErrorNotification('Unable to login: Click on status bar to login again', 60);
                         console.error('NeoCopilot: User verification failed');
 
                     }
                 } else {
                     await authManager.clearTokens();
                     authManager.clearUserProfile();
-                    showTextNotification('Unable to login: Click on status bar to login again', 60);
+                    showErrorNotification('Unable to login: Click on status bar to login again', 60);
 
                 }
             } catch (error) {
                 console.error('NeoCopilot: Error in user verification');
                 await authManager.clearTokens();
                 authManager.clearUserProfile();
-                showTextNotification('Unable to login. Click on status bar to login again', 60);
+                showErrorNotification('Unable to login. Click on status bar to login again', 60);
 
             }
         } else {
-            showTextNotification('Unable to Login: Click on status bar to login again', 60);
+            showErrorNotification('Unable to Login: Click on status bar to login again', 60);
 
         }
     }

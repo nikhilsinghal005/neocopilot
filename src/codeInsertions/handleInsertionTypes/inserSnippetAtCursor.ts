@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { showTextNotification } from '../../utilities/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../../utilities/statusBarNotifications/showErrorNotification';
 
 interface Insertion {
     id: string;
@@ -22,7 +23,7 @@ export function insertSnippetAtCursorFunction(
     
     // Check if there is an active editor
     if (!editor) {
-      showTextNotification('No active editor found.', 3)
+      showErrorNotification('No active editor found.', 3)
       return;
     }
   
