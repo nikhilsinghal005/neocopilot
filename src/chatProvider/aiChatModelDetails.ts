@@ -23,6 +23,7 @@ export class AiChatModelDetails {
     
     // Making sure the socket is connected everytime socket connects.
     this.socketModule.socket?.on('connect', () => {
+      console.log('Socket connected. Trying to attach getAllModels listeners.');
       this.attachSocketListeners();
     });
   }
@@ -30,7 +31,9 @@ export class AiChatModelDetails {
    * Attach necessary socket listeners.
    */
    private attachSocketListeners(): void {
+    console.log('Attaching Model details socket listeners.');
     if (!this.socketModule.socket?.listeners('basic_app_details').length) {
+      console.log('Attaching basic_app_details listener.');
       this.socketModule.socket?.on('basic_app_details', (data: any) => {
         const chatData = data.chat_model_limits
         this.chatDetailsUpdate(chatData)

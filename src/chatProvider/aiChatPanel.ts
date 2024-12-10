@@ -35,13 +35,13 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     private readonly _authManager: AuthManager,
     private readonly viewType: string
   ) {
-    this.socketModule = SocketModule.getInstance();  // Singleton for managing socket connections
-    this.panelManager = new PanelManager(this._context);  // Panel manager for controlling the webview panels
-    this.codeInsertionManager = CodeInsertionManager.getInstance(this._context);  // Code insertion manager
-    this.aiChatMessageHandler = new AiChatMessageHandler(this, this._authManager, this._context);  // Handles chat message sending and reception
-    this.aiChatSmartInsertHandler = new AiChatSmartInsertHandler(this, this._authManager, this._context);  // Smart code insertion handler
-    this.aiChatContextHandler = new AiChatContextHandler(this, this._authManager, this._context);  // Handles context-based actions (e.g., file names)
-    this.aiChatModelDetails = new AiChatModelDetails(this, this._authManager, this._context);  // Handles AI model details
+    this.socketModule = SocketModule.getInstance();
+    this.panelManager = new PanelManager(this._context);
+    this.codeInsertionManager = CodeInsertionManager.getInstance(this._context);
+    this.aiChatMessageHandler = new AiChatMessageHandler(this, this._authManager, this._context);
+    this.aiChatSmartInsertHandler = new AiChatSmartInsertHandler(this, this._authManager, this._context);
+    this.aiChatContextHandler = new AiChatContextHandler(this, this._authManager, this._context); 
+    this.aiChatModelDetails = new AiChatModelDetails(this, this._authManager, this._context);
   }
 
   // Singleton instance to ensure only one AiChatPanel instance exists
@@ -52,7 +52,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     viewType: string
   ): AiChatPanel {
     if (!AiChatPanel.primaryInstance) {
+      console.log('Creating new AiChatPanel instance');
       AiChatPanel.primaryInstance = new AiChatPanel(extensionUri, context, authManager, viewType);
+    }else{
+      console.log('Reusing existing AiChatPanel instance');
     }
     return AiChatPanel.primaryInstance;
   }

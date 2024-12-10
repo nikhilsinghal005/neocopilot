@@ -32,7 +32,6 @@ export class AiChatMessageHandler {
           // Handles sending a chat message
           case 'send_chat_message':
             const inputChat: ChatSession = message.data;
-            console.log("----------------", inputChat)
             this.attemptSendChatMessage(inputChat);
             break;
         }
@@ -65,7 +64,10 @@ export class AiChatMessageHandler {
    * @param retries Number of remaining retries.
    */
   public attemptSendChatMessage(inputChat: ChatSession, retries = 3): void {
+    this.socketModule = SocketModule.getInstance();
     if (this.socketModule.socket?.connected) {
+      console.log("Socket connected. Attaching listeners for Chat messages.");
+      this.attachSocketListeners();
       this.sendChatMessage(inputChat);
     } else if (retries > 0) {
       setTimeout(() => {
@@ -85,13 +87,16 @@ export class AiChatMessageHandler {
    * Attach necessary socket listeners.
    */
   private attachSocketListeners(): void {
+    console.log("Attaching listeners for Chat messages.");
     if (this.socketModule.socket?.listeners('receive_chat_response').length === 0) {
+      console.log("Attaching listeners for Chat messages.");
       this.socketModule.socket?.on('receive_chat_response', (data: MessageResponseFromBackEnd) => {
         this.forwardMessageToWebviews(data);
       });
     }
   
     if (this.socketModule.socket?.listeners('typing_indicator').length === 0) {
+      console.log("Attaching listeners for Chat messages.");
       this.socketModule.socket?.on('typing_indicator', (data: any) => {
         this.postTypingIndicatorMessageToWebview(this.aiChatPanel.activePanels[0], data.processingState);
       });

@@ -36,6 +36,7 @@ export class AiChatSmartInsertHandler {
 
     // Reattach listeners on every socket reconnection
     this.socketModule.socket?.on('connect', () => {
+      console.log('Socket connected successfully. Attaching smart listeners.');
       this.attachSocketListeners();
     });
   }
@@ -44,8 +45,10 @@ export class AiChatSmartInsertHandler {
    * Attach necessary socket listeners.
    */
   private attachSocketListeners(): void {
+    console.log('Attaching socket listeners');
     const event = 'recieve_editor_smart_insert';
     if (!this.socketModule.socket?.listeners(event).length) {
+      console.log('Attaching socket listener for ', event);
       this.socketModule.socket?.on(event, (data: any) => {
         this.applySmartInsertCode(data);
       });
@@ -284,7 +287,9 @@ export class AiChatSmartInsertHandler {
    * @param retries Number of retry attempts.
    */
   private sendSmartInsertCode(inputMessages: smartInsert, retries = 3): void {
+    this.socketModule = SocketModule.getInstance();
     if (this.socketModule.socket?.connected) {
+      console.log("Socket is connected");
       this.attachSocketListeners();
       this.sendEditorSmartInsert(
         inputMessages.uniqueId,
