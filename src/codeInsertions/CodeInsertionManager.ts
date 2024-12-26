@@ -392,6 +392,8 @@ public rejectInsertion(id: string): void {
     // console.log("------------------------------------------------", JSON.stringify(updatedText))
     // count of occurances
     let newLineList = updatedText.split(nextLineCharacter)
+    newLineList = newLineList.filter(line => !line.includes("```"));
+
     if (newLineList.length > 1) {
       this.leftOver = newLineList.pop() || ""
     }

@@ -347,6 +347,8 @@ public async enqueueSnippetLineByLine(
       // await new Promise((resolve) => setTimeout(resolve, 5000));
       // count of occurances
       let newLineList = updatedText.split(nextLineCharacter)
+      newLineList = newLineList.filter(line => !line.includes("```"));
+
       if (newLineList.length > 1) {
         this.leftOver = newLineList.pop() || ""
       }
