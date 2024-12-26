@@ -1,38 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
   <!-- Define gradients -->
   <defs>
-    <!-- Gradient for left angle bracket -->
+    <!-- Gradient for left bracket -->
     <linearGradient id="leftBracketGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff; stop-opacity:1" /> <!-- Slightly lighter green -->
-      <stop offset="100%" style="stop-color:#0eb666; stop-opacity:1" /> <!-- Darker green -->
+      <stop offset="0%" style="stop-color:#8a46eb; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff; stop-opacity:1" />
     </linearGradient>
-    
-    <!-- Gradient for "Neo" text -->
-    <linearGradient id="neoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff; stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#0eb666; stop-opacity:1" />
+
+    <!-- Gradient for N= text -->
+    <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8a46eb; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff; stop-opacity:1" />
     </linearGradient>
-    
-    <!-- Gradient for right angle bracket -->
+
+    <!-- Gradient for right bracket -->
     <linearGradient id="rightBracketGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff; stop-opacity:1" /> <!-- Slightly darker green -->
-      <stop offset="100%" style="stop-color:#0eb666; stop-opacity:1" /> <!-- Forest green -->
+      <stop offset="0%" style="stop-color:#8a46eb; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff; stop-opacity:1" />
     </linearGradient>
   </defs>
-  
- 
-  <!-- Left angle bracket with subtle gradient difference -->
-  <text x="20%" y="47%" dominant-baseline="middle" text-anchor="end" font-size="24" font-weight="bold" font-family="Arial, serif" fill="url(#leftBracketGradient)" filter="url(#textShadow)">
-    &lt;
+
+  <!-- Left bracket -->
+  <text x="20%" y="50%" dominant-baseline="middle" text-anchor="end" font-size="50"  font-family="Arial, serif" fill="url(#leftBracketGradient)">
+    [
   </text>
-  
-  <!-- Neo text -->
-  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="36" font-weight="bold" font-family="Arial, sans-serif" fill="url(#neoGradient)" filter="url(#textShadow)">
-    /N
+
+  <!-- N= text -->
+  <text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" font-size="32"  font-weight="bold" font-family="Arial, sans-serif" fill="url(#textGradient)">
+    N=
   </text>
-  
-  <!-- Right angle bracket with subtle gradient difference -->
-  <text x="81%" y="47%" dominant-baseline="middle" text-anchor="start" font-size="24" font-weight="bold" font-family="Arial, serif" fill="url(#rightBracketGradient)" filter="url(#textShadow)">
-    &gt;
+
+  <!-- Right bracket -->
+  <text x="81%" y="50%" dominant-baseline="middle" text-anchor="start" font-size="50"  font-family="Arial,Z sans-serif" fill="url(#textGradient)">
+    ]
   </text>
 </svg>
