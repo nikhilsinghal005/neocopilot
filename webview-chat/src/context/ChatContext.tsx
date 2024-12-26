@@ -1,6 +1,5 @@
-// src/context/ChatContext.tsx
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { ChatSession, MessageStore, CurrentFileContext, EditorOpenFileList } from '../types/Message';
+import { ChatSession, MessageStore, CurrentFileContext, EditorOpenFileList, ChatSessionList } from '../types/Message';
 import { chatModelDetail } from '../types/AppDetails';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -21,6 +20,8 @@ interface ChatContextProps {
   setIsInterrupted: React.Dispatch<React.SetStateAction<boolean>>;
   chatModelList: chatModelDetail[];
   setChatModelList: React.Dispatch<React.SetStateAction<chatModelDetail[]>>;
+  chatSessionList: ChatSessionList;
+  setChatSessionList:  React.Dispatch<React.SetStateAction<ChatSessionList>>;
 }
 
 const createNewChatSession = (): ChatSession => ({
@@ -54,7 +55,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }else{
       const newSession: ChatSession = createNewChatSession();
       sessionStorage.setItem('chatSession', JSON.stringify(newSession));
-      return createNewChatSession();
+      return newSession;
     }
   });
 
@@ -64,17 +65,41 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
   const [isInterrupted, setIsInterrupted] = useState<boolean>(false);
   const [chatModelList, setChatModelList] = useState<chatModelDetail[]>([]);
+  const [chatSessionList, setChatSessionList] = useState<ChatSessionList>([]);
+
   
   useEffect(() => {
     sessionStorage.setItem('chatSession', JSON.stringify(chatSession));
   }, [chatSession]);
 
   const clearChatSession = useCallback(() => {
+    if (chatSession.messages.length > 0) { // Check if there are any messages
+      let chatNameToSet = 'Untitled Chat';
+      const firstUserMessage = chatSession.messages.find(msg => msg.messageType === 'user');
+      if (firstUserMessage) {
+        chatNameToSet = firstUserMessage.text.substring(0, 100);
+      }
+  
+      setChatSessionList((prev) => {
+        // Filter out the session with the same chatId
+        const updatedList = prev.filter(session => session.chatId !== chatSession.chatId);
+  
+        // Add the new session and limit the list size to 10
+        const newList = [
+          { ...chatSession, chatName: chatNameToSet },
+          ...updatedList,
+        ];
+  
+        return newList.slice(0, 10); // Keep only the latest 10 sessions
+      });
+    }
+    
     const newSession = createNewChatSession();
     sessionStorage.setItem('chatSession', JSON.stringify(newSession));
     setChatSession(newSession);
-  }, []);
-
+  }, [chatSession, setChatSessionList]);
+  
+  
   const addMessage = useCallback((newMessage: MessageStore) => {
     setChatSession((prevSession) => ({
       ...prevSession,
@@ -95,6 +120,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addMessage,
         isInterrupted, setIsInterrupted,
         chatModelList, setChatModelList,
+        chatSessionList, setChatSessionList,
       }}>
       {children}
     </ChatContext.Provider>
