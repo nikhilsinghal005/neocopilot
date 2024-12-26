@@ -135,7 +135,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
           // Toggles sidebar visibility or location
           case 'toggleSidebar':
-            await this.togglePanelLocation();
+            await this.panelManager.togglePanelLocationChange();
+            console.log("Toggled sidebar");
             break;
 
           // Handles code snippet insertion into terminal or editor
@@ -188,10 +189,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     }
   }
   
-  // Toggle the location of the panel (e.g., from sidebar to main window)
-  private async togglePanelLocation(): Promise<void> {
-    this.panelManager.togglePanelLocationChange();
-  }
+
 
   // Send authentication status to the webview
   public sendAuthStatus(isLoggedIn: boolean): void {
