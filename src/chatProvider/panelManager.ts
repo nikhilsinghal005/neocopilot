@@ -13,7 +13,7 @@ export class PanelManager {
 
     async togglePanelLocationChange(): Promise<void> {
         try {
-            console.log("Starting the panel location change process...");
+          // console.log("Starting the panel location change process...");
 
             // Write the desired option to the clipboard
             vscode.commands.executeCommand('workbench.action.moveView');
@@ -32,7 +32,7 @@ export class PanelManager {
 
             await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
         } catch (error) {
-            console.error("Error during panel location toggle:", error);
+            // console.error("Error during panel location toggle:", error);
         }
     }
 }

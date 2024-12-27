@@ -53,7 +53,7 @@ export const useChatListener = () => {
 
         if (data.isComplete) finalizeMessage();
       } catch (error) {
-        console.error("Error updating chat message in useChatListener:", error);
+        // console.error("Error updating chat message in useChatListener:", error);
       }
     };
 
@@ -95,7 +95,7 @@ export const useChatListener = () => {
         }
 
         if (!messageInProgressRef.current) {
-          console.error("messageInProgressRef is null during updateSessionWithMessage. This should not happen.");
+          // console.error("messageInProgressRef is null during updateSessionWithMessage. This should not happen.");
           return prevSession;
         }
 

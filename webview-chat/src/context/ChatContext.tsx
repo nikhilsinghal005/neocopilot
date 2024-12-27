@@ -49,7 +49,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         return JSON.parse(storedSession) as ChatSession;
       } catch (error) {
-        console.error("Failed to parse stored chat session:", error);
+        // console.error("Failed to parse stored chat session:", error);
         return createNewChatSession();
       }
     }else{

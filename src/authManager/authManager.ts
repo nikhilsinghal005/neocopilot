@@ -62,7 +62,7 @@ export class AuthManager {
         return null;
       }
     } catch (error) {
-      console.error('Neo Copilot: Failed to retrieve user info', error);
+      // console.error('Neo Copilot: Failed to retrieve user info', error);
       return null;
     }
   }

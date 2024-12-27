@@ -46,7 +46,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
 
     const handleNewFileRequired = (event: MessageEvent) => {
       if (event.data.command === 'file_does_not_exist' && event.data.codeId === codeId) {
-        console.log("Check the data recived from the extension", event.data)
+      // console.log("Check the data recived from the extension", event.data)
         // console.log("File does not exist")
         if (event.data.isAnyFileOpen) {
           setState('newFileRequiredType1');

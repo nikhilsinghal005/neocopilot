@@ -36,7 +36,7 @@ export class AiChatSmartInsertHandler {
 
     // Reattach listeners on every socket reconnection
     this.socketModule.socket?.on('connect', () => {
-      console.log('Socket connected successfully. Attaching smart listeners.');
+    // console.log('Socket connected successfully. Attaching smart listeners.');
       this.attachSocketListeners();
     });
   }
@@ -45,10 +45,10 @@ export class AiChatSmartInsertHandler {
    * Attach necessary socket listeners.
    */
   private attachSocketListeners(): void {
-    console.log('Attaching socket listeners');
+  // console.log('Attaching socket listeners');
     const event = 'recieve_editor_smart_insert';
     if (!this.socketModule.socket?.listeners(event).length) {
-      console.log('Attaching socket listener for ', event);
+    // console.log('Attaching socket listener for ', event);
       this.socketModule.socket?.on(event, (data: any) => {
         this.applySmartInsertCode(data);
       });
@@ -112,7 +112,7 @@ export class AiChatSmartInsertHandler {
         }
       }
     } catch (error) {
-      console.error("Error in handleCreateNewFile:", error);
+      // console.error("Error in handleCreateNewFile:", error);
       showErrorNotification('An error occurred while creating a new file.', 4);
     }
   }
@@ -168,7 +168,7 @@ export class AiChatSmartInsertHandler {
 
       this.processSmartInsert(message);
     } catch (error) {
-      console.error("Error in insertProcessVerification:", error);
+      // console.error("Error in insertProcessVerification:", error);
       this.sendMessageToWebview({
         command: 'smart_insert_to_editor_update',
         isComplete: false,
@@ -229,7 +229,7 @@ export class AiChatSmartInsertHandler {
         this.sendSmartInsertCode(output);
       }    
     } catch (error) {
-      console.error("Error in insertProcessVerification:", error);
+      // console.error("Error in insertProcessVerification:", error);
       this.sendMessageToWebview({
         command: 'smart_insert_to_editor_update',
         isComplete: false,
@@ -267,7 +267,7 @@ export class AiChatSmartInsertHandler {
         status: "completed_successfully"
       });
     } catch (error) {
-      console.error("Error in insertProcessVerification:", error);
+      // console.error("Error in insertProcessVerification:", error);
       this.sendMessageToWebview({
         command: 'smart_insert_to_editor_update',
         isComplete: false,
@@ -287,7 +287,7 @@ export class AiChatSmartInsertHandler {
   private sendSmartInsertCode(inputMessages: smartInsert, retries = 3): void {
     this.socketModule = SocketModule.getInstance();
     if (this.socketModule.socket?.connected) {
-      console.log("Socket is connected");
+    // console.log("Socket is connected");
       this.attachSocketListeners();
       this.sendEditorSmartInsert(
         inputMessages.uniqueId,
@@ -364,7 +364,7 @@ export class AiChatSmartInsertHandler {
         // this.socketModule.predictionRequestInProgress = false;
       }
     } catch (error) {
-      console.error("Error in insertProcessVerification:", error);
+      // console.error("Error in insertProcessVerification:", error);
       this.sendMessageToWebview({
         command: 'smart_insert_to_editor_update',
         isComplete: false,
@@ -398,7 +398,7 @@ export class AiChatSmartInsertHandler {
     updatedCode: string,
     actionType: string
   ) {
-    console.log("Message to scoket from backend")
+  // console.log("Message to scoket from backend")
     // this.socketModule.predictionRequestInProgress = true;
     if (this.socketModule.socket) {
       this.socketModule.socket.emit('generate_editor_smart_insert', {

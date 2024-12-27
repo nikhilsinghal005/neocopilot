@@ -2,14 +2,14 @@ import * as vscode from 'vscode';
 import { LOGIN_REDIRECT_URL } from '../../config';
 
 export async function showCustomNotification(customMessage: string, displayDurationInSeconds: number = 10) {
-  console.log("Custom Message:", customMessage);
+// console.log("Custom Message:", customMessage);
 
   // Define the buttons as MessageItem objects
   const upgradeButton: vscode.MessageItem = { title: "Upgrade to Pro" };
   const continueButton: vscode.MessageItem = { title: "Continue", isCloseAffordance: false };
   
   const showButtons = customMessage.includes("Neo:");
-  console.log("Show Buttons:", showButtons);
+// console.log("Show Buttons:", showButtons);
 
   const displayMessage = customMessage.replace(/^Neo:\s*/, '');
 
