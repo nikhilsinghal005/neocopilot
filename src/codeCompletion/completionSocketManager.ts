@@ -12,6 +12,7 @@ import {
 } from "../utilities/codeCompletionUtils/completionUtils";
 import { getTextBeforeCursor } from "../utilities/codeCompletionUtils/editorCodeUtils";
 import { GetLineSeparator } from '../utilities/editorUtils/getLineSeparator';
+import { showCustomNotification } from '../utilities/statusBarNotifications/showCustomNotification';
 
 /**
  * Interface representing the structure of a prediction received from the socket.
@@ -34,11 +35,14 @@ export class CompletionSocketManager {
   public tempUniqueIdentifier: string = "NA";
   public currentVersion = versionConfig.getCurrentVersion();
   public currentSuggestionId: string = "";
-  public rateLimitExceeded: boolean = false;
   public isSuggestionRequired: boolean = true;
   public startTime: number = performance.now();
   public previousText: string = "";
+  private rateLimitTime: number = 0;
+  private isRateLimitExceeded: boolean = false;
+  private rateLimitDebounceTimeout: any = null; // Store timeout for debounce logic
 
+  
   // Private properties
   private tempSuggestion: string = "";
   private debounceTimer: NodeJS.Timeout | null = null;
@@ -119,7 +123,7 @@ export class CompletionSocketManager {
     inputType: string,
     language: string
   ): void {
-    if (this.rateLimitExceeded) {
+    if (this.isRateLimitExceeded) {
       console.warn("Rate limit exceeded. Prediction request aborted.");
       return;
     }
@@ -170,7 +174,7 @@ export class CompletionSocketManager {
     completion_comment: string,
     completion_size: number
   ): void {
-    if (this.rateLimitExceeded) {
+    if (this.isRateLimitExceeded) {
       return;
     }
 
@@ -190,6 +194,25 @@ export class CompletionSocketManager {
    * @param predictionReceived Data received from the socket.
    */
   private predictionHandleFunction(predictionReceived: any): void {
+    // Check for rate limti hit
+    if (predictionReceived.isRateLimit){
+        showCustomNotification(predictionReceived.rateLimitResponse);
+        this.rateLimitTime = predictionReceived.rateLimitTime
+        this.isRateLimitExceeded = predictionReceived.isRateLimit
+        this.reinitializeSocket()
+
+        // Log a warning with the remaining rate limit time
+        console.warn(`Code completion rate limit hit. Limited for ${this.rateLimitTime} seconds.`);
+
+        // Set a timer for when the rate limit expires
+        setTimeout(() => {
+          this.isRateLimitExceeded = false;
+          this.rateLimitTime = 0;
+        }, this.rateLimitTime*1000);
+
+        return;
+    }
+
     const prediction: PredictionReceived = {
       message: predictionReceived.message,
       message_list: predictionReceived.message_list,
