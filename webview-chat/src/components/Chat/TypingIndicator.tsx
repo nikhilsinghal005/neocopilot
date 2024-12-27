@@ -24,7 +24,7 @@ const TypingIndicator: React.FC = () => {
 
   return (
     <div className="message flex justify-start mb-4">
-      <span className="codicon codicon-person text-vscode-editor-foreground mr-1"></span>
+      <span className="text-vscode-editor-foreground mr-2"></span>
       <div
         className="px-2 rounded-lg max-w-full break-words shadow-md text-vscode-editor-foreground"
         // style={{
