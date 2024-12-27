@@ -1,227 +1,273 @@
-// src/SuggestionManager.ts
+// src/codeCompletion/SuggestionManager.ts
+
 import * as vscode from 'vscode';
 import { SocketModule } from '../socketModule';
 import { getTextBeforeCursor, getTextAfterCursor } from "../utilities/codeCompletionUtils/editorCodeUtils";
-import { isNullOrEmptyOrWhitespace } from "../utilities/codeCompletionUtils/completionUtils";
-import { getDeletedText } from "../utilities/codeCompletionUtils/completionUtils";
+import { isNullOrEmptyOrWhitespace, getDeletedText, searchSuggestion } from "../utilities/codeCompletionUtils/completionUtils";
 import { v4 as uuidv4 } from 'uuid';
 import { DeletionHandler } from '../codeCompletion/handleActions/deleteActionHandler';
 import { UpdateHandler } from '../codeCompletion/handleActions/updateActionHandler';
+import { CompletionProviderModule } from '../codeCompletion/completionProviderModule';
+import { VscodeEventsModule } from '../codeCompletion/vscodeEventsModule';
+import { CompletionSocketManager } from '../codeCompletion/completionSocketManager';
 
+/**
+ * Manages suggestions based on user interactions and predictions.
+ */
 export class SuggestionManager {
+  // Singleton instances of modules
   private socketModule: SocketModule;
-  public textBeforeCursor: string = ""; // Text before cursor sent to Frontend
+  private completionProviderModule: CompletionProviderModule;
+  private completionSocketManager: CompletionSocketManager;
+
+  // Handlers for deletion and updates
   private deleteActionHandler: DeletionHandler;
   private updateActionHandler: UpdateHandler;
+
+  // Suggestion Parameters
   public mainSuggestion: string = "";
   public tempSuggestion: string = "";
   public mainListSuggestion: string[] = [];
-  public predictionWaitText: string = "";
+
+  // Editor Content Parameters
+  private isTextDeleted: boolean = false;
+  public textBeforeCursor: string = "";
+  public updatedText: string = "";
+
+  // Action Parameters
   public typeOfAction: string = "";
   public specialCharacters: string[];
   public deleteSpecialCharacters: string[];
-  public uniqueIdentifier: string = uuidv4();
-  private debounceTimeout: NodeJS.Timeout | undefined;
-  public predictionDelay: number = 300;
 
-  constructor(socketModule: SocketModule) {
-    this.socketModule = socketModule;
+  // Debounce Mechanism
+  private debounceTimeout: NodeJS.Timeout | undefined;
+  public predictionDelay: number = 50;
+
+  // Tracking Text States
+  public previousText: string = "";
+
+  /**
+   * Initializes the SuggestionManager with necessary handlers and modules.
+   * @param vscodeEventsModule Instance of VscodeEventsModule.
+   */
+  constructor(private vscodeEventsModule: VscodeEventsModule) {
+    this.socketModule = SocketModule.getInstance();
+    this.completionProviderModule = CompletionProviderModule.getInstance();
+    this.completionSocketManager = CompletionSocketManager.getInstance();
+
     this.specialCharacters = ['(', '{', '[', '"', "'"];
     this.deleteSpecialCharacters = ['()', '{}', '[]', '""', "''"];
     this.typeOfAction = "EMIT-REQUEST";
     this.mainListSuggestion = [];
-    this.deleteActionHandler = new DeletionHandler(socketModule, this);
-    this.updateActionHandler = new UpdateHandler(socketModule, this);
+
+    this.deleteActionHandler = new DeletionHandler(this);
+    this.updateActionHandler = new UpdateHandler(this);
   }
 
+  /**
+   * Reinitializes the suggestion parameters to their default states.
+   */
   public reinitialize(): void {
-    this.socketModule.completionProvider.updateSuggestion("");
+    this.completionProviderModule.updateSuggestion("");
     this.mainSuggestion = "";
-    this.socketModule.predictionWaitText = "";
+    this.completionSocketManager.predictionWaitText = "";
     this.mainListSuggestion = [];
-    this.socketModule.predictionRequestInProgress = false;
-    this.predictionWaitText = "";
+    this.completionSocketManager.predictionRequestInProgress = false;
+    this.completionSocketManager.predictionWaitText = "";
   }
 
+  /**
+   * Handles text changes in the editor and manages suggestions accordingly.
+   * @param event Text document change event.
+   * @param editor Active text editor.
+   * @param currentStartLineNumber Starting line number of the change.
+   * @param currentStartCharacterPosition Starting character position of the change.
+   * @param currentEndLineNumber Ending line number of the change.
+   * @param currentEndCharacterPosition Ending character position of the change.
+   */
   public handleTextChange(
     event: vscode.TextDocumentChangeEvent,
     editor: vscode.TextEditor | undefined,
-    currentText: string,
-    previousText: string,
     currentStartLineNumber: number,
     currentStartCharacterPosition: number,
     currentEndLineNumber: number,
     currentEndCharacterPosition: number,
-    updatedText: string,
-    currentLanguage: string
   ): void {
     try {
-      // console.log("============ NeoCopilot: Text Prediction Handling ===============");
-      if (isNullOrEmptyOrWhitespace(currentText) || !editor) { // strip white spaces from current text
-        // console.log("Input text is short");
+      // Validate input text and editor presence
+      if (isNullOrEmptyOrWhitespace(this.vscodeEventsModule.currentText) || !editor) {
+        //console.log("Input text is short or editor is undefined.");
         this.reinitialize();
         return;
       }
 
+      // Handle Undo and Redo actions
       const reason = event.reason;
-      switch (reason) {
-        case vscode.TextDocumentChangeReason.Undo:
-          // console.log("User has undone changes");
-          // FutureLogs: Add handling when user has predicted changes: Priority Low
-          this.reinitialize();
-          return;
-        case vscode.TextDocumentChangeReason.Redo:
-          // console.log("User has redo changes");
-          this.reinitialize();
-          // FutureLogs: Add handling when user has predicted changes: Priority Low
-          return;
-      }
-
-      if (event.contentChanges.length > 1) { // If there are more than one changes in the editor
-        // console.log("More than one changes in the editor");
-        const multipleChange = event.contentChanges[0].text;
-        if (["// ", "# "].includes(multipleChange)) {
-          this.reinitialize();
-          return;
-        }
+      if (reason === vscode.TextDocumentChangeReason.Undo || reason === vscode.TextDocumentChangeReason.Redo) {
+        //console.log(`User performed a ${reason === vscode.TextDocumentChangeReason.Undo ? 'Undo' : 'Redo'} action.`);
         this.reinitialize();
         return;
       }
+
+      // Handle multiple content changes
+      if (event.contentChanges.length > 1) {
+        //console.log("Multiple content changes detected.");
+        this.reinitialize();
+        return;
+      }
+
+      // Update suggestion parameters to ensure they are current
+      this.mainSuggestion = this.completionSocketManager.suggestion;
+      this.tempSuggestion = this.completionProviderModule.suggestion;
+      this.mainListSuggestion = this.completionSocketManager.socketListSuggestion;
 
       this.textBeforeCursor = getTextBeforeCursor(editor);
-      // Update the suggestion parameters to make sure they always remain updated
-      this.mainSuggestion = this.socketModule.suggestion;
-      this.tempSuggestion = this.socketModule.completionProvider.suggestion;
-      this.mainListSuggestion = this.socketModule.socketListSuggestion;
+      this.updatedText = event.contentChanges[0].text;
+      this.isTextDeleted = this.updatedText === "" || !this.updatedText;
 
-      // Check if Prediction is Already in Progress
-      if (this.socketModule.predictionRequestInProgress) {
-        // console.log("Prediction is in progress");
-        this.handlePredictionInProgress(updatedText);
+      // If text is deleted, determine the deleted text
+      if (this.isTextDeleted) {
+        this.updatedText = getDeletedText(
+          this.vscodeEventsModule.previousText,
+          currentStartLineNumber,
+          currentStartCharacterPosition,
+          currentEndLineNumber,
+          currentEndCharacterPosition
+        );
+      }
+
+      //console.log("Updated Text:", this.updatedText);
+
+      // Check if a prediction is already in progress
+      if (this.completionSocketManager.predictionRequestInProgress) {
+        //console.log("Prediction is in progress.");
+        this.handlePredictionInProgress(this.updatedText, this.isTextDeleted);
         return;
       } else {
-        // console.log("Prediction is not in progress");
-        this.predictionWaitText = "";
-        this.socketModule.predictionWaitText = "";
+        this.completionSocketManager.predictionWaitText = "";
+        this.completionSocketManager.isSuggestionRequired = true;
       }
 
       // Action when prediction exists
       if (this.mainSuggestion && this.tempSuggestion) { 
+        //console.log("Prediction already exists.");
+        
+        // Check if text is deleted
+        if (this.isTextDeleted) { 
+          //console.log("Deleted Text:", this.updatedText);
+          const isDeletionValid = this.deleteActionHandler.handleDeletion(
+            this.updatedText,
+            currentStartLineNumber,
+            currentStartCharacterPosition,
+            currentEndLineNumber,
+            currentEndCharacterPosition
+          );
+          //console.log("Is Deletion Valid:", isDeletionValid);
 
-          // console.log("Prediction already exists");
-          // Check if text is deleted or not
-          if (this.deleteActionHandler.isTextDeleted(updatedText)) { 
-
-            // console.log("Text is deleted");
-            const deletedText = getDeletedText( 
-              previousText, 
-              currentStartLineNumber, 
-              currentStartCharacterPosition,
-              currentEndLineNumber, 
-              currentEndCharacterPosition
-            );
-
-            // console.log("Deleted Text:", deletedText);
-            this.deleteActionHandler.handleDeletion(
-              deletedText,
-              currentStartLineNumber,
-              currentStartCharacterPosition,
-              currentEndLineNumber,
-              currentEndCharacterPosition
-            );
+          if (isDeletionValid) {
+            return;
           }
-
+        }
       } else {
-          // When no suggestion exists in the editor
-          // console.log("Prediction does not exist");
-          this.reinitialize();
-          if (this.deleteActionHandler.isTextDeleted(updatedText)) {
-              this.deleteActionHandler.handleAllDeletion(
-                currentStartLineNumber, 
-                currentEndLineNumber,
-                currentEndCharacterPosition,
-                currentStartCharacterPosition
-              );
-          } else {
-              this.updateActionHandler.handleUpdateWhenNoPrediction(
-                  updatedText
-              );
-          }
+        // When no suggestion exists in the editor
+        this.reinitialize();
+        if (this.isTextDeleted) {
+          // Optionally handle all deletions if needed
+          // this.deleteActionHandler.handleAllDeletion(
+          //   currentStartLineNumber, 
+          //   currentEndLineNumber,
+          //   currentEndCharacterPosition,
+          //   currentStartCharacterPosition
+          // );
+          return;
+        } else {
+          this.updateActionHandler.handleUpdateWhenNoPrediction(this.updatedText);
+        }
       }
 
       if (!this.mainSuggestion) { 
         // Action in case if prediction does not exist
         if (editor && editor.document === event.document) {
-          this.sendForPrediction(updatedText, currentLanguage);
+          this.sendForPrediction(this.updatedText, this.vscodeEventsModule.currentLanguage);
         }
-
       } else {
-        // console.log("Text is updated");
+        // Update suggestions when prediction exists
         this.updateActionHandler.handleUpdateWhenPredictionExists(
-            event,
-            editor,
-            updatedText,
-            currentLanguage
+          event,
+          editor,
+          this.updatedText,
+          this.vscodeEventsModule.currentLanguage
         );
       }
 
-    } catch (Error) {
-      // console.log("Error:", Error)
+    } catch (error) {
+      console.error("Error in handleTextChange:", error);
       this.socketModule.customInformationMessage(
         'SuggestionManager:handleTextChange', 
-        JSON.stringify(Error)
+        JSON.stringify(error)
       );
       this.reinitialize();
     }
   }
 
-  // Handle Running Predictions
-  private handlePredictionInProgress(updatedText: string): void {
-    if (updatedText) {
-        this.predictionWaitText += updatedText;
-        this.socketModule.predictionWaitText = this.predictionWaitText;
+  /**
+   * Handles scenarios when a prediction is already in progress.
+   * @param updatedText The text that was updated.
+   * @param isTextDeleted Indicates if the text was deleted.
+   */
+  private handlePredictionInProgress(updatedText: string, isTextDeleted: boolean): void {
+    if (isTextDeleted) {
+      if (this.completionSocketManager.predictionWaitText && this.completionSocketManager.predictionWaitText.endsWith(updatedText)) {
+        this.completionSocketManager.predictionWaitText = this.completionSocketManager.predictionWaitText.substring(0, this.completionSocketManager.predictionWaitText.length - updatedText.length);
+      } else {
+        this.completionSocketManager.predictionWaitText = "";
+        this.completionSocketManager.isSuggestionRequired = false;
+      }
     } else {
-        // Handle text deletion during prediction
-        this.predictionWaitText = "";
-        this.socketModule.predictionWaitText = "";
-        this.socketModule.isSuggestionRequired = false;
+      this.completionSocketManager.predictionWaitText += updatedText;
     }
   }
 
-  // Send data for prediction
+  /**
+   * Sends the current text for prediction.
+   * @param updatedText The text that was updated.
+   * @param currentLanguage The current programming language.
+   */
   public sendForPrediction(updatedText: string, currentLanguage: string): void {
+    //console.log("============ NeoCopilot: Prediction Request ===============");
+    
     // Clear any existing debounce timeout
     if (this.debounceTimeout) {
-      // console.log("Time Cleared Out")
       clearTimeout(this.debounceTimeout);
     }
   
     // Set a new debounce timeout
     this.debounceTimeout = setTimeout(() => {
-      if (vscode.window.activeTextEditor) {
-
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
         // Reinitialize suggestion manager
         this.reinitialize();
-        this.uniqueIdentifier = uuidv4();
-        this.socketModule.startTime = performance.now();
+        this.completionSocketManager.startTime = performance.now();
 
-        // Check if the text before cursor is the same as the expected text before cursor
+        // Determine expected text before cursor
         let expectedTextBeforeCursor: string;
         if (this.deleteSpecialCharacters.includes(updatedText)) {
           expectedTextBeforeCursor = this.textBeforeCursor + updatedText[0];
-        }else{
+        } else {
           expectedTextBeforeCursor = this.textBeforeCursor + updatedText;
         }
 
-        if (expectedTextBeforeCursor !== getTextBeforeCursor(vscode.window.activeTextEditor)) {
+        // Validate the current text before cursor
+        if (expectedTextBeforeCursor !== getTextBeforeCursor(editor)) {
           this.reinitialize();
           return;
         } else {
           // Emit the prediction request
-          this.socketModule.emitMessage(
-            this.uniqueIdentifier,
-            getTextBeforeCursor(vscode.window.activeTextEditor),
-            getTextAfterCursor(vscode.window.activeTextEditor),
+          this.completionSocketManager.attachSocketListeners();
+          this.completionSocketManager.emitMessage(
+            uuidv4(),
+            getTextBeforeCursor(editor),
+            getTextAfterCursor(editor),
             this.typeOfAction,
             currentLanguage
           );
@@ -229,4 +275,4 @@ export class SuggestionManager {
       }
     }, this.predictionDelay);
   }
-}  
+}

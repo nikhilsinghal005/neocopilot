@@ -4,6 +4,8 @@ import { CodeInsertionCodeLensProvider } from './CodeInsertionCodeLensProvider';
 import { insertSnippetAtCursorFunction} from './handleInsertionTypes/inserSnippetAtCursor';
 import {insertTextIntoTerminalFunction} from './handleInsertionTypes/insertCommandTerminal';
 import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../utilities/statusBarNotifications/showErrorNotification';
+
 
 /**
  * Represents an insertion in the editor.
@@ -162,12 +164,12 @@ public async reinitializeDecorationsAndCodeLenses(): Promise<void> {
   public acceptInsertion(id: string): void {
     const insertion = this.insertions.get(id);
     if (!insertion) {
-      vscode.window.showErrorMessage('Insertion not found.');
+      showErrorNotification('Insertion not found.');
       return;
   }
 
   if (!this.currentEditor) {
-    vscode.window.showErrorMessage('No active editor found.');
+    showErrorNotification('No active editor found.');
     return;
   }
 
@@ -200,10 +202,10 @@ public async reinitializeDecorationsAndCodeLenses(): Promise<void> {
         this.currentEditor?.setDecorations(this.insertedDecorationType, []);
         this.currentEditor?.setDecorations(this.deletedDecorationType, []);
         this.currentEditor?.setDecorations(this.sameDecorationType, []);
-        showTextNotification('Code accepted.', 1)
+        // showTextNotification('Code accepted.', 1)
         this.reinitialize();
       } else {
-        vscode.window.showErrorMessage('Failed to accept the insertion.');
+        showErrorNotification('Failed to accept the insertion.');
         this.reinitialize();
       }
     });
@@ -216,12 +218,12 @@ public async reinitializeDecorationsAndCodeLenses(): Promise<void> {
 public rejectInsertion(id: string): void {
   const insertion = this.insertions.get(id);
   if (!insertion) {
-    vscode.window.showErrorMessage('Insertion not found.');
+    showErrorNotification('Insertion not found.');
     return;
   }
 
   if (!this.currentEditor) {
-    vscode.window.showErrorMessage('No active editor found.');
+    showErrorNotification('No active editor found.');
     return;
   }
 
@@ -256,11 +258,11 @@ public rejectInsertion(id: string): void {
         this.currentEditor?.setDecorations(this.insertedDecorationType, []);
         this.currentEditor?.setDecorations(this.deletedDecorationType, []);
         this.currentEditor?.setDecorations(this.sameDecorationType, []);
-        showTextNotification('Code rejected.', 2)
+        // showTextNotification('Code rejected.', 2)
         this.reinitialize();
       } else {
-        showTextNotification('Failed to reject the insertion.', 2)
-        // vscode.window.showErrorMessage('Failed to reject the insertion.');
+        showErrorNotification('Failed to reject the insertion.', 2)
+        // showErrorNotification('Failed to reject the insertion.');
         this.reinitialize();
 
       }
@@ -347,7 +349,7 @@ public rejectInsertion(id: string): void {
 
     const editor = this.currentEditor;
     if (!editor || !this.selectionContext) {
-      vscode.window.showErrorMessage('No active editor or valid selection context found.');
+      showErrorNotification('No active editor or valid selection context found.');
         return;
     }
 
@@ -383,9 +385,15 @@ public rejectInsertion(id: string): void {
       return;
     }
     updatedText = this.leftOver + updatedText
+    if (updatedText.length === 0){
+      return;
+    }
+
     // console.log("------------------------------------------------", JSON.stringify(updatedText))
     // count of occurances
     let newLineList = updatedText.split(nextLineCharacter)
+    newLineList = newLineList.filter(line => !line.includes("```"));
+
     if (newLineList.length > 1) {
       this.leftOver = newLineList.pop() || ""
     }

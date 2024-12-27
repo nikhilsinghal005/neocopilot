@@ -6,6 +6,7 @@ import { AiChatPanel } from '../chatProvider/aiChatPanel';
 import { CodeSelectionCommand } from './selectionContext';
 import { SelectionContext } from './selectionContext';
 import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../utilities/statusBarNotifications/showErrorNotification';
 import { showCustomNotification } from '../utilities/statusBarNotifications/showCustomNotification';
 
 export class CodeSelectionCommandHandler {
@@ -114,12 +115,12 @@ export class CodeSelectionCommandHandler {
                   return; // Exit the loop on success
                 } else {
                   retries++;
-                  showTextNotification('Trying to connect with system. Please wait', 0.9);
+                  // showErrorNotification('Failed to get response. Retrying...', 0.9);
                   await delay(3000); // Wait 5 seconds before retrying
                 }
               }
               if (retries >= 4) {
-                showTextNotification('Unable to connect with system. Please check internet connection', 2);
+                showErrorNotification('Failed to get response. Please try again.', 2);
               }
             }
         ),
@@ -202,14 +203,18 @@ private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.T
 
         // Check if the data is complete
         if (data.isComplete) {
-          if (data.isError) {
-              this.updatedtext = "";
-              showTextNotification(data.response, 0.9);
-            }
-          else if (data.isRateLimit) {
-            showCustomNotification(data.response)
+          // this.socketModule.predictionRequestInProgress = false;
+          if (data.isRateLimit) {
+            console.log("Rate Limit Exceeded")
+            console.log(data.rateLimitResponse);
+            showCustomNotification(data.rateLimitResponse)
             this.updatedtext = "";
-          } else {
+          } 
+          else if (data.isError) {
+              this.updatedtext = "";
+              showErrorNotification(data.response, 0.9);
+            }
+          else {
             this.codeInsertionManager.enqueueSnippetLineByLine(
               "",
               data.id,
@@ -243,7 +248,6 @@ private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.T
 
     // Split the selected text into lines and store the start and end line numbers
     this.codeInsertionManager.currentEditor = editor;
-    console.log("nnnnnnnnnnnnnnnnnnnnn", this.codeInsertionManager.currentEditor)
     this.codeInsertionManager.oldLinesList = selectedText.split(this.nextLineCharacter);
     this.codeInsertionManager.oldStartLine = selection.start.line;
     this.codeInsertionManager.oldEndLine = selection.end.line;
@@ -264,7 +268,7 @@ private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.T
       this.uniqueRequestId = uuidv4();
       this.uniqueChatId = uuidv4();
 
-      this.socketModule.sendEditorCodeRefactor(
+      this.sendEditorCodeRefactor(
         this.uniqueRequestId,
         this.uniqueChatId,
         userInput,
@@ -285,69 +289,6 @@ private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.T
     } else {
       vscode.window.showInformationMessage('No input provided.');
     }
-  }
-
-/**
- * Handles the "Code Factor" command.
- */
-private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection) {
-  console.log("Without Selection");
-
-  const editor = this.codeInsertionManager.currentEditor;
-  if (!editor) {
-    vscode.window.showErrorMessage('No active editor found.');
-    return;
-  }
-
-    this.codeInsertionManager.reinitialize();
-    this.currentSelectionContext = selection;
-    this.nextLineCharacter = this.getLineSeparator();
-
-    // Get selected text
-    const selectedText = editor.document.getText(selection);
-    const position = editor.selection.active; // Get the current cursor position
-    const currentLineText = editor.document.lineAt(position.line).text; // Get the line where the cursor is currently positioned
-
-  // Check if the current line is empty after trimming
-  if (currentLineText.trim() === '') {
-    const documentText = editor.document.getText();
-    const textBeforeLine = documentText.substring(0, editor.document.offsetAt(new vscode.Position(position.line, 0)));
-    const textAfterLine = documentText.substring(editor.document.offsetAt(new vscode.Position(position.line + 1, 0)));
-
-    this.currentSelectionContext = selection;
-
-    // Prompt user for input
-    const userInput = await vscode.window.showInputBox({
-      prompt: 'Enter the purpose or label for the text',
-      placeHolder: 'e.g., Refactor, Review, Debug',
-    });
-
-    if (userInput) {
-      // Send data through SocketModule
-      this.nextLineCharacter = this.getLineSeparator();
-      this.uniqueRequestId = uuidv4();
-      this.uniqueChatId = uuidv4();
-
-      this.socketModule.sendEditorCodeRefactor(
-        this.uniqueRequestId,
-        this.uniqueChatId,
-        userInput,
-        "def",
-        textBeforeLine, // Text before the line
-        textAfterLine,  // Text after the line
-        textBeforeLine + this.nextLineCharacter + textAfterLine,
-        this.nextLineCharacter,
-        "no_select_action"
-      );
-    } else {
-      vscode.window.showInformationMessage('No input provided.');
-    }
-  } else {
-    // If the current line is not empty
-    vscode.window.showInformationMessage(
-      'The current line is not empty. Select some text or move to an empty line to use the edit functionality.'
-    );
-  }
   }
   
   /**
@@ -383,6 +324,37 @@ private async handleCodeFactorCommandForNoSelection(selection: vscode.Selection)
       editor.selection = new vscode.Selection(position, position);
     }
   }
+
+  private sendEditorCodeRefactor(
+    uniqueId: string, 
+    uniqueChatId: string, 
+    userInput: string, 
+    selectedText: string,
+    beforeText: string,
+    afterText: string,
+    completeText: string, 
+    nextLineCharacter: string,
+    actionType: string
+  ) {
+    console.log("Message to scoket from backend")
+    // this.socketModule.predictionRequestInProgress = true;
+    if (this.socketModule.socket) {
+      this.socketModule.socket.emit('generate_editor_code_refactor', {
+        uniqueId: uniqueId,
+        chatId: uniqueChatId,
+        userInput: userInput,
+        selectedText: selectedText,
+        beforeText: beforeText,
+        afterText: afterText,
+        completeText: completeText,
+        nextLineCharacter: nextLineCharacter,
+        actionType: actionType,
+        appVersion: this.socketModule.currentVersion,
+        userEmail: this.socketModule.email
+      });
+    }
+  }
+
 }
 
 

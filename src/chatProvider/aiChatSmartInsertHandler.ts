@@ -36,6 +36,7 @@ export class AiChatSmartInsertHandler {
 
     // Reattach listeners on every socket reconnection
     this.socketModule.socket?.on('connect', () => {
+      console.log('Socket connected successfully. Attaching smart listeners.');
       this.attachSocketListeners();
     });
   }
@@ -44,8 +45,10 @@ export class AiChatSmartInsertHandler {
    * Attach necessary socket listeners.
    */
   private attachSocketListeners(): void {
+    console.log('Attaching socket listeners');
     const event = 'recieve_editor_smart_insert';
     if (!this.socketModule.socket?.listeners(event).length) {
+      console.log('Attaching socket listener for ', event);
       this.socketModule.socket?.on(event, (data: any) => {
         this.applySmartInsertCode(data);
       });
@@ -76,8 +79,6 @@ export class AiChatSmartInsertHandler {
         case 'smartCodeInsertUserAction':
           this.handleUserAction(message);
           break;
-        default:
-          console.warn(`Unhandled message command: ${message.command}`);
       }
     });
   }
@@ -112,7 +113,7 @@ export class AiChatSmartInsertHandler {
       }
     } catch (error) {
       console.error("Error in handleCreateNewFile:", error);
-      showErrorNotification('An error occurred while creating a new file.', 0.7);
+      showErrorNotification('An error occurred while creating a new file.', 4);
     }
   }
 
@@ -146,7 +147,6 @@ export class AiChatSmartInsertHandler {
       const isOpenFile = await openAndHighlightFile(smartFilePath);
 
       if (!isOpenFile && !vscode.window.activeTextEditor) {
-        showErrorNotification('File does not exist.', 0.7);
         this.sendMessageToWebview({
           command: 'file_does_not_exist',
           isAnyFileOpen: false,
@@ -157,7 +157,6 @@ export class AiChatSmartInsertHandler {
       }
 
       if (!isOpenFile && vscode.window.activeTextEditor) {
-        showErrorNotification('File does not exist.', 0.7);
         this.sendMessageToWebview({
           command: 'file_does_not_exist',
           isAnyFileOpen: true,
@@ -177,7 +176,7 @@ export class AiChatSmartInsertHandler {
         codeId: message.data.codeId,
         status: "completed_successfully"
       });
-      showErrorNotification('An error occurred during code insertion.', 0.7);
+      showErrorNotification('Unable to insert code. Please try again.', 3);
     }
   }
 
@@ -193,7 +192,7 @@ export class AiChatSmartInsertHandler {
       this.smartInsertionManager.currentEditor = editor;
 
       if (!editor) {
-        showErrorNotification('No active editor found.', 0.7);
+        showErrorNotification('No active editor found.', 3);
         if (this.aiChatPanel.activePanels.length > 0) {
           await new Promise(resolve => setTimeout(resolve, 1000));
           this.sendMessageToWebview({
@@ -238,7 +237,7 @@ export class AiChatSmartInsertHandler {
         codeId: message.data.codeId,
         status: "completed_successfully"
       });
-      showErrorNotification('An error occurred during code insertion.', 0.7);
+      showErrorNotification('Unable to insert code. Please try again.', 3);
     }
   }
 
@@ -276,7 +275,7 @@ export class AiChatSmartInsertHandler {
         codeId: this.smartInsertionManager.currentCodeBlockId,
         status: "completed_successfully"
       });
-      showErrorNotification('An error occurred during code insertion.', 0.7);
+      showErrorNotification('An error occurred during code insertion.', 3);
     }
   }
 
@@ -286,9 +285,11 @@ export class AiChatSmartInsertHandler {
    * @param retries Number of retry attempts.
    */
   private sendSmartInsertCode(inputMessages: smartInsert, retries = 3): void {
+    this.socketModule = SocketModule.getInstance();
     if (this.socketModule.socket?.connected) {
+      console.log("Socket is connected");
       this.attachSocketListeners();
-      this.socketModule.sendEditorSmartInsert(
+      this.sendEditorSmartInsert(
         inputMessages.uniqueId,
         inputMessages.uniqueChatId,
         inputMessages.editorCode,
@@ -300,7 +301,7 @@ export class AiChatSmartInsertHandler {
         this.sendSmartInsertCode(inputMessages, retries - 1);
       }, 5000);
     } else {
-      showTextNotification("Please check your internet connection or try again", 5);
+      showErrorNotification("Please check your internet connection or try again", 4);
     }
   }
 
@@ -332,7 +333,8 @@ export class AiChatSmartInsertHandler {
             status: "completed_successfully"
           });
           this.updatedText = "";
-          showTextNotification(data.response, 1);
+          // showErrorNotification(data.errorResponse, 1);
+          showErrorNotification("Error occurred during code insertion. Please try again.", 3);
         } else if (data.isRateLimit) {
           this.sendMessageToWebview({
             command: 'smart_insert_to_editor_update',
@@ -341,7 +343,7 @@ export class AiChatSmartInsertHandler {
             codeId: this.smartInsertionManager.currentCodeBlockId,
             status: "completed_successfully"
           });
-          showCustomNotification(data.response);
+          showCustomNotification(data.rateLimitResponse);
           this.updatedText = "";
         } else {
           // Finalize insertion
@@ -357,6 +359,7 @@ export class AiChatSmartInsertHandler {
             status: "completed_successfully"
           });
         }
+        // this.socketModule.predictionRequestInProgress = false;
       }
     } catch (error) {
       console.error("Error in insertProcessVerification:", error);
@@ -367,7 +370,7 @@ export class AiChatSmartInsertHandler {
         codeId: this.smartInsertionManager.currentCodeBlockId,
         status: "completed_successfully"
       });
-      showErrorNotification('An error occurred during code insertion.', 0.7);
+      showErrorNotification("Error occurred during code insertion. Please try again.", 3);
     }
   }
 
@@ -383,6 +386,28 @@ export class AiChatSmartInsertHandler {
       this.smartInsertionManager.rejectInsertion();
     } else {
       console.warn(`Unhandled user action: ${action}`);
+    }
+  }
+
+  private sendEditorSmartInsert(
+    uniqueId: string, 
+    uniqueChatId: string, 
+    editorCode: string, 
+    updatedCode: string,
+    actionType: string
+  ) {
+    console.log("Message to scoket from backend")
+    // this.socketModule.predictionRequestInProgress = true;
+    if (this.socketModule.socket) {
+      this.socketModule.socket.emit('generate_editor_smart_insert', {
+        uniqueId: uniqueId,
+        chatId: uniqueChatId,
+        editorCode: editorCode,
+        updatedCode: updatedCode,
+        actionType: actionType,
+        appVersion: this.socketModule.currentVersion,
+        userEmail: this.socketModule.email
+      });
     }
   }
 }

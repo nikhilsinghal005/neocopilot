@@ -1,6 +1,7 @@
 // src/codeInsertions/CodeInsertionManager.ts
 import * as vscode from 'vscode';
 import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../utilities/statusBarNotifications/showErrorNotification';
 
 /**
  * Represents an insertion in the editor.
@@ -139,12 +140,12 @@ export class SmartInsertionManager {
   public async acceptInsertion(): Promise<void> {
     const insertion = this.insertions.get(this.uniqueId);
     if (!insertion) {
-      vscode.window.showErrorMessage('Insertion not found.');
+      showErrorNotification('Insertion not found.');
       return;
   }
 
   if (!this.currentEditor) {
-    vscode.window.showErrorMessage('No active editor found.');
+    showErrorNotification('No active editor found.');
     return;
   }
 
@@ -185,11 +186,11 @@ export class SmartInsertionManager {
     this.currentEditor?.setDecorations(this.insertedDecorationType, []);
     this.currentEditor?.setDecorations(this.deletedDecorationType, []);
     this.currentEditor?.setDecorations(this.sameDecorationType, []);
-    showTextNotification('Code accepted', 2);
+    // showTextNotification('Code accepted', 2);
     this.reinitialize()
   } else {
     this.reinitialize()
-    vscode.window.showErrorMessage('Failed to accept the insertion.');
+    showErrorNotification('Failed to accept the insertion.');
   }
 }
 /**
@@ -199,12 +200,12 @@ export class SmartInsertionManager {
 public async rejectInsertion(): Promise<void> {
   const insertion = this.insertions.get(this.uniqueId);
   if (!insertion) {
-    vscode.window.showErrorMessage('Insertion not found.');
+    showErrorNotification('Insertion not found.');
     return;
   }
 
   if (!this.currentEditor) {
-    vscode.window.showErrorMessage('No active editor found.');
+    showErrorNotification('No active editor found.');
     return;
   }
 
@@ -252,7 +253,7 @@ this.currentEditor
         this.reinitialize()
       } else {
         this.reinitialize()
-        vscode.window.showErrorMessage('Failed to reject the insertion.');
+        showErrorNotification('Failed to reject the insertion.');
       }
     });
 }
@@ -299,7 +300,7 @@ public async enqueueSnippetLineByLine(
 
       const editor = this.currentEditor;
       if (!editor) {
-          vscode.window.showErrorMessage('No active editor or valid selection context found.');
+          showErrorNotification('No active editor or valid selection context found.');
           return;
       }
 
@@ -318,6 +319,7 @@ public async enqueueSnippetLineByLine(
           editor.setDecorations(this.deletedDecorationType, this.decorationsToApply.deleted);
           editor.setDecorations(this.sameDecorationType, this.decorationsToApply.same);
         }
+
         const insertion: Insertion = {
           id,
           decorationType: this.insertedDecorationType,
@@ -326,7 +328,8 @@ public async enqueueSnippetLineByLine(
           insertedRanges: this.decorationsToApply.inserted,
           deletedRanges: this.decorationsToApply.deleted,
           sameRanges: this.decorationsToApply.same,
-      };
+        };
+
         editor.setDecorations(this.movingDecorationType, []);
         this.insertions.set(id, insertion);
         console.log("Insertion Process Completed")
@@ -335,8 +338,17 @@ public async enqueueSnippetLineByLine(
 
       updatedText = this.leftOver + updatedText
       // console.log("------------------------------------------------", JSON.stringify(updatedText))
+      // console.log("------------------------------------------------", JSON.stringify(this.oldLinesList))
+      if (updatedText.length === 0){
+        return;
+      }
+      // console.log("------------------------------------------------", JSON.stringify(updatedText))
+      // add a sleep time to simulate the delay
+      // await new Promise((resolve) => setTimeout(resolve, 5000));
       // count of occurances
       let newLineList = updatedText.split(nextLineCharacter)
+      newLineList = newLineList.filter(line => !line.includes("```"));
+
       if (newLineList.length > 1) {
         this.leftOver = newLineList.pop() || ""
       }

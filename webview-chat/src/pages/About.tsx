@@ -33,7 +33,7 @@ Our mission is to create a **collaborative coding experience** by developing an 
         paddingTop: '40px'
       }}
     >
-      <div className="card border rounded-xs shadow-xl p-6 overflow-hidden h-[600px]"
+      <div className="card border rounded-xs shadow-xl p-6 overflow-hidden"
         style={{
           backgroundColor: 'var(--vscode-editor-background)',
           borderColor: 'var(--vscode-editorGroup-border)',
@@ -46,11 +46,11 @@ Our mission is to create a **collaborative coding experience** by developing an 
         <ReactMarkdown 
           children={markdownContent} 
           components={{
-            h1: ({node, ...props}) => <div className="text-2xl font-bold mb-6" {...props} style={{ color: 'var(--vscode-editor-foreground)' }} />,
-            p: ({node, ...props}) => <p className="text-base leading-relaxed mb-4" {...props} style={{ color: 'var(--vscode-editor-foreground)' }} />,
+            h1: ({node, ...props}) => <div className="text-xl font-roboto mb-6" {...props} style={{ color: 'var(--vscode-editor-foreground)' }} />,
+            p: ({node, ...props}) => <p className="text-sm font-roboto leading-relaxed mb-4" {...props} style={{ color: 'var(--vscode-editor-foreground)' }} />,
             blockquote: ({node, ...props}) => (
               <blockquote 
-                className="italic text-lg text-center mt-8" 
+                className="italic text-sm text-center mt-8" 
                 {...props} 
                 style={{ 
                   backgroundColor: 'var(--vscode-editor-background)',
