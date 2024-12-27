@@ -21,7 +21,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
         {message.messageType !== 'user' && (
           <div className="flex items-center mr-1 mt-3">
             <span 
-              className="codicon codicon-person text-vscode-editor-foreground"
+              className="codicon codicon-robot text-vscode-editor-foreground"
               style={{ fontSize: '12px' }}
             ></span>
           </div>
