@@ -2,11 +2,10 @@
 
 NeoCopilot is a powerful Visual Studio Code extension offering inline code completion and an integrated chat assistant. Enhance your coding experience with real-time code suggestions and seamless in-editor code assistance, powered by advanced machine learning models.
 
-<div align="left">
-    <video width="1000" height="575" autoplay loop muted>
-        <source src="https://assets.neocopilot.io/videos/inlinevideo.mp4" type="video/mp4">
-    </video>
-</div>
+<video width="1000" height="575" autoplay loop muted playsinline preload="auto">
+    <source src="https://assets.neocopilot.io/videos/inlinevideo.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
 
 ## Code Completion
 
@@ -15,19 +14,17 @@ NeoCopilot is a powerful Visual Studio Code extension offering inline code compl
 - **Context-Aware Suggestions**: Provides relevant code completions based on the current context.
 - **Customizable Settings**: Adjust the extension's behavior to fit your coding style. (Coming Soon)
 
-
-<div align="left">
-    <video width="1000" height="575" autoplay loop muted>
-        <source src="https://assets.neocopilot.io/videos/chatvideo.mp4" type="video/mp4">
-    </video>
-</div>
+<video width="1000" height="575" autoplay loop muted playsinline preload="auto">
+    <source src="https://assets.neocopilot.io/videos/chatvideo.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
 
 ## Chat Assistant Functionalities
 
 1. **Insert Code Snippets**: NeoCopilot can generate and insert code snippets directly into the editor based on your queries.
 2. **Run Bash Commands in Terminal**: For Bash commands, NeoCopilot offers an "Insert in Terminal" option that runs the command directly in your terminal.
 3. **Insert Commands in Editor**: When in terminal mode, you can easily switch to editor insertion, allowing seamless transitions between terminal and editor commands.
-3. **Flexible Chat Positioning**: Easily toggle the chat view to a secondary position with a single click, optimizing your workspace for enhanced visibility and convenience.
+4. **Flexible Chat Positioning**: Easily toggle the chat view to a secondary position with a single click, optimizing your workspace for enhanced visibility and convenience.
 
 ## Installation
 
