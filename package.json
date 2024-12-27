@@ -3,7 +3,7 @@
   "name": "neocopilot",
   "displayName": "Neo Copilot",
   "description": "CodeAssist provides developers with intelligent, context-sensitive code suggestions designed to boost productivity and simplify the development process. Harness the power of an advanced suggestion engine that understands your code, delivering seamless and efficient workflow support.",
-  "version": "0.100.19",
+  "version": "0.100.20",
   "engines": {
     "vscode": "^1.70.0"
   },
@@ -70,36 +70,35 @@
         {
           "type": "webview",
           "id": "aiChatPanelPrimary",
-          "name": "AI Chat Panel",
+          "name": "Neo Chat Panel",
           "retention": true
         }
       ]
     },
-
     "commands": [
       {
         "command": "disable-code-suggestions",
         "title": "Disable Code Suggestions"
       },
       {
-        "command": "extension.codeFactor",
-        "title": "Code Factor"
+        "command": "extension.neoEdit",
+        "title": "Neo Edit"
       },
       {
-        "command": "extension.addComment",
-        "title": "Add Comment"
+        "command": "extension.neoChatInsert",
+        "title": "Neo Chat Insert"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "extension.neoEdit",
+        "key": "ctrl+I",
+        "when": "editorTextFocus"
       },
       {
-        "command": "extension.languageFunctionsCodeFactor",
-        "title": "Code Factor (Function/Class)"
-      },
-      {
-        "command": "extension.languageFunctionsAddComment",
-        "title": "Add Comment (Function/Class)"
-      },
-      {
-        "command": "extension.addQuery",
-        "title": "Add Query"
+        "command": "extension.neoChatInsert",
+        "key": "ctrl+O",
+        "when": "editorTextFocus"
       }
     ],
     "configuration": {
@@ -131,7 +130,7 @@
     "@types/glob": "^8.1.0",
     "@types/lodash": "^4.17.7",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^20.2.5",
+    "@types/node": "^22.9.1",
     "@types/uuid": "^9.0.8",
     "@types/vscode": "^1.70.0",
     "@types/vscode-webview": "^1.57.5",
@@ -148,19 +147,17 @@
     "intelephense": "^1.12.6",
     "mocha": "^10.2.0",
     "ts-loader": "^9.5.1",
-    "typescript": "^5.6.2",
+    "typescript": "^5.6.3",
     "vite": "^5.4.8",
     "vscode-languageserver-textdocument": "^1.0.12",
     "webpack": "^5.91.0",
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@vscode/codicons": "^0.0.35",
-    "@vscode/webview-ui-toolkit": "^1.4.0",
     "axios": "^1.7.2",
     "diff": "^5.2.0",
     "dotenv": "^16.4.5",
-    "highlight.js": "^11.9.0",
+    "fast-diff": "^1.3.0",
     "lodash": "^4.17.21",
     "socket.io-client": "^4.7.5",
     "uuid": "^9.0.1",

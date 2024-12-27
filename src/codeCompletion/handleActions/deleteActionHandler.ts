@@ -1,23 +1,31 @@
 // src/deletion/DeletionHandler.ts
+
 import * as vscode from 'vscode';
-import { SocketModule } from '../../socketModule';
 import { SuggestionManager } from '../SuggestionManager';
-import { getDeletedText } from "../../utilities/codeCompletionUtils/completionUtils";
 import { modifySuggestion, handleAddedSpecialCharacters } from "../../utilities/codeCompletionUtils/completionUtils";
+import { CompletionProviderModule } from '../../codeCompletion/completionProviderModule';
+import { CompletionSocketManager } from '../../codeCompletion/completionSocketManager';
 
 export class DeletionHandler {
-  private socketModule: SocketModule;
   private suggestionManager: SuggestionManager;
+  private completionProviderModule: CompletionProviderModule;
+  private completionSocketManager: CompletionSocketManager;
 
-  constructor(socketModule: SocketModule, suggestionManager: SuggestionManager) {
-    this.socketModule = socketModule;
+  constructor(suggestionManager: SuggestionManager) {
     this.suggestionManager = suggestionManager;
+    this.completionProviderModule = CompletionProviderModule.getInstance();
+    this.completionSocketManager = CompletionSocketManager.getInstance();
   }
 
-  public isTextDeleted(updatedText: string): boolean {
-    return updatedText === "" || !updatedText;
-  }
-
+  /**
+   * Handle deletion events based on the context of the deletion.
+   * @param deletedText The text that was deleted.
+   * @param currentStartLineNumber Starting line number of the deletion.
+   * @param currentStartCharacterPosition Starting character position of the deletion.
+   * @param currentEndLineNumber Ending line number of the deletion.
+   * @param currentEndCharacterPosition Ending character position of the deletion.
+   * @returns Whether the deletion was handled successfully.
+   */
   public handleDeletion(
     deletedText: string,
     currentStartLineNumber: number,
@@ -26,33 +34,30 @@ export class DeletionHandler {
     currentEndCharacterPosition: number
   ): boolean {
     if (currentStartLineNumber === currentEndLineNumber) {
-        return this.handleSameLineDeletion(
-            deletedText, 
-            currentStartCharacterPosition, 
-            currentEndCharacterPosition
-        );
+      return this.handleSameLineDeletion(
+        deletedText, 
+        currentStartCharacterPosition, 
+        currentEndCharacterPosition
+      );
     } else {
-        return this.handleMultiLineDeletion(
-            deletedText
-        );
+      return this.handleMultiLineDeletion(deletedText);
     }
   }
 
+  /**
+   * Handle deletions within the same line.
+   */
   private handleSameLineDeletion(
     deletedText: string,
     currentStartCharacterPosition: number,
     currentEndCharacterPosition: number
   ): boolean {
-
     if (!this.isDeletionContextValid(deletedText)) {
-      // console.log("Location Not Verified for Deletion");
       this.suggestionManager.reinitialize();
       return false;
     }
-    // console.log("Location Verified for Deletion");
 
     if (this.handleSpecialCharacterDeletion(deletedText)) {
-      // console.log("Handled Special Characters");
       return true;
     }
 
@@ -60,99 +65,95 @@ export class DeletionHandler {
     return this.handleRegularDeletion(positionChange);
   }
 
+  /**
+   * Handle deletions across multiple lines.
+   */
   private handleMultiLineDeletion(deletedText: string): boolean {
-    // Check if the deletion context is valid
     if (!this.isDeletionContextValid(deletedText)) {
-      // console.log("Location Not Verified for Deletion");
       this.suggestionManager.reinitialize();
       return false;
     }
-    // console.log("Location Verified for Deletion");
 
-    if (this.suggestionManager.mainSuggestion.endsWith(deletedText + this.suggestionManager.tempSuggestion)) {
-      // console.log("Suggestion ends with deleted text + temp suggestion");
-      this.suggestionManager.tempSuggestion = deletedText + this.suggestionManager.tempSuggestion;
-      this.socketModule.completionProvider.updateSuggestion(this.suggestionManager.tempSuggestion);
+    const { mainSuggestion, tempSuggestion } = this.suggestionManager;
+
+    if (mainSuggestion.endsWith(deletedText + tempSuggestion)) {
+      this.suggestionManager.tempSuggestion = deletedText + tempSuggestion;
+      this.completionProviderModule.updateSuggestion(this.suggestionManager.tempSuggestion);
       return true;
     } else {
       this.suggestionManager.reinitialize();
-      return true;
+      return false;
     }
   }
 
+  /**
+   * Validate the context of the deletion to ensure it's relevant.
+   */
   private isDeletionContextValid(deletedText: string): boolean {
-    // Location verification Before and After Text Deletion
-    const previousFullText = this.socketModule.previousText + this.suggestionManager.mainSuggestion;
-    const tempSuggestionLength = this.suggestionManager.tempSuggestion.length;
+    const { mainSuggestion, tempSuggestion, textBeforeCursor } = this.suggestionManager;
+    const previousFullText = this.completionSocketManager.previousText + mainSuggestion;
+    const tempSuggestionLength = tempSuggestion.length;
     const deletedTextLength = deletedText.length;
-
-    // Calculate the expected text before cursor
     const expectedTextBeforeCursor = previousFullText.slice(0, -tempSuggestionLength - deletedTextLength);
-    const currentTextWithDeleted = this.suggestionManager.textBeforeCursor;
-
-    // console.log("Previous Full Text:", previousFullText);
-    // console.log("Expected Text Before Cursor:", expectedTextBeforeCursor);
-    // console.log("Current Text With Deleted:", currentTextWithDeleted);
+    const currentTextWithDeleted = textBeforeCursor;
 
     return expectedTextBeforeCursor === currentTextWithDeleted;
   }
 
+  /**
+   * Handle deletions involving special characters.
+   */
   private handleSpecialCharacterDeletion(deletedText: string): boolean {
     if (deletedText.length === 2 && this.suggestionManager.deleteSpecialCharacters.includes(deletedText)) {
-      // Recompute tempSuggestion based on current text
-      const previousText = this.socketModule.previousText;
-      const mainSuggestion = this.suggestionManager.mainSuggestion;
+      const { previousText } = this.completionSocketManager;
+      const { mainSuggestion, textBeforeCursor } = this.suggestionManager;
 
-      // Current text before cursor
-      const currentText = this.suggestionManager.textBeforeCursor;
-
-      // Calculate the accepted part of mainSuggestion
-      const acceptedSuggestion = currentText.substring(previousText.length);
-
-      // Compute the new tempSuggestion
+      const acceptedSuggestion = textBeforeCursor.substring(previousText.length);
       this.suggestionManager.tempSuggestion = mainSuggestion.substring(acceptedSuggestion.length);
 
-      // Update the suggestion in the editor
-      this.socketModule.completionProvider.updateSuggestion(this.suggestionManager.tempSuggestion);
-      // console.log("Handled Special Character Deletion");
-      // console.log("**************************************")
-      // console.log("previousText", previousText)
-      // console.log("mainSuggestion", mainSuggestion)
-      // console.log("currentText", currentText)
-      // console.log("acceptedSuggestion", acceptedSuggestion)
+      this.completionProviderModule.updateSuggestion(
+        this.suggestionManager.tempSuggestion
+      );
       return true;
     }
     return false;
   }
 
+  /**
+   * Handle regular deletions by modifying the current suggestion.
+   */
   private handleRegularDeletion(positionChange: number): boolean {
-    // Adjust the tempSuggestion based on the number of characters deleted
-    this.suggestionManager.tempSuggestion = modifySuggestion(this.suggestionManager.mainSuggestion, this.suggestionManager.tempSuggestion, positionChange);
-    
-    // Update the suggestion in the editor
-    this.socketModule.completionProvider.updateSuggestion(this.suggestionManager.tempSuggestion);
+    const { mainSuggestion, tempSuggestion, textBeforeCursor } = this.suggestionManager;
+    const modifiedSuggestion = modifySuggestion(mainSuggestion, tempSuggestion, positionChange);
 
-    if (this.suggestionManager.tempSuggestion) {
-      return true; // Successfully updated the suggestion
+
+    if (modifiedSuggestion) {
+      this.suggestionManager.tempSuggestion = modifiedSuggestion;
+      this.completionProviderModule.updateSuggestion(modifiedSuggestion);
+      return true;
     } else {
-      // If tempSuggestion is empty or null, reinitialize
       this.suggestionManager.reinitialize();
       this.suggestionManager.predictionDelay = 2000;
       return false;
     }
   }
 
+  /**
+   * Adjust prediction delay based on the type of deletion action.
+   */
   public handleAllDeletion(
     currentStartLineNumber: number,
     currentEndLineNumber: number,
     currentEndCharacterPosition: number,
     currentStartCharacterPosition: number
   ): void {
-    this.suggestionManager.predictionDelay = 2000;
     if (currentStartLineNumber === currentEndLineNumber) {
-      if (currentEndCharacterPosition - currentStartCharacterPosition > 2) {
+      const charDifference = currentEndCharacterPosition - currentStartCharacterPosition;
+      if (charDifference > 2) {
         this.suggestionManager.predictionDelay = 5000;
         this.suggestionManager.typeOfAction = "NEO-SNE-D-LC-1";
+      } else {
+        this.suggestionManager.predictionDelay = 2000;
       }
     } else {
       this.suggestionManager.predictionDelay = 10000;

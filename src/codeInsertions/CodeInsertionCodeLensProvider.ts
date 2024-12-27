@@ -6,6 +6,9 @@ export class CodeInsertionCodeLensProvider implements vscode.CodeLensProvider {
   private _onDidChangeCodeLenses: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
   public readonly onDidChangeCodeLenses: vscode.Event<void> = this._onDidChangeCodeLenses.event;
 
+  // Store the current editor reference
+  public currentEditor: vscode.TextEditor | undefined;
+
   constructor(codeInsertionManager: CodeInsertionManager) {
     this.codeInsertionManager = codeInsertionManager;
   }
@@ -14,20 +17,25 @@ export class CodeInsertionCodeLensProvider implements vscode.CodeLensProvider {
     document: vscode.TextDocument,
     token: vscode.CancellationToken
   ): vscode.CodeLens[] {
+    // Ensure we are working with the correct editor and document
+    if (this.currentEditor && document.uri.toString() !== this.currentEditor.document.uri.toString()) {
+      return [];
+    }
+
     const insertions = this.codeInsertionManager.getInsertionsForDocument(document.uri);
     const codeLenses: vscode.CodeLens[] = [];
 
     insertions.forEach((insertion) => {
-      // Create "Accept" CodeLens
+      // Create "Accept" CodeLens with emoji
       const acceptCodeLens = new vscode.CodeLens(insertion.codeLensRange, {
-        title: 'Accept',
+        title: '✅ <<<<<<<<<<<<<<<< ACCEPT >>>>>>>>>>>>>>>>>>',
         command: 'codeInsertion.accept',
         arguments: [insertion.id],
       });
 
-      // Create "Reject" CodeLens
+      // Create "Reject" CodeLens with emoji
       const rejectCodeLens = new vscode.CodeLens(insertion.codeLensRange, {
-        title: 'Reject',
+        title: '❌ <<<<<<<<<<<<<<<< REJECT >>>>>>>>>>>>>>>>>>',
         command: 'codeInsertion.reject',
         arguments: [insertion.id],
       });
@@ -39,9 +47,12 @@ export class CodeInsertionCodeLensProvider implements vscode.CodeLensProvider {
   }
 
   /**
-   * Triggers a refresh of CodeLenses.
+   * Triggers a refresh of CodeLenses for a specific editor.
    */
-  public refresh(): void {
+  public refresh(editor?: vscode.TextEditor): void {
+    if (editor) {
+      this.currentEditor = editor; // Ensure currentEditor is set
+    }
     this._onDidChangeCodeLenses.fire();
   }
 }

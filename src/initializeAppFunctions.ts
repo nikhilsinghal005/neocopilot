@@ -1,17 +1,23 @@
+// src/initializeAppFunctions.ts
+
 import * as vscode from 'vscode';
 import { VscodeEventsModule } from './codeCompletion/vscodeEventsModule';
 import { CompletionProviderModule } from './codeCompletion/completionProviderModule';
 import { StatusBarManager } from './StatusBarManager';
 import { AiChatPanel } from './chatProvider/aiChatPanel';
 import { AuthManager } from './authManager/authManager';
+import { CodeSelectionCommandHandler } from './codeSelection/codeSelectionCommand';
+import { FloatingHoverProvider } from './codeSelection/codeSelectionOverlayPanel'; // Adjust the path as necessary
+import { SocketModule } from './socketModule';
+import { SelectionContext } from './codeSelection/selectionContext'
 
-
-export function initializeAppFunctions(
+export async function initializeAppFunctions(
   vscodeEventsModule: VscodeEventsModule,
   completionProviderModule: CompletionProviderModule,
   authManager: AuthManager,
+  socketModule: SocketModule,
   context: vscode.ExtensionContext
-): void {
+): Promise<void> {
   console.info("%cNeo Copilot: Initializing functinalities", 'color: green;')
   StatusBarManager.initializeStatusBar(true, context, vscodeEventsModule);
   vscode.window.onDidChangeActiveTextEditor(
@@ -29,20 +35,32 @@ export function initializeAppFunctions(
 
   vscode.workspace.getConfiguration().update('editor.quickSuggestions', false);
   const currentVersion = context.extension.packageJSON.version;
-
+  await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   primaryViewProvider.sendAuthStatus(true)
 
+  vscode.window.onDidChangeActiveTextEditor(
+    editor => primaryViewProvider.aiChatContextHandler.getCurrentFileName(editor, context), null, context.subscriptions
+  );
+
+  const selectionContext = new SelectionContext();
+ // Hover Provider 
+ const hoverProvider = new FloatingHoverProvider(primaryViewProvider, socketModule, selectionContext);
+ const hoverDisposable = vscode.languages.registerHoverProvider(
+     { scheme: 'file', language: '*' }, // Adjust languages as needed
+     hoverProvider
+ );
+ context.subscriptions.push(hoverDisposable);
+
+ new  CodeSelectionCommandHandler(context, primaryViewProvider, selectionContext);
+
 }
 
-export function initializeNonLoginRequiredAppFunctions(
-
-  vscodeEventsModule: VscodeEventsModule,
-  completionProviderModule: CompletionProviderModule,
+ export async function initializeNonLoginRequiredAppFunctions(
   authManager: AuthManager,
   context: vscode.ExtensionContext
-): void {
-  // console.info("%cNeo Copilot: Initializing functionalities", 'color: green;');
+): Promise<void> {
+  console.info("%cNeo Copilot: Initializing base functionalities", 'color: green;');
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
@@ -50,11 +68,5 @@ export function initializeNonLoginRequiredAppFunctions(
       primaryViewProvider
     )
   );
-  // const secondaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.secondaryViewType);
-  // context.subscriptions.push(
-  //   vscode.window.registerWebviewViewProvider(
-  //     AiChatPanel.secondaryViewType,
-  //     secondaryViewProvider
-  //   )
-  // );
 }
+
