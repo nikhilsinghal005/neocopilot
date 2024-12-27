@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
+import { showErrorNotification } from '../../utilities/statusBarNotifications/showErrorNotification';
 
 export async function openAndHighlightFile(relativePath: string): Promise<boolean> {
     try {
         // Resolve the relative path to an absolute file URI
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders) {
-            vscode.window.showErrorMessage('No workspace folder found.');
+            showErrorNotification('No workspace folder found.', 2);
             return false;
         }
 
@@ -16,7 +17,7 @@ export async function openAndHighlightFile(relativePath: string): Promise<boolea
         // Check if the file is already open and active
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor && activeEditor.document.uri.fsPath === absolutePath.fsPath) {
-            vscode.window.showInformationMessage(`File is already active: ${relativePath}`);
+            // vscode.window.showInformationMessage(`File is already active: ${relativePath}`);
             return true;
         }
 
@@ -32,7 +33,7 @@ export async function openAndHighlightFile(relativePath: string): Promise<boolea
         editor.selection = new vscode.Selection(startPos, endPos);
         editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
 
-        vscode.window.showInformationMessage(`Opened and highlighted: ${relativePath}`);
+        // vscode.window.showInformationMessage(`Opened and highlighted: ${relativePath}`);
         return true;
     } catch (error) {
         return false;

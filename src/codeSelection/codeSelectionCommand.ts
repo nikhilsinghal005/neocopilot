@@ -287,7 +287,7 @@ private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.T
               editor.selection = new vscode.Selection(position, position);
             }
     } else {
-      vscode.window.showInformationMessage('No input provided.');
+      showErrorNotification('No input provided.', 2);
     }
   }
   

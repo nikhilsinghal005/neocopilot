@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { showTextNotification } from '../../utilities/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../../utilities/statusBarNotifications/showErrorNotification';
 
 
 export async function createFile(relativePath: string): Promise<boolean> {
@@ -23,15 +25,15 @@ export async function createFile(relativePath: string): Promise<boolean> {
         const newFileUri = vscode.Uri.file(absolutePath);
         await vscode.window.showTextDocument(newFileUri);
 
-        vscode.window.showInformationMessage(`File created successfully at ${relativePath}`);
+        showTextNotification(`File created successfully at ${relativePath}`, 2);
         return true;
 
     } catch (error: any) {
         if (error.code === 'EEXIST') {
-            vscode.window.showErrorMessage(`File already exists at ${relativePath}`);
+            showErrorNotification(`File already exists at ${relativePath}`, 2);
         } else {
-            vscode.window.showErrorMessage(`Error creating file: ${error.message}`);
-            console.error("Error creating file:", error); // Log for debugging
+            showErrorNotification(`Error creating file: ${error.message}`, 2);
+            // console.error("Error creating file:", error); // Log for debugging
         }
         return false;
     }
