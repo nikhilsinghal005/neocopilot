@@ -209,10 +209,12 @@ private expandSelectionToFullLines(selection: vscode.Selection, editor: vscode.T
             console.log(data.rateLimitResponse);
             showCustomNotification(data.rateLimitResponse)
             this.updatedtext = "";
+            this.codeInsertionManager.reinitialize();
           } 
           else if (data.isError) {
               this.updatedtext = "";
-              showErrorNotification(data.response, 0.9);
+              showErrorNotification(data.response, 1.5);
+              this.codeInsertionManager.reinitialize();
             }
           else {
             this.codeInsertionManager.enqueueSnippetLineByLine(

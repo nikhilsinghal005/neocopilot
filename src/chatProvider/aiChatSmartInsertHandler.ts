@@ -334,6 +334,7 @@ export class AiChatSmartInsertHandler {
           });
           this.updatedText = "";
           // showErrorNotification(data.errorResponse, 1);
+          this.smartInsertionManager.reinitialize();
           showErrorNotification("Error occurred during code insertion. Please try again.", 3);
         } else if (data.isRateLimit) {
           this.sendMessageToWebview({
@@ -344,6 +345,7 @@ export class AiChatSmartInsertHandler {
             status: "completed_successfully"
           });
           showCustomNotification(data.rateLimitResponse);
+          this.smartInsertionManager.reinitialize();
           this.updatedText = "";
         } else {
           // Finalize insertion
