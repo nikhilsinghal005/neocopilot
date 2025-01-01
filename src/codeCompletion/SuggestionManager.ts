@@ -96,7 +96,7 @@ export class SuggestionManager {
     try {
       // Validate input text and editor presence
       if (isNullOrEmptyOrWhitespace(this.vscodeEventsModule.currentText) || !editor) {
-        //console.log("Input text is short or editor is undefined.");
+        //// console.log("Input text is short or editor is undefined.");
         this.reinitialize();
         return;
       }
@@ -104,14 +104,14 @@ export class SuggestionManager {
       // Handle Undo and Redo actions
       const reason = event.reason;
       if (reason === vscode.TextDocumentChangeReason.Undo || reason === vscode.TextDocumentChangeReason.Redo) {
-        //console.log(`User performed a ${reason === vscode.TextDocumentChangeReason.Undo ? 'Undo' : 'Redo'} action.`);
+        //// console.log(`User performed a ${reason === vscode.TextDocumentChangeReason.Undo ? 'Undo' : 'Redo'} action.`);
         this.reinitialize();
         return;
       }
 
       // Handle multiple content changes
       if (event.contentChanges.length > 1) {
-        //console.log("Multiple content changes detected.");
+        //// console.log("Multiple content changes detected.");
         this.reinitialize();
         return;
       }
@@ -136,11 +136,11 @@ export class SuggestionManager {
         );
       }
 
-      //console.log("Updated Text:", this.updatedText);
+      //// console.log("Updated Text:", this.updatedText);
 
       // Check if a prediction is already in progress
       if (this.completionSocketManager.predictionRequestInProgress) {
-        //console.log("Prediction is in progress.");
+        //// console.log("Prediction is in progress.");
         this.handlePredictionInProgress(this.updatedText, this.isTextDeleted);
         return;
       } else {
@@ -150,11 +150,11 @@ export class SuggestionManager {
 
       // Action when prediction exists
       if (this.mainSuggestion && this.tempSuggestion) { 
-        //console.log("Prediction already exists.");
+        //// console.log("Prediction already exists.");
         
         // Check if text is deleted
         if (this.isTextDeleted) { 
-          //console.log("Deleted Text:", this.updatedText);
+          //// console.log("Deleted Text:", this.updatedText);
           const isDeletionValid = this.deleteActionHandler.handleDeletion(
             this.updatedText,
             currentStartLineNumber,
@@ -162,7 +162,7 @@ export class SuggestionManager {
             currentEndLineNumber,
             currentEndCharacterPosition
           );
-          //console.log("Is Deletion Valid:", isDeletionValid);
+          //// console.log("Is Deletion Valid:", isDeletionValid);
 
           if (isDeletionValid) {
             return;
@@ -234,7 +234,7 @@ export class SuggestionManager {
    * @param currentLanguage The current programming language.
    */
   public sendForPrediction(updatedText: string, currentLanguage: string): void {
-    //console.log("============ NeoCopilot: Prediction Request ===============");
+    //// console.log("============ NeoCopilot: Prediction Request ===============");
     
     // Clear any existing debounce timeout
     if (this.debounceTimeout) {

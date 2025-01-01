@@ -37,10 +37,10 @@ export class SocketModule {
   public static getInstance(): SocketModule {
     if (!SocketModule.instance) {
 
-      // console.log("SocketModule: Creating new instance");
+      // // console.log("SocketModule: Creating new instance");
       SocketModule.instance = new SocketModule();
     } else {
-      // console.log("SocketModule: Returning existing instance");
+      // // console.log("SocketModule: Returning existing instance");
     }
     return SocketModule.instance;
   }

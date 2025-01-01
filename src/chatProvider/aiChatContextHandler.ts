@@ -139,11 +139,11 @@ export class AiChatContextHandler {
                     isSelected: false
                 }));
 
-                // console.log("Opened Files Before", openFiles)
+                // // console.log("Opened Files Before", openFiles)
                 openFiles = openFiles.concat(
                     recentlyOpenedFilesArray.filter(newFile => !openFiles.some(existingFile => existingFile.filePath === newFile.filePath))
                 );
-                // console.log("Stored Files", recentlyOpenedFilesArray)
+                // // console.log("Stored Files", recentlyOpenedFilesArray)
 
                 if (this.aiChatPanel.activePanels.length > 0) {
                     this.aiChatPanel.activePanels[0].webview.postMessage({
@@ -151,7 +151,7 @@ export class AiChatContextHandler {
                         openFiles: openFiles
                     });
                 }
-                // console.log("Opened Files", openFiles)
+                // // console.log("Opened Files", openFiles)
             } catch (error) {
                 console.error("Error processing current file name:", error);
             }

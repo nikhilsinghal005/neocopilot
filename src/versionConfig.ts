@@ -16,12 +16,12 @@ class VersionConfig {
 
   public initialize(context: vscode.ExtensionContext) {
       this.currentVersion = context.extension.packageJSON.version;
-    //   // console.log(`current version: ${this.currentVersion}`);
+    //   // // console.log(`current version: ${this.currentVersion}`);
       context.globalState.update('currentVersion', this.currentVersion);
   }
 
   public getCurrentVersion(): string {
-    // // console.log(`current version updated: ${this.currentVersion}`);
+    // // // console.log(`current version updated: ${this.currentVersion}`);
     if (!this.currentVersion) {
       return 'unknown';
     }else{

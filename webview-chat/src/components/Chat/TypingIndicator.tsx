@@ -10,7 +10,7 @@ const TypingIndicator: React.FC = () => {
   useEffect(() => {
     const handleIncomingMessage = (event: MessageEvent) => {
       if (event.data.command === 'chat_response_state_info') {
-        console.log('Received chat message from VS Code:', event.data);
+        // console.log('Received chat message from VS Code:', event.data);
         setInput(event.data.inputState || ''); // Update input with incoming data or fallback to empty string
       }
     };

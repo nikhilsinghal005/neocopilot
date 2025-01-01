@@ -37,7 +37,7 @@ export class UpdateHandler {
     updatedText: string,
     currentLanguage: string
   ): void {
-    //console.log("Attempting to update suggestion based on the text change.");
+    //// console.log("Attempting to update suggestion based on the text change.");
     const updatedTextLength = updatedText.length;
 
     // Handle special character insertion first
@@ -47,7 +47,7 @@ export class UpdateHandler {
 
     // Handle suggestion updates and determine the match case
     const matchCase: string = this.handleSuggestionUpdate(updatedText, updatedTextLength);
-    //console.log(`Match Case: ${matchCase}`);
+    //// console.log(`Match Case: ${matchCase}`);
 
     if (["CASE2", "CASE3", "CASE4"].includes(matchCase)) {
       if (!this.searchAndUpdateSuggestion(updatedText)) {
@@ -73,12 +73,12 @@ export class UpdateHandler {
     if (trimmedText === "\n" || trimmedText === "\r\n") {
       // User moved to the next line in the editor
       this.suggestionManager.predictionDelay = 100;
-      //console.log("User performed a single-line edit");
+      //// console.log("User performed a single-line edit");
     } else if (updatedText.includes("\n") || updatedText.includes("\r\n")) {
       // User performed a multi-line edit
       this.suggestionManager.typeOfAction = "NEO-SNE-A-LC-X";
       this.suggestionManager.predictionDelay = 7000;
-      //console.log("User performed a multi-line edit.");
+      //// console.log("User performed a multi-line edit.");
     }
   }
 
@@ -93,15 +93,15 @@ export class UpdateHandler {
     updatedTextLength: number
   ): boolean {
 
-    //console.log("Attempting to handle special character insertion.");
+    //// console.log("Attempting to handle special character insertion.");
     if (this.suggestionManager.deleteSpecialCharacters.includes(updatedText)) {
 
       const {mainSuggestion, tempSuggestion, textBeforeCursor} = this.suggestionManager;
-      //console.log("Special character deletion detected.");
-      //console.log(`Main Suggestion: ${mainSuggestion}`);
-      //console.log(`Temp Suggestion: ${tempSuggestion}`);
-      //console.log(`Text Before Cursor: ${textBeforeCursor}`);
-      //console.log(`Updated Text: ${updatedText}`);
+      //// console.log("Special character deletion detected.");
+      //// console.log(`Main Suggestion: ${mainSuggestion}`);
+      //// console.log(`Temp Suggestion: ${tempSuggestion}`);
+      //// console.log(`Text Before Cursor: ${textBeforeCursor}`);
+      //// console.log(`Updated Text: ${updatedText}`);
 
       const expectedStartText = this.completionSocketManager.previousText + mainSuggestion;
       const actualStartText = textBeforeCursor + updatedText[0];
@@ -121,7 +121,7 @@ export class UpdateHandler {
             "special_character",
             updatedTextLength
           );
-          //console.log("Handled special character deletion and updated suggestion.");
+          //// console.log("Handled special character deletion and updated suggestion.");
           return true;
         }
       }
@@ -184,11 +184,11 @@ export class UpdateHandler {
       this.completionProviderModule.updateSuggestion(tempSuggestion);
       this.completionSocketManager.chatCompletionMessage("search_completion", "found", tempSuggestion.length);
 
-      //console.log("Suggestion found and updated.");
+      //// console.log("Suggestion found and updated.");
       return true;
     }
 
-    //console.log("No matching suggestion found.");
+    //// console.log("No matching suggestion found.");
     return false;
   }
 }
