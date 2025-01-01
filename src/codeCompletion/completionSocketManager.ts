@@ -204,11 +204,15 @@ export class CompletionSocketManager {
         // Log a warning with the remaining rate limit time
         console.warn(`Code completion rate limit hit. Limited for ${this.rateLimitTime} seconds.`);
 
+        // Cap the timeout to a maximum value (e.g., 1 day)
+        const maxTimeout = 24 * 60 * 60; // 1 day in seconds
+        const timeout = Math.min(this.rateLimitTime, maxTimeout);
+
         // Set a timer for when the rate limit expires
         setTimeout(() => {
           this.isRateLimitExceeded = false;
           this.rateLimitTime = 0;
-        }, this.rateLimitTime*1000);
+        }, timeout * 1000);
 
         return;
     }
