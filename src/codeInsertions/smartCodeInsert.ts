@@ -66,7 +66,7 @@ export class SmartInsertionManager {
   public async reinitializeDecorations(): Promise<void> {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
-        console.log("Which Editor");
+        // console.log("Which Editor");
         this.currentEditor = vscode.window.activeTextEditor;
         this.currentEditor?.setDecorations(this.insertedDecorationType, this.decorationsToApply.inserted);
         this.currentEditor?.setDecorations(this.deletedDecorationType, this.decorationsToApply.deleted);
@@ -332,7 +332,7 @@ public async enqueueSnippetLineByLine(
 
         editor.setDecorations(this.movingDecorationType, []);
         this.insertions.set(id, insertion);
-        console.log("Insertion Process Completed")
+        // console.log("Insertion Process Completed")
         return;
       }
 

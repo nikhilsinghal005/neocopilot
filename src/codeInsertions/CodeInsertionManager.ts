@@ -134,7 +134,7 @@ export class CodeInsertionManager {
 public async reinitializeDecorationsAndCodeLenses(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (editor) {
-      console.log("Which Editor");
+      // console.log("Which Editor");
       this.currentEditor = vscode.window.activeTextEditor;
       await this.codeLensProvider.refresh(this.currentEditor);
       this.currentEditor?.setDecorations(this.insertedDecorationType, this.decorationsToApply.inserted);
@@ -389,7 +389,7 @@ public rejectInsertion(id: string): void {
       return;
     }
 
-    // console.log("------------------------------------------------", JSON.stringify(updatedText))
+    // // console.log("------------------------------------------------", JSON.stringify(updatedText))
     // count of occurances
     let newLineList = updatedText.split(nextLineCharacter)
     newLineList = newLineList.filter(line => !line.includes("```"));
