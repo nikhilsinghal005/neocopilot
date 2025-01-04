@@ -12,6 +12,7 @@ import { showTextNotification } from '../utilities/statusBarNotifications/showTe
 import { showCustomNotification } from '../utilities/statusBarNotifications/showCustomNotification';
 import { openAndHighlightFile } from '../utilities/editorUtils/openAndHighlightFile';
 import { createFile } from '../utilities/editorUtils/createFile';
+import { scrollToLine } from '../utilities/editorUtils/scrollToLine';
 
 export class AiChatSmartInsertHandler {
   private socketModule: SocketModule;
@@ -109,6 +110,7 @@ export class AiChatSmartInsertHandler {
             `${code}${GetLineSeparator() || ''}`,
             uuidv4()
           );
+          scrollToLine(1); // Scroll to the first line after creating the file
         }
       }
     } catch (error) {
@@ -169,6 +171,7 @@ export class AiChatSmartInsertHandler {
       this.processSmartInsert(message);
     } catch (error) {
       console.error("Error in insertProcessVerification:", error);
+      
       this.sendMessageToWebview({
         command: 'smart_insert_to_editor_update',
         isComplete: false,
@@ -186,7 +189,7 @@ export class AiChatSmartInsertHandler {
    */
   public async processSmartInsert(message: any): Promise<void> {
     try {
-
+      scrollToLine(1); // Scroll to the first line after creating the file
       const editor = vscode.window.activeTextEditor;
       this.smartInsertionManager.reinitialize();
       this.smartInsertionManager.currentEditor = editor;

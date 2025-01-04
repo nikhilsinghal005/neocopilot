@@ -27,6 +27,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   const [state, setState] = useState<'idle' | 'processing' | 'review' | 'newFileRequiredType1' | 'newFileRequiredType2'>('idle');
   const [dots, setDots] = useState('');
   const codeId = React.useMemo(() => Math.random().toString(36).substr(2, 9), []); // Generate unique ID for the code block
+  console.log("codeId", codeId)
   const [showNewFileDropdownType1, setShowNewFileDropdownType1] = useState(false);
   const [showNewFileDropdownType2, setShowNewFileDropdownType2] = useState(false);
   const {isTyping} = useChatContext();
