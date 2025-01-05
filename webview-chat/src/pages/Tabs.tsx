@@ -10,8 +10,7 @@ interface TabProps {
 
 const Tabs: React.FC<TabProps> = ({ tabs }) => {
     const [activeTab, setActiveTab] = useState(0);
-    const isChatTabActive = activeTab === 0;
-
+    const isChatTabActive = tabs[activeTab]?.label === 'Chat';
     return (
       <div className="w-full h-full flex flex-col bg-vscode-editor-background">
         {/* Fixed Tab Header */}

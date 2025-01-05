@@ -5,6 +5,7 @@ import Tabs from './pages/Tabs';
 import { ChatProvider } from './context/ChatContext';
 import { VscodeProvider } from './context/VscodeContext';
 import About from './pages/About';
+import Coworker from './pages/Coworker';
 
 declare const acquireVsCodeApi: () => {
   postMessage: (msg: any) => void;
@@ -89,9 +90,13 @@ const App: React.FC = () => {
       content: <Chat />,
     },
     {
+      label: 'Coworker',
+      content: <Coworker />,
+    },
+    {
       label: 'About',
       content: <About vscode={vscodeApi} />,
-    },
+    }
   ];
 
   return (
