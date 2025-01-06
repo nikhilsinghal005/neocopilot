@@ -202,13 +202,13 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   // console.log(language)
 
   return (
-    <div className="my-4 p-0 rounded-lg shadow-lg border w-full min-w-[400px]"
+    <div className="my-4 p-0 rounded-sm shadow-lg border w-full min-w-[400px]"
       style={{
         backgroundColor: 'var(--vscode-editor-background)',
         borderColor: 'var(--vscode-editorGroup-border)',
       }}
     >
-      <div className="flex justify-between items-center bg-vscode-chat-message-incoming text-vscode-editor-foreground pl-2 pr-6 py-0 rounded-t-md border"
+      <div className="flex justify-between items-center bg-vscode-chat-message-incoming text-vscode-editor-foreground pl-2 pr-6 py-0 rounded-t-sm border"
         style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
       >
         <span className="text-xs font-semibold">{fileName}</span>
@@ -257,7 +257,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
             <span className="text-vscode-editor-foreground">Processing{dots}</span>
           )}
           {state === 'review' && (
-            <span className="px-2 flex gap-2">
+            <span className="pl-2 pr-0 flex gap-2">
               <CodeButtonNormal
                 onClick={handleAccept}
                 ariaLabel={'Accept code'}
@@ -366,7 +366,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           )}
         </div>
       </div>
-      <div className="rounded-b-md overflow-hidden hover:overflow-auto transition-all duration-300 bg-vscode-chat-message-incoming !p-0 !m-0">
+      <div className="rounded-b-sm overflow-hidden hover:overflow-auto transition-all duration-300 bg-vscode-chat-message-incoming !p-0 !m-0">
         <pre className="!m-0">
           <code className={`${className} block p-2 text-vscode-editor-foreground`} {...props}>
             {codeContent}

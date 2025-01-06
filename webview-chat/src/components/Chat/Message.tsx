@@ -27,7 +27,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
 
         {/* Message box */}
         <div
-          className={`rounded-md flex items-center break-words px-2 max-w-[97%] bg-vscode-chat-message-incoming text-vscode-editor-foreground`}
+          className={`rounded-sm flex items-center break-words px-2 max-w-[97%] bg-vscode-chat-message-incoming text-vscode-editor-foreground`}
           style={{
             backgroundColor:
               message.messageType === 'user'
