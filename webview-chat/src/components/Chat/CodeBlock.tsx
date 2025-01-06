@@ -230,6 +230,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                   icon="codicon-terminal"
                   tooltip="Run in Terminal"
                   disabled={isTyping}
+                  buttonName={'Terminal'}
                 />
               ) : (
                 // Render Insert button for other languages
@@ -239,8 +240,6 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                   icon="codicon-arrow-right"
                   tooltip="Insert in Editor"
                   disabled={isTyping}
-                  buttonName={'Terminal'}
-
                 />
               )}
               {/* Copy Button */}
@@ -263,7 +262,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
             </>
           )}
           {state === 'processing' && (
-            <span className="text-vscode-editor-foreground">Processing{dots}</span>
+            <span className="text-vscode-editor-foreground pr-6">Processing{dots}</span>
           )}
           {state === 'review' && (
             <span className="pl-2 pr-0 flex gap-0">
