@@ -208,8 +208,11 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         borderColor: 'var(--vscode-editorGroup-border)',
       }}
     >
-      <div className="flex justify-between items-center bg-vscode-chat-message-incoming text-vscode-editor-foreground pl-2 pr-6 py-0 rounded-t-sm border"
-        style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
+      <div className="flex justify-between items-center text-vscode-editor-foreground pl-2 pr-6 py-0 rounded-t-sm border"
+        style={{ 
+          backgroundColor: 'var(--vscode-editor-background)',
+          borderColor: 'var(--vscode-editorGroup-border)' 
+        }}
       >
         <span className="text-xs font-semibold">{fileName}</span>
         <div className="flex">
