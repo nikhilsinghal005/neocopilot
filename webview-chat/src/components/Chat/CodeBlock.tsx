@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useVscode } from '../../context/VscodeContext';
 import CodeButton from '../Common/CodeButton';
+import CodeButtonWithText from '../Common/CodeButtonWithText';
 import CodeButtonNormal from '../Common/CodeButtonNormal';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 // import CodeButtonWithName from '../Common/CodeButtonWithName';
@@ -208,7 +209,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         borderColor: 'var(--vscode-editorGroup-border)',
       }}
     >
-      <div className="flex h-7 justify-between items-center text-vscode-editor-foreground pl-2 pr-6 py-0 rounded-t-sm border"
+      <div className="flex h-7 justify-between items-center text-vscode-editor-foreground pl-2 pr-0 py-0 rounded-t-sm border"
         style={{ 
           backgroundColor: 'var(--vscode-editor-background)',
           borderColor: 'var(--vscode-editorGroup-border)' 
@@ -221,7 +222,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
 
               {language === 'bash' || language === 'powershell' || language === 'powershell' ? (
                 // Render "T" button for Bash language
-                <CodeButton
+                <CodeButtonWithText
                   onClick={() => handleInsertToEditorTerminal(code, 'terminal')}
                   ariaLabel="Run code in Terminal"
                   icon="codicon-terminal"
@@ -230,16 +231,18 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                 />
               ) : (
                 // Render Insert button for other languages
-                <CodeButton
+                <CodeButtonWithText
                   onClick={() => handleInsertToEditorTerminal(code, 'editor')}
                   ariaLabel="Insert code to Editor"
                   icon="codicon-arrow-right"
                   tooltip="Insert in Editor"
                   disabled={isTyping}
+                  buttonName={'Terminal'}
+
                 />
               )}
               {/* Copy Button */}
-              <CodeButton
+              <CodeButtonWithText
                 onClick={() => handleCopyToClipboard(code)}
                 ariaLabel="Copy code to clipboard"
                 icon="codicon-copy"
@@ -247,12 +250,13 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                 disabled={isTyping}
               />
               {/* Smart Insert Button */}
-              <CodeButton
+              <CodeButtonWithText
                 onClick={() => handleSmartInsertToEditor(code)}
                 ariaLabel="Smart Insert to Editor"
                 icon="codicon-play"
                 tooltip="Smart Insert"
                 disabled={isTyping}
+                buttonName={'Apply'}
               />
             </>
           )}
@@ -260,22 +264,22 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
             <span className="text-vscode-editor-foreground">Processing{dots}</span>
           )}
           {state === 'review' && (
-            <span className="pl-2 pr-0 flex gap-2">
-              <CodeButtonNormal
+            <span className="pl-2 pr-0 flex gap-0">
+              <CodeButtonWithText
                 onClick={handleAccept}
                 ariaLabel={'Accept code'}
-                text={'Accept'}
+                icon="codicon-check"
                 tooltip='Accept Code'
-                type='primary'
                 disabled={isTyping}
+                buttonName={'Accept'}
               />
-              <CodeButtonNormal
+              <CodeButtonWithText
                 onClick={handleReject}
                 ariaLabel={'Reject code'}
-                text={'Reject'}
+                icon="codicon-chrome-close"
                 tooltip='Reject Code'
-                type='secondary'
                 disabled={isTyping}
+                buttonName={'Reject'}
               />
             </span>
           )}
