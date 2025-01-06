@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Chat from './pages/Chat';
 import Tabs from './pages/Tabs';
 import { ChatProvider } from './context/ChatContext';
+import { CoworkerProvider } from './context/CoworkerContext';
 import { VscodeProvider } from './context/VscodeContext';
 import About from './pages/About';
 import Coworker from './pages/Coworker';
@@ -101,15 +102,17 @@ const App: React.FC = () => {
 
   return (
     <VscodeProvider vscode={vscodeApi}>
-      <ChatProvider>
-        <div className="App h-full flex items-center justify-center overflow-hidden">
-          {isLoggedIn ? (
-            <Tabs tabs={tabContent} />
-          ) : (
-            <Login vscode={vscodeApi} />
-          )}
-        </div>
-      </ChatProvider>
+      <CoworkerProvider>
+        <ChatProvider>
+          <div className="App h-full flex items-center justify-center overflow-hidden">
+            {isLoggedIn ? (
+              <Tabs tabs={tabContent} />
+            ) : (
+              <Login vscode={vscodeApi} />
+            )}
+          </div>
+        </ChatProvider>
+      </CoworkerProvider>
     </VscodeProvider>
   );
 };

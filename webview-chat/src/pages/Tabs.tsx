@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ChatControls from '../components/Chat/ChatControls';
+import CoworkerControls from '../components/Coworker/CoworkerControls';
 
 interface TabProps {
   tabs: Array<{
@@ -11,6 +12,7 @@ interface TabProps {
 const Tabs: React.FC<TabProps> = ({ tabs }) => {
     const [activeTab, setActiveTab] = useState(0);
     const isChatTabActive = tabs[activeTab]?.label === 'Chat';
+    const isCoworkerTabActive = tabs[activeTab]?.label === 'Coworker';
     return (
       <div className="w-full h-full flex flex-col bg-vscode-editor-background">
         {/* Fixed Tab Header */}
@@ -31,8 +33,9 @@ const Tabs: React.FC<TabProps> = ({ tabs }) => {
             ))}
           </div>
   
-          {/* Conditional Buttons (shown only on Chat tab) */}
+          {/* Conditional Buttons */}
           {isChatTabActive && <ChatControls />}
+          {isCoworkerTabActive && <CoworkerControls />}
         </div>
 
         {/* Render all tab content but hide inactive ones */}
