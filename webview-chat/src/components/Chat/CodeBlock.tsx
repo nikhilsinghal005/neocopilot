@@ -6,6 +6,7 @@ import CodeButtonNormal from '../Common/CodeButtonNormal';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 // import CodeButtonWithName from '../Common/CodeButtonWithName';
 import { useChatContext } from '../../context/ChatContext';
+import LanguageIcon from '../Common/LanguageIcon';
 
 interface CodeBlockProps {
   inline?: boolean;
@@ -209,13 +210,14 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         borderColor: 'var(--vscode-editorGroup-border)',
       }}
     >
-      <div className="flex h-7 justify-between items-center text-vscode-editor-foreground pl-2 pr-0 py-0 rounded-t-sm border"
+      <div className="flex h-7 justify-between items-center text-vscode-editor-foreground pl-0 pr-0 py-0 rounded-t-sm border"
         style={{ 
           backgroundColor: 'var(--vscode-editor-background)',
           borderColor: 'var(--vscode-editorGroup-border)' 
         }}
-      >
-        <span className="text-xs font-semibold">{fileName}</span>
+      > 
+        
+        <span className="text-xs font-semibold flex items-center"><LanguageIcon fileName={fileName || ""}  iconSize={24} />{fileName}</span>
         <div className="flex">
           {state === 'idle' && (
             <>
