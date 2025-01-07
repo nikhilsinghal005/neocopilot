@@ -1,12 +1,15 @@
 import React from 'react';
 import { MessageStore } from '../../types/Message';
 import MessageRenderer from './MessageRenderer';
+import { CurrentFileContext } from '../../types/Message';
 
 interface MessageProps {
   message: MessageStore;
 }
 
 const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
+  console.log(message)
+
   return (
     <>
       {/* Divider line after each message */}
@@ -49,7 +52,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               minute: '2-digit',
             })} */}
           </span>
-          <MessageRenderer text={message.text} type={message.messageType} />
+          <MessageRenderer text={message.text} type={message.messageType} attachedContext={message.attachedContext ?? [] as CurrentFileContext[]} />
         </div>
 
         {/* Check mark on the right for the user's messages */}
