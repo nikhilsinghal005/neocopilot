@@ -8,7 +8,7 @@ interface MessageProps {
 }
 
 const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
-  console.log(message)
+  // console.log(message)
 
   return (
     <>

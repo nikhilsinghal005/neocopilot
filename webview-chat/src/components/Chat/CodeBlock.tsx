@@ -29,16 +29,16 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   const [state, setState] = useState<'idle' | 'processing' | 'review' | 'newFileRequiredType1' | 'newFileRequiredType2'>('idle');
   const [dots, setDots] = useState('');
   const codeId = React.useMemo(() => Math.random().toString(36).substr(2, 9), []); // Generate unique ID for the code block
-  console.log("codeId", codeId)
+  // console.log("codeId", codeId)
   const [showNewFileDropdownType1, setShowNewFileDropdownType1] = useState(false);
   const [showNewFileDropdownType2, setShowNewFileDropdownType2] = useState(false);
   const {isTyping} = useChatContext();
 
   useEffect(() => {
     const handleSmartInsertToEditorUpdate = (event: MessageEvent) => {
-      // console.log("smart Insert Call -----------------------------", event.data)
+      // // console.log("smart Insert Call -----------------------------", event.data)
       if (event.data.command === 'smart_insert_to_editor_update' && event.data.codeId === codeId) {
-        // console.log('Smart Insert to Editor Update', event.data);
+        // // console.log('Smart Insert to Editor Update', event.data);
         if (!event.data.isComplete) {
           setState('idle');
         } else {
@@ -49,8 +49,8 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
 
     const handleNewFileRequired = (event: MessageEvent) => {
       if (event.data.command === 'file_does_not_exist' && event.data.codeId === codeId) {
-        console.log("Check the data recived from the extension", event.data)
-        // console.log("File does not exist")
+        // console.log("Check the data recived from the extension", event.data)
+        // // console.log("File does not exist")
         if (event.data.isAnyFileOpen) {
           setState('newFileRequiredType1');
           setShowNewFileDropdownType1(true);
@@ -137,7 +137,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
 
   const handleCopyToClipboard = (code: string) => {
     navigator.clipboard.writeText(code).then(() => {
-      // console.log('Code copied to clipboard!');
+      // // console.log('Code copied to clipboard!');
     }).catch((err) => {
       // console.error('Failed to copy code: ', err);
     });
@@ -201,7 +201,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
 
   const code = extractText(codeContent).trim();
   const language = className ? className.replace(/language-|code-highlight/g, '').trim() : '';
-  // console.log(language)
+  // // console.log(language)
 
   return (
     <div className="my-4 p-0 rounded-sm shadow-lg border w-full min-w-[400px]"
