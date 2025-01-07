@@ -36,6 +36,9 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               message.messageType === 'user'
                 ? 'var(--vscode-input-background)'
                 : undefined,
+            border:message.messageType === 'user'
+                ? '2px solid var(--vscode-editorGroup-border)'
+                : undefined,
             overflowX: 'auto',
             flexGrow: 1,
             minWidth: '97%',
