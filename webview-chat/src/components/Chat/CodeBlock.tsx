@@ -217,7 +217,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         }}
       > 
         
-        <span className="text-xs font-semibold flex items-center"><LanguageIcon fileName={fileName || ""}  iconSize={24} />{fileName}</span>
+        <span className="text-xs font-semibold flex items-center"><LanguageIcon fileName={fileName || ""}  iconSize={22} />{fileName}</span>
         <div className="flex">
           {state === 'idle' && (
             <>
@@ -286,14 +286,15 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           )}
           {state === 'newFileRequiredType1' && (
             <div className="relative">
-              <CodeButton
+              <CodeButtonWithText
                 onClick={() => setShowNewFileDropdownType1(!showNewFileDropdownType1)}
                 ariaLabel="Smart Insert to Editor"
                 icon="codicon-play"
                 tooltip="Smart Insert"
                 disabled={isTyping}
+                buttonName={'Apply'}
               >
-              </CodeButton>
+              </CodeButtonWithText>
               {showNewFileDropdownType1 && (
                 <div
                   className="absolute right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
@@ -334,14 +335,15 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           )}
           {state === 'newFileRequiredType2' && (
             <div className="relative">
-              <CodeButton
+              <CodeButtonWithText
                 onClick={() => setShowNewFileDropdownType2(!showNewFileDropdownType2)}
                 ariaLabel="Smart Insert to Editor"
                 icon="codicon-play"
                 tooltip="Smart Insert"
                 disabled={isTyping}
+                buttonName={'Apply'}
               >
-              </CodeButton>
+              </CodeButtonWithText>
               {showNewFileDropdownType2 && (
                 <div
                   className="absolute text-sm right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
