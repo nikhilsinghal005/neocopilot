@@ -123,7 +123,7 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
   }
 
   // Refresh the access token by calling the backend API
-  public async refreshAccessToken(retryCount: number = 10000): Promise<string | null> { // High retry count for refresh attempts
+  public async refreshAccessToken(retryCount: number = 100000): Promise<string | null> { // High retry count for refresh attempts
     try {
       const refreshToken = await this.getRefreshToken();
       if (!refreshToken) {
@@ -154,12 +154,12 @@ public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
         } else if (response.status === 500 || response.status >= 500) {
           // Retry on server errors
           console.warn('Neo Copilot: Unable to verify user, retrying...');
-          await sleep(5000);
+          await sleep(10000);
           return this.refreshAccessToken(retryCount - 1);
         } else {
           // For all other errors (non 401/403), retry but do not log out
           console.warn('Neo Copilot: Temporary issue, retrying...');
-          await sleep(5000);
+          await sleep(10000);
           return this.refreshAccessToken(retryCount - 1);
         }
       }
