@@ -248,6 +248,11 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
+                  if (input.trim() === '') {
+                    // setWarningMessage('Cannot send an empty message.');
+                    setTimeout(() => setWarningMessage(''), 2000); // Clear message after 3 seconds
+                    return; // Prevent sending empty message
+                  }
                   handleSendClick(
                     isTyping,
                     setWarningMessage,
@@ -318,7 +323,12 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                 </VSCodeButton>
               ) : (
                 <VSCodeButton
-                  onClick={() =>
+                  onClick={() => {
+                    if (input.trim() === '') {
+                      // setWarningMessage('Cannot send an empty message.');
+                      setTimeout(() => setWarningMessage(''), 2000); // Clear message after 3 seconds
+                      return; // Prevent sending empty message
+                    }
                     handleSendClick(
                       isTyping,
                       setWarningMessage,
@@ -328,8 +338,8 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                       setInput,
                       handleSendMessage,
                       setIsTyping
-                    )
-                  }
+                    );
+                  }}
                   appearance="icon"
                   aria-label="Send Message"
                   disabled={isTyping}
