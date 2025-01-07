@@ -68,7 +68,7 @@ export class AuthManager {
   }
 
 // Verify the access token by calling the API
-public async verifyAccessToken(maxRetries: number = 3): Promise<boolean> {
+public async verifyAccessToken(maxRetries: number = 5): Promise<boolean> {
   let retries = 0;
   let token = await this.getAccessToken();
   if (!token) {
