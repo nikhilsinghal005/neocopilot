@@ -40,7 +40,7 @@ const Chat: React.FC = () => {
       modelSelected: chatModel,
       attachedContext: attachedContext
     };
-    ("----------------------" , newMessageStore);
+    console.log("----------------------" , newMessageStore);
     setChatSession((prevSession) => {
       // Prevent duplicate messages based on ID
       const messageExists = prevSession.messages.some(msg => msg.id === newMessageStore.id);

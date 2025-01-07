@@ -52,10 +52,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     viewType: string
   ): AiChatPanel {
     if (!AiChatPanel.primaryInstance) {
-      ('Creating new AiChatPanel instance');
+      console.log('Creating new AiChatPanel instance');
       AiChatPanel.primaryInstance = new AiChatPanel(extensionUri, context, authManager, viewType);
     }else{
-      ('Reusing existing AiChatPanel instance');
+      console.log('Reusing existing AiChatPanel instance');
     }
     return AiChatPanel.primaryInstance;
   }
@@ -108,7 +108,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     // Add a listener for messages from the webview (e.g., user actions like sending messages)
     if (!this.webviewListeners.has(webviewView)) {
-      ('Adding webview listener');
+      console.log('Adding webview listener');
       this.webviewListeners.add(webviewView);
       this.aiChatMessageHandler.initializeWebviewListener(webviewView)
       this.aiChatSmartInsertHandler.initializeWebviewListener(webviewView)
@@ -136,7 +136,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           // Toggles sidebar visibility or location
           case 'toggleSidebar':
             await this.panelManager.togglePanelLocationChange();
-            ("Toggled sidebar");
+            console.log("Toggled sidebar");
             break;
 
           // Handles code snippet insertion into terminal or editor
@@ -168,7 +168,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             this.sendAuthStatus(isLoggedIn);
 
             if (isLoggedIn) {
-              ('Initializing sockets');
+              console.log('Initializing sockets');
               this.socketModule = SocketModule.getInstance();
               this.aiChatMessageHandler.initializeSockets();
               this.aiChatSmartInsertHandler.initializeSockets();

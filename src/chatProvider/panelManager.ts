@@ -13,7 +13,7 @@ export class PanelManager {
 
     async togglePanelLocationChange(): Promise<void> {
         try {
-            ("Starting the panel location change process...");
+            console.log("Starting the panel location change process...");
 
             // Write the desired option to the clipboard
             vscode.commands.executeCommand('workbench.action.moveView');
