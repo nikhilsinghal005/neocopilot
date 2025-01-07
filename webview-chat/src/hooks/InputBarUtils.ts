@@ -25,7 +25,7 @@ export const useHandleIncomingMessages = ({
   useEffect(() => {
     const handleInsertMessages = (event: MessageEvent) => {
       if (event.data.command === 'insert_messages') {
-        console.log('Received chat message from VS Code:', event.data);
+        ('Received chat message from VS Code:', event.data);
         setInput(event.data.inputText || '');
       }
     };
@@ -100,7 +100,7 @@ export const useHandleIncomingMessages = ({
   useEffect(() => {
     const handleOpenFilesListUpdate = (event: MessageEvent) => {
       if (event.data.command === 'editor_open_files_list_update_event') {
-        console.log('List of Files Received:', event.data);
+        ('List of Files Received:', event.data);
         const updatedOpenFilesList = event.data.openFiles.filter(
           (file: EditorOpenFileList) => !attachedContext.some((context) => context.filePath === file.filePath)
         );

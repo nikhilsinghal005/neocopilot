@@ -134,7 +134,7 @@ export class CodeInsertionManager {
 public async reinitializeDecorationsAndCodeLenses(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (editor) {
-      console.log("Which Editor");
+      ("Which Editor");
       this.currentEditor = vscode.window.activeTextEditor;
       await this.codeLensProvider.refresh(this.currentEditor);
       this.currentEditor?.setDecorations(this.insertedDecorationType, this.decorationsToApply.inserted);
