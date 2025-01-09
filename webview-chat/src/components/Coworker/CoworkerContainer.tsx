@@ -1,4 +1,4 @@
-// src/components/Chat/ChatContainer.tsx
+// src/components/Coworker/CoworkerContainer.tsx
 import React from 'react';
 import MessageList from './MessageList';
 import TypingIndicator from './TypingIndicator';
@@ -6,26 +6,26 @@ import InputBar from '../InputBarCoworker/InputBar';
 import { useCoworkerContext } from '../../context/CoworkerContext';
 import NewChatPanel from './NewChatPanel';
 
-interface ChatContainerProps {
+interface CoworkerContainerProps {
   input: string;
   setInput: (input: string) => void;
   isTyping: boolean;
   handleSendMessage: () => void;
 }
 
-const ChatContainer: React.FC<ChatContainerProps> = ({
+const CoworkerContainer: React.FC<CoworkerContainerProps> = ({
   input,
   setInput,
   isTyping,
   handleSendMessage,
 }) => {
-  const { chatSession } = useCoworkerContext(); // Access chatSession from the context
+  const { coworkerSession } = useCoworkerContext(); // Access coworkerSession from the context
 
-  // Ensure that chatSession and chatSession.messages are defined
-  const hasMessages = chatSession && Array.isArray(chatSession.messages) && chatSession.messages.length > 0;
+  // Ensure that coworkerSession and coworkerSession.messages are defined
+  const hasMessages = coworkerSession && Array.isArray(coworkerSession.messages) && coworkerSession.messages.length > 0;
 
   return (
-    <div className="chat-page flex flex-col flex-grow w-full h-full">
+    <div className="coworker-page flex flex-col flex-grow w-full h-full">
       {/* Conditional rendering for NewChatPanel */}
       {!hasMessages ? (
         <NewChatPanel />
@@ -39,7 +39,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
               bottom: `calc(var(--input-container-height, 130px) + 0px)`, // Adjusted to match the dynamic height of input container
             }}
           >
-            <MessageList chatSession={chatSession} />
+            <MessageList coworkerSession={coworkerSession} />
             {isTyping && <TypingIndicator />}
           </div>
         </>
@@ -68,4 +68,4 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
   );
 };
 
-export default ChatContainer;
+export default CoworkerContainer;

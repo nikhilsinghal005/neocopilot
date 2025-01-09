@@ -1,19 +1,19 @@
 // src/components/Chat/MessageList.tsx
 import React, { useRef, useEffect } from 'react';
-import { ChatSession } from '../../types/Message';
+import { CoworkerSession } from '../../types/CoworkerMessage';
 import MessageComponent from './Message';
 
 interface MessageListProps {
-  chatSession: ChatSession; // Now we receive the entire chat session
+  coworkerSession: CoworkerSession; // Now we receive the entire chat session
 }
 
-const MessageList: React.FC<MessageListProps> = ({ chatSession }) => {
+const MessageList: React.FC<MessageListProps> = ({ coworkerSession }) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // Scroll to the latest message when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatSession.messages]); // Now dependent on the messages array within chatSession
+  }, [coworkerSession.messages]); // Now dependent on the messages array within coworkerSession
 
   return (
     <div
@@ -35,7 +35,7 @@ const MessageList: React.FC<MessageListProps> = ({ chatSession }) => {
           }
         `}
       </style>
-      {chatSession.messages.slice(-60).map((message) => (
+      {coworkerSession.messages.slice(-60).map((message) => (
         <MessageComponent key={message.id} message={message} />
       ))}
       <div ref={messagesEndRef} />

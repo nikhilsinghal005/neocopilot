@@ -1,6 +1,6 @@
 // src/pages/Coworker.tsx
 import React, { useState, useEffect } from 'react';
-import ChatContainer from '../components/Coworker/ChatContainer';
+import CoworkerContainer from '../components/Coworker/CoworkerContainer'; // Updated to match Coworker naming
 import { useCoworkerListener } from '../hooks/useCoworkerListener';
 import { MessageStore, MessageOutput } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,23 +9,23 @@ import { useVscode } from '../context/VscodeContext';
 
 const Coworker: React.FC = () => {
   const vscode = useVscode();
-  const { chatSession, setChatSession, isTyping, setIsTyping, chatModel, attachedContext } = useCoworkerContext();
+  const { coworkerSession, setCoworkerSession, isTyping, setIsTyping, coworkerModel, attachedContext } = useCoworkerContext();
   const [input, setInput] = useState('');
 
   useEffect(() => {
-    // Restore the saved chat session from VSCode state
-    const savedChatSession = vscode.getState ? vscode.getState() : null;
-    if (savedChatSession) {
-      setChatSession(savedChatSession);
+    // Restore the saved coworker session from VSCode state
+    const savedCoworkerSession = vscode.getState ? vscode.getState() : null;
+    if (savedCoworkerSession) {
+      setCoworkerSession(savedCoworkerSession);
     }
-  }, [vscode, setChatSession]);
+  }, [vscode, setCoworkerSession]);
 
   useEffect(() => {
-    // Save the chat session in VSCode state
-    if (chatSession) {
-      vscode.setState(chatSession);
+    // Save the coworker session in VSCode state
+    if (coworkerSession) {
+      vscode.setState(coworkerSession);
     }
-  }, [chatSession, vscode]);
+  }, [coworkerSession, vscode]);
 
   useCoworkerListener();
 
@@ -37,24 +37,24 @@ const Coworker: React.FC = () => {
       timestamp: new Date().toISOString(),
       messageType: 'user',
       text: input.trim(),
-      modelSelected: chatModel,
+      modelSelected: coworkerModel,
       attachedContext: attachedContext
     };
-    console.log("----------------------" , newMessageStore);
-    setChatSession((prevSession) => {
+
+    setCoworkerSession((prevSession) => {
       // Prevent duplicate messages based on ID
       const messageExists = prevSession.messages.some(msg => msg.id === newMessageStore.id);
       if (messageExists) return prevSession;
 
       const updatedMessages = [...(prevSession.messages || []), newMessageStore];
-      const updatedChatSession = { ...prevSession, messages: updatedMessages };
+      const updatedCoworkerSession = { ...prevSession, messages: updatedMessages };
 
       vscode.postMessage({
         command: 'send_coworker_message',
-        data: updatedChatSession,
+        data: updatedCoworkerSession,
       });
 
-      return updatedChatSession;
+      return updatedCoworkerSession;
     });
 
     setInput('');
@@ -63,12 +63,11 @@ const Coworker: React.FC = () => {
 
   return (
     <div>
-      <ChatContainer
+      <CoworkerContainer
         input={input}
         setInput={setInput}
         isTyping={isTyping}
         handleSendMessage={handleSendMessage}
-
       />
     </div>
   );

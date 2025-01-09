@@ -6,7 +6,7 @@ import { useCoworkerContext } from '../../context/CoworkerContext';
 
 const NewChatPanel: React.FC = () => {
   const vscode = useVscode();
-  const { chatSessionList, setChatSession } = useCoworkerContext();
+  const { coworkerSessionList, setCoworkerSession } = useCoworkerContext();
   const markdownContent = `
 # Welcome to Neo Copilot
 
@@ -24,7 +24,7 @@ Neo Copilot is here to help you write better code, faster.
   };
 
   const handleChatClick = (session: any) => {
-    setChatSession(session);
+    setCoworkerSession(session);
   };
 
   return (

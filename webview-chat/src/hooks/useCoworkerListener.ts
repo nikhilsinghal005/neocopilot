@@ -1,20 +1,20 @@
 import { useEffect, useRef } from 'react';
 import { useCoworkerContext } from '../context/CoworkerContext';
-import { MessageStore, MessageInput, ChatSession } from '../types/Message';
+import { MessageStore, MessageInput, CoworkerSession } from '../types/CoworkerMessage';
 import { v4 as uuidv4 } from 'uuid';
 
 export const useCoworkerListener = () => {
-  const { chatSession, setChatSession, isTyping, setIsTyping, isInterrupted } = useCoworkerContext();
+  const { coworkerSession, setCoworkerSession, isTyping, setIsTyping, isInterrupted } = useCoworkerContext();
   const accumulatedResponseRef = useRef<string>('');
   const messageInProgressRef = useRef<MessageStore | null>(null);
   const interruptedMessageIdsRef = useRef<Set<string>>(new Set());
 
   // Sync refs with current state
   const isTypingRef = useRef<boolean>(isTyping);
-  const chatSessionRef = useRef<ChatSession | null>(chatSession);
+  const chatSessionRef = useRef<CoworkerSession | null>(coworkerSession);
 
   useEffect(() => { isTypingRef.current = isTyping; }, [isTyping]);
-  useEffect(() => { chatSessionRef.current = chatSession; }, [chatSession]);
+  useEffect(() => { chatSessionRef.current = coworkerSession; }, [coworkerSession]);
 
   useEffect(() => {
     const handleIncomingMessage = (event: MessageEvent) => {
@@ -58,12 +58,12 @@ export const useCoworkerListener = () => {
     };
 
     const isValidMessage = (data: MessageInput) => {
-      if (!chatSessionRef.current?.chatId) {
-        console.warn("No valid chatId found; ignoring message.");
+      if (!chatSessionRef.current?.coworkerId) {
+        console.warn("No valid coworkerId found; ignoring message.");
         return false;
       }
-      if (data.chatId !== chatSessionRef.current.chatId) {
-        console.warn(`Message chatId mismatch: expected ${chatSessionRef.current.chatId}, received ${data.chatId}`);
+      if (data.coworkerId !== chatSessionRef.current.coworkerId) {
+        console.warn(`Message coworkerId mismatch: expected ${chatSessionRef.current.coworkerId}, received ${data.coworkerId}`);
         resetMessageProgress();
         return false;
       }
@@ -88,10 +88,10 @@ export const useCoworkerListener = () => {
     };
 
     const updateSessionWithMessage = (data: MessageInput) => {
-      setChatSession((prevSession) => {
+      setCoworkerSession((prevSession) => {
         if (!prevSession) {
           console.warn("Previous session is null, creating a new one.");
-          return createNewSession(data.chatId);
+          return createNewSession(data.coworkerId);
         }
 
         if (!messageInProgressRef.current) {
@@ -139,10 +139,10 @@ export const useCoworkerListener = () => {
       });
     };
 
-    const createNewSession = (chatId: string): ChatSession => ({
-      chatId,
+    const createNewSession = (coworkerId: string): CoworkerSession => ({
+      coworkerId,
       timestamp: new Date().toISOString(),
-      chatName: 'New Chat',
+      coworkerName: 'New Chat',
       createdAt: new Date().toISOString(),
       messages: messageInProgressRef.current ? [messageInProgressRef.current] : [],
     });
@@ -159,5 +159,5 @@ export const useCoworkerListener = () => {
 
     window.addEventListener('message', handleIncomingMessage);
     return () => window.removeEventListener('message', handleIncomingMessage);
-  }, [setChatSession, setIsTyping, isInterrupted]);
+  }, [setCoworkerSession, setIsTyping, isInterrupted]);
 };

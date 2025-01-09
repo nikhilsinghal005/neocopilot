@@ -25,8 +25,8 @@ interface InputBarProps {
 const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage, isTyping }) => {
   const [warningMessage, setWarningMessage] = useState('');
   const {
-    chatModel,
-    setChatModel,
+    coworkerModel,
+    setCoworkerModel,
     attachedContext,
     setAttachedContext,
     openEditorFilesList,
@@ -278,10 +278,10 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                 color: 'var(--vscode-editor-foreground)',
                 borderColor: 'var(--vscode-editorGroup-border)',
               }}
-              value={chatModel}
+              value={coworkerModel}
               onChange={(e) => {
                 if (e.target) {
-                  setChatModel((e.target as HTMLSelectElement).value);
+                  setCoworkerModel((e.target as HTMLSelectElement).value);
                 }
               }}
             >

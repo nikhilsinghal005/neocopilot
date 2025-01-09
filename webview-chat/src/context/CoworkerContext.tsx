@@ -1,128 +1,126 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { ChatSession, MessageStore, CurrentFileContext, EditorOpenFileList, ChatSessionList } from '../types/Message';
+import { CoworkerSession, MessageStore, CurrentFileContext, EditorOpenFileList, CoworkerSessionList } from '../types/CoworkerMessage';
 import { chatModelDetail } from '../types/AppDetails';
 import { v4 as uuidv4 } from 'uuid';
 
 interface CoworkerContextProps {
-  chatSession: ChatSession;
-  setChatSession: React.Dispatch<React.SetStateAction<ChatSession>>;
+  coworkerSession: CoworkerSession;
+  setCoworkerSession: React.Dispatch<React.SetStateAction<CoworkerSession>>;
   isTyping: boolean;
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>;
-  chatModel: string;
-  setChatModel: React.Dispatch<React.SetStateAction<string>>;
+  coworkerModel: string;
+  setCoworkerModel: React.Dispatch<React.SetStateAction<string>>;
   attachedContext: CurrentFileContext[],
   setAttachedContext: React.Dispatch<React.SetStateAction<CurrentFileContext[]>>;
   openEditorFilesList: EditorOpenFileList[];
   setOpenEditorFilesList: React.Dispatch<React.SetStateAction<EditorOpenFileList[]>>;
-  clearChatSession: () => void;
+  clearCoworkerSession: () => void;
   addMessage: (newMessage: MessageStore) => void;
   isInterrupted: boolean;
   setIsInterrupted: React.Dispatch<React.SetStateAction<boolean>>;
-  chatModelList: chatModelDetail[];
-  setChatModelList: React.Dispatch<React.SetStateAction<chatModelDetail[]>>;
-  chatSessionList: ChatSessionList;
-  setChatSessionList:  React.Dispatch<React.SetStateAction<ChatSessionList>>;
+  coworkerModelList: chatModelDetail[];
+  setCoworkerModelList: React.Dispatch<React.SetStateAction<chatModelDetail[]>>;
+  coworkerSessionList: CoworkerSessionList;
+  setCoworkerSessionList: React.Dispatch<React.SetStateAction<CoworkerSessionList>>;
 }
 
-const createNewChatSession = (): ChatSession => ({
-  chatId: uuidv4(),
+const createNewCoworkerSession = (): CoworkerSession => ({
+  coworkerId: uuidv4(),
   timestamp: new Date().toISOString(),
   createdAt: new Date().toISOString(),
-  chatName: 'Untitled Chat',
+  coworkerName: 'Untitled Coworker',
   messages: [],
 });
 
-const ChatContext = createContext<CoworkerContextProps | undefined>(undefined);
+const CoworkerContext = createContext<CoworkerContextProps | undefined>(undefined);
 
 export const useCoworkerContext = (): CoworkerContextProps => {
-  const context = useContext(ChatContext);
+  const context = useContext(CoworkerContext);
   if (!context) {
-    throw new Error('useChatContext must be used within a CoworkerProvider');
+    throw new Error('useCoworkerContext must be used within a CoworkerProvider');
   }
   return context;
 };
 
 export const CoworkerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [chatSession, setChatSession] = useState<ChatSession>(() => {
-    const storedSession = sessionStorage.getItem('coWorkerSession');
+  const [coworkerSession, setCoworkerSession] = useState<CoworkerSession>(() => {
+    const storedSession = sessionStorage.getItem('coworkerSession');
     if (storedSession) {
       try {
-        return JSON.parse(storedSession) as ChatSession;
+        return JSON.parse(storedSession) as CoworkerSession;
       } catch (error) {
-        console.error("Failed to parse stored chat session:", error);
-        return createNewChatSession();
+        console.error("Failed to parse stored coworker session:", error);
+        return createNewCoworkerSession();
       }
-    }else{
-      const newSession: ChatSession = createNewChatSession();
-      sessionStorage.setItem('coWorkerSession', JSON.stringify(newSession));
+    } else {
+      const newSession: CoworkerSession = createNewCoworkerSession();
+      sessionStorage.setItem('coworkerSession', JSON.stringify(newSession));
       return newSession;
     }
   });
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
-  const [chatModel, setChatModel] = useState<string>('neo-7');
+  const [coworkerModel, setCoworkerModel] = useState<string>('neo-7');
   const [attachedContext, setAttachedContext] = useState<CurrentFileContext[]>([]);
   const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
   const [isInterrupted, setIsInterrupted] = useState<boolean>(false);
-  const [chatModelList, setChatModelList] = useState<chatModelDetail[]>([]);
-  const [chatSessionList, setChatSessionList] = useState<ChatSessionList>([]);
+  const [coworkerModelList, setCoworkerModelList] = useState<chatModelDetail[]>([]);
+  const [coworkerSessionList, setCoworkerSessionList] = useState<CoworkerSessionList>([]);
 
-  
   useEffect(() => {
-    sessionStorage.setItem('coWorkerSession', JSON.stringify(chatSession));
-  }, [chatSession]);
+    sessionStorage.setItem('coworkerSession', JSON.stringify(coworkerSession));
+  }, [coworkerSession]);
 
-  const clearChatSession = useCallback(() => {
-    if (chatSession.messages.length > 0) { // Check if there are any messages
-      let chatNameToSet = 'Untitled Chat';
-      const firstUserMessage = chatSession.messages.find(msg => msg.messageType === 'user');
+  const clearCoworkerSession = useCallback(() => {
+    if (coworkerSession.messages.length > 0) { // Check if there are any messages
+      let coworkerNameToSet = 'Untitled Coworker';
+      const firstUserMessage = coworkerSession.messages.find(msg => msg.messageType === 'user');
       if (firstUserMessage) {
-        chatNameToSet = firstUserMessage.text.substring(0, 100);
+        coworkerNameToSet = firstUserMessage.text.substring(0, 100);
       }
-  
-      setChatSessionList((prev) => {
-        // Filter out the session with the same chatId
-        const updatedList = prev.filter(session => session.chatId !== chatSession.chatId);
-  
+
+      setCoworkerSessionList((prev) => {
+        // Filter out the session with the same coworkerId
+        const updatedList = prev.filter(session => session.coworkerId !== coworkerSession.coworkerId);
+
         // Add the new session and limit the list size to 10
         const newList = [
-          { ...chatSession, chatName: chatNameToSet },
+          { ...coworkerSession, coworkerName: coworkerNameToSet },
           ...updatedList,
         ];
-  
+
         return newList.slice(0, 10); // Keep only the latest 10 sessions
       });
     }
-    
-    const newSession = createNewChatSession();
-    sessionStorage.setItem('coWorkerSession', JSON.stringify(newSession));
-    setChatSession(newSession);
-  }, [chatSession, setChatSessionList]);
-  
-  
+
+    const newSession = createNewCoworkerSession();
+    sessionStorage.setItem('coworkerSession', JSON.stringify(newSession));
+    setCoworkerSession(newSession);
+  }, [coworkerSession, setCoworkerSessionList]);
+
   const addMessage = useCallback((newMessage: MessageStore) => {
-    setChatSession((prevSession) => ({
+    setCoworkerSession((prevSession) => ({
       ...prevSession,
       messages: [...prevSession.messages, newMessage],
     }));
   }, []);
 
   return (
-    <ChatContext.Provider 
+    <CoworkerContext.Provider 
       value={{
-        chatSession, 
-        setChatSession, 
+        coworkerSession, 
+        setCoworkerSession, 
         isTyping, setIsTyping, 
-        chatModel, setChatModel,
+        coworkerModel, setCoworkerModel,
         attachedContext, setAttachedContext,
         openEditorFilesList, setOpenEditorFilesList,
-        clearChatSession, 
+        clearCoworkerSession, 
         addMessage,
         isInterrupted, setIsInterrupted,
-        chatModelList, setChatModelList,
-        chatSessionList, setChatSessionList,
+        coworkerModelList, setCoworkerModelList,
+        coworkerSessionList, setCoworkerSessionList,
       }}>
       {children}
-    </ChatContext.Provider>
+    </CoworkerContext.Provider>
   );
 };
