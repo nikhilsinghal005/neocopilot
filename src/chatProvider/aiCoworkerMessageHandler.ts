@@ -2,7 +2,7 @@
 import { AuthManager } from '../authManager/authManager';
 import { SocketModule } from '../socketModule';
 import { v4 as uuidv4 } from 'uuid';
-import { ChatSession, MessageResponse, MessageResponseFromBackEnd } from './types/messageTypes';
+import { CoworkerSession, MessageResponse, MessageResponseFromBackEnd } from './types/messageTypesCoworker';
 import { AiChatPanel } from './aiChatPanel';
 import * as vscode from 'vscode';
 import { getFileText } from '../utilities/editorUtils/getFileText';
@@ -31,7 +31,7 @@ export class AiCoworkerMessageHandler {
         switch (message.command) {
           // Handles sending a chat message
           case 'send_coworker_message':
-            const inputChat: ChatSession = message.data;
+            const inputChat: CoworkerSession = message.data;
             this.attemptSendChatMessage(inputChat);
             break;
         }
@@ -63,7 +63,7 @@ export class AiCoworkerMessageHandler {
    * @param inputChat The chat session data to send.
    * @param retries Number of remaining retries.
    */
-  public attemptSendChatMessage(inputChat: ChatSession, retries = 3): void {
+  public attemptSendChatMessage(inputChat: CoworkerSession, retries = 3): void {
     this.socketModule = SocketModule.getInstance();
     if (this.socketModule.socket?.connected) {
       console.log("Socket connected. Attaching listeners for Chat messages.");
@@ -75,7 +75,7 @@ export class AiCoworkerMessageHandler {
       }, 5000);
     } else {
       this.forwardMessageToWebviews({
-        chatId: inputChat.chatId,
+        coworkerId: inputChat.coworkerId,
         id: uuidv4(),
         response: "Please check your internet connection or try again.",
         isComplete: true,
@@ -123,7 +123,7 @@ export class AiCoworkerMessageHandler {
       webviewView.webview.postMessage({
         command: 'receive_coworker_message',
         data: {
-          chatId: data.chatId,
+          coworkerId: data.coworkerId,
           response: data.response,
           unique_id: data.id,
           isComplete: data.isComplete
@@ -148,7 +148,7 @@ export class AiCoworkerMessageHandler {
           panel.webview.postMessage({
             command: 'receive_coworker_message',
             data: {
-              chatId: data.chatId,
+              coworkerId: data.coworkerId,
               response: data.response,
               id: data.id,
               isComplete: data.isComplete
@@ -163,7 +163,7 @@ export class AiCoworkerMessageHandler {
     }
   }
 
-  public async sendChatMessage(chat: ChatSession) {
+  public async sendChatMessage(chat: CoworkerSession) {
 
     let messageList = chat.messages.slice(-5);
 
@@ -188,7 +188,7 @@ export class AiCoworkerMessageHandler {
     // Emit the updated messageList to the socket
     if (this.socketModule.socket) {
       this.socketModule.socket.emit('generate_coworker_response', {
-            chatId: chat.chatId,
+            coworkerId: chat.coworkerId,
             timestamp: chat.timestamp,
             messageList, // Updated with fileText for all messages
             appVersion: this.socketModule.currentVersion,

@@ -101,9 +101,9 @@ const App: React.FC = () => {
   ];
 
   return (
-    <VscodeProvider vscode={vscodeApi}>
-      <CoworkerProvider>
-        <ChatProvider>
+    <VscodeProvider vscode={vscodeApi}> 
+      <ChatProvider>
+        <CoworkerProvider>
           <div className="App h-full flex items-center justify-center overflow-hidden">
             {isLoggedIn ? (
               <Tabs tabs={tabContent} />
@@ -111,8 +111,8 @@ const App: React.FC = () => {
               <Login vscode={vscodeApi} />
             )}
           </div>
-        </ChatProvider>
-      </CoworkerProvider>
+          </CoworkerProvider>
+      </ChatProvider>
     </VscodeProvider>
   );
 };
