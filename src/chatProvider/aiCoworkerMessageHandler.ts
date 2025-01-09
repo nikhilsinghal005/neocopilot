@@ -32,7 +32,7 @@ export class AiCoworkerMessageHandler {
           // Handles sending a chat message
           case 'send_coworker_message':
             const inputChat: CoworkerSession = message.data;
-            this.attemptSendChatMessage(inputChat);
+            this.attemptSendCoworkerMessage(inputChat);
             break;
         }
       });
@@ -63,15 +63,15 @@ export class AiCoworkerMessageHandler {
    * @param inputChat The chat session data to send.
    * @param retries Number of remaining retries.
    */
-  public attemptSendChatMessage(inputChat: CoworkerSession, retries = 3): void {
+  public attemptSendCoworkerMessage(inputChat: CoworkerSession, retries = 3): void {
     this.socketModule = SocketModule.getInstance();
     if (this.socketModule.socket?.connected) {
       console.log("Socket connected. Attaching listeners for Chat messages.");
       this.attachSocketListeners();
-      this.sendChatMessage(inputChat);
+      this.sendCoworkerMessage(inputChat);
     } else if (retries > 0) {
       setTimeout(() => {
-        this.attemptSendChatMessage(inputChat, retries - 1);
+        this.attemptSendCoworkerMessage(inputChat, retries - 1);
       }, 5000);
     } else {
       this.forwardMessageToWebviews({
@@ -163,7 +163,7 @@ export class AiCoworkerMessageHandler {
     }
   }
 
-  public async sendChatMessage(chat: CoworkerSession) {
+  public async sendCoworkerMessage(chat: CoworkerSession) {
 
     let messageList = chat.messages.slice(-5);
 
