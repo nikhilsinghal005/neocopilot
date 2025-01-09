@@ -22,6 +22,8 @@ interface ChatContextProps {
   setChatModelList: React.Dispatch<React.SetStateAction<chatModelDetail[]>>;
   chatSessionList: ChatSessionList;
   setChatSessionList:  React.Dispatch<React.SetStateAction<ChatSessionList>>;
+  input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const createNewChatSession = (): ChatSession => ({
@@ -52,7 +54,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error("Failed to parse stored chat session:", error);
         return createNewChatSession();
       }
-    }else{
+    } else {
       const newSession: ChatSession = createNewChatSession();
       sessionStorage.setItem('chatSession', JSON.stringify(newSession));
       return newSession;
@@ -66,40 +68,37 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isInterrupted, setIsInterrupted] = useState<boolean>(false);
   const [chatModelList, setChatModelList] = useState<chatModelDetail[]>([]);
   const [chatSessionList, setChatSessionList] = useState<ChatSessionList>([]);
+  const [input, setInput] = useState<string>(''); // Add input state here
 
-  
   useEffect(() => {
     sessionStorage.setItem('chatSession', JSON.stringify(chatSession));
   }, [chatSession]);
 
   const clearChatSession = useCallback(() => {
-    if (chatSession.messages.length > 0) { // Check if there are any messages
+    if (chatSession.messages.length > 0) {
       let chatNameToSet = 'Untitled Chat';
       const firstUserMessage = chatSession.messages.find(msg => msg.messageType === 'user');
       if (firstUserMessage) {
         chatNameToSet = firstUserMessage.text.substring(0, 100);
       }
-  
+
       setChatSessionList((prev) => {
-        // Filter out the session with the same chatId
         const updatedList = prev.filter(session => session.chatId !== chatSession.chatId);
-  
-        // Add the new session and limit the list size to 10
+
         const newList = [
           { ...chatSession, chatName: chatNameToSet },
           ...updatedList,
         ];
-  
-        return newList.slice(0, 10); // Keep only the latest 10 sessions
+
+        return newList.slice(0, 10);
       });
     }
-    
+
     const newSession = createNewChatSession();
     sessionStorage.setItem('chatSession', JSON.stringify(newSession));
     setChatSession(newSession);
   }, [chatSession, setChatSessionList]);
-  
-  
+
   const addMessage = useCallback((newMessage: MessageStore) => {
     setChatSession((prevSession) => ({
       ...prevSession,
@@ -108,20 +107,30 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <ChatContext.Provider 
+    <ChatContext.Provider
       value={{
-        chatSession, 
-        setChatSession, 
-        isTyping, setIsTyping, 
-        chatModel, setChatModel,
-        attachedContext, setAttachedContext,
-        openEditorFilesList, setOpenEditorFilesList,
-        clearChatSession, 
+        chatSession,
+        setChatSession,
+        isTyping,
+        setIsTyping,
+        chatModel,
+        setChatModel,
+        attachedContext,
+        setAttachedContext,
+        openEditorFilesList,
+        setOpenEditorFilesList,
+        clearChatSession,
         addMessage,
-        isInterrupted, setIsInterrupted,
-        chatModelList, setChatModelList,
-        chatSessionList, setChatSessionList,
-      }}>
+        isInterrupted,
+        setIsInterrupted,
+        chatModelList,
+        setChatModelList,
+        chatSessionList,
+        setChatSessionList,
+        input,
+        setInput, // Provide input state here
+      }}
+    >
       {children}
     </ChatContext.Provider>
   );

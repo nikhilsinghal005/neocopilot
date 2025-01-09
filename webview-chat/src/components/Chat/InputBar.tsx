@@ -3,8 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { VSCodeButton, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
 import { useVscode } from '../../context/VscodeContext';
-import { CurrentFileContext, EditorOpenFileList } from '../../types/Message';
-import MessageRenderer from './MessageRenderer';
 import {
   useHandleIncomingMessages,
   sanitizeInput,
@@ -89,7 +87,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
   };
 
   return (
-    <div className="complete-wrapper w-full h-full flex flex-col items-center px-0 pt-0">
+    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0">
       {/* Context Wrapper */}
       <div
         className="context-wrapper w-full h-full flex flex-row items-center p-1 pt-0 gap-2"

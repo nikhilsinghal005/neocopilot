@@ -9,8 +9,7 @@ import { useVscode } from '../context/VscodeContext';
 
 const Chat: React.FC = () => {
   const vscode = useVscode();
-  const { chatSession, setChatSession, isTyping, setIsTyping, chatModel, attachedContext } = useChatContext();
-  const [input, setInput] = useState('');
+  const { chatSession, setChatSession, isTyping, setIsTyping, chatModel, attachedContext, input, setInput } = useChatContext();
 
   useEffect(() => {
     // Restore the saved chat session from VSCode state
