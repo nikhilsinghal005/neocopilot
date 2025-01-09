@@ -11,10 +11,10 @@ export const useCoworkerListener = () => {
 
   // Sync refs with current state
   const isTypingRef = useRef<boolean>(isTyping);
-  const chatSessionRef = useRef<CoworkerSession | null>(coworkerSession);
+  const coworkerSessionRef = useRef<CoworkerSession | null>(coworkerSession);
 
   useEffect(() => { isTypingRef.current = isTyping; }, [isTyping]);
-  useEffect(() => { chatSessionRef.current = coworkerSession; }, [coworkerSession]);
+  useEffect(() => { coworkerSessionRef.current = coworkerSession; }, [coworkerSession]);
 
   useEffect(() => {
     const handleIncomingMessage = (event: MessageEvent) => {
@@ -58,12 +58,12 @@ export const useCoworkerListener = () => {
     };
 
     const isValidMessage = (data: MessageInput) => {
-      if (!chatSessionRef.current?.coworkerId) {
+      if (!coworkerSessionRef.current?.coworkerId) {
         console.warn("No valid coworkerId found; ignoring message.");
         return false;
       }
-      if (data.coworkerId !== chatSessionRef.current.coworkerId) {
-        console.warn(`Message coworkerId mismatch: expected ${chatSessionRef.current.coworkerId}, received ${data.coworkerId}`);
+      if (data.coworkerId !== coworkerSessionRef.current.coworkerId) {
+        console.warn(`Message coworkerId mismatch: expected ${coworkerSessionRef.current.coworkerId}, received ${data.coworkerId}`);
         resetMessageProgress();
         return false;
       }

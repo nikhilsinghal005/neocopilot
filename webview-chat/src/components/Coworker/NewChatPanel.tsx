@@ -70,7 +70,7 @@ Neo Copilot is here to help you write better code, faster.
           Toggle Chat Panel
         </VSCodeButton>
       </div>
-      {/* {chatSessionList.length > 0 && (
+      {/* {coworkerSessionList.length > 0 && (
         <div
           className="card border rounded-xs shadow-xl p-6 overflow-hidden mt-4"
           style={{
@@ -84,7 +84,7 @@ Neo Copilot is here to help you write better code, faster.
         >
           <h2 className="text-sm font-roboto-bold mb-4">Previous Chats</h2>
           <ul className="list-none p-0">
-            {chatSessionList.slice(0, 5).map((session, index) => (
+            {coworkerSessionList.slice(0, 5).map((session, index) => (
               <li
                 key={index}
                 className="mb-2 p-2 rounded border cursor-pointer"
