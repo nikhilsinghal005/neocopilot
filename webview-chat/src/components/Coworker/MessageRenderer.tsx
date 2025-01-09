@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown, { Components } from 'react-markdown';
 import rehypePrism from 'rehype-prism-plus';
-import './prism-tomorrow.css';
+import '../../themes/prism-tomorrow.css';
 import './custom-overrides.css';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from './CodeBlock';
