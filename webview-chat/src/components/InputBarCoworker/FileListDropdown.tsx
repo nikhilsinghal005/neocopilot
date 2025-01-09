@@ -1,5 +1,5 @@
 // FileListDropdown.tsx
-import React from 'react';
+import React, {useState} from 'react';
 import { useChatContext } from '../../context/ChatContext';
 import LanguageIcon from '../Common/LanguageIcon';
 import { handleListItemClickFunction } from '../../hooks/InputBarUtils';
@@ -13,6 +13,8 @@ const FileListDropdown: React.FC = () => {
     setOpenEditorFilesList,
   } = useChatContext();
   const vscode = useVscode();
+  const [showList, setShowList] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
   // Click handler function
   const handleListItemClick = (file: any) => {
@@ -20,10 +22,8 @@ const FileListDropdown: React.FC = () => {
     // Otherwise, if you know the shape of `file`, you can still define an interface or inline type
     handleListItemClickFunction(
       file,
-      // If you used to store "selectedItem" in state, that can stay in a parent or context
-      // For simplicity, removing it here:
-      () => {}, // dummy setter for selectedItem
-      () => {}, // dummy setter for showList
+      setSelectedItem,
+      setShowList,
       attachedContext,
       openEditorFilesList,
       setOpenEditorFilesList,

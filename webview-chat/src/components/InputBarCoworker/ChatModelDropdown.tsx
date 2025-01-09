@@ -4,7 +4,7 @@ import { VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import { useCoworkerContext } from '../../context/CoworkerContext';
 
 const ChatModelDropdown: React.FC = () => {
-  const { chatModel, setChatModel } = useCoworkerContext();
+  const { coworkerModel, setCoworkerModel } = useCoworkerContext();
 
   return (
     <VSCodeDropdown
@@ -14,10 +14,10 @@ const ChatModelDropdown: React.FC = () => {
         color: 'var(--vscode-editor-foreground)',
         borderColor: 'var(--vscode-editorGroup-border)',
       }}
-      value={chatModel}
+      value={coworkerModel}
       onChange={(e) => {
         if (e.target) {
-          setChatModel((e.target as HTMLSelectElement).value);
+          setCoworkerModel((e.target as HTMLSelectElement).value);
         }
       }}
     >
