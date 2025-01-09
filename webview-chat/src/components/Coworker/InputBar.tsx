@@ -3,8 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { VSCodeButton, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import { useCoworkerContext } from '../../context/CoworkerContext';
 import { useVscode } from '../../context/VscodeContext';
-import { CurrentFileContext, EditorOpenFileList } from '../../types/Message';
-import MessageRenderer from './MessageRenderer';
+
 import {
   useHandleIncomingMessages,
   sanitizeInput,
@@ -14,6 +13,7 @@ import {
   handleRemoveTagFunction,
   handleListItemClickFunction,
 } from '../../hooks/InputBarUtils';
+import LanguageIcon from '../Common/LanguageIcon';
 
 interface InputBarProps {
   input: string;
@@ -88,7 +88,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
   };
 
   return (
-    <div className="complete-wrapper w-full h-full flex flex-col items-center px-0 pt-0">
+    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0">
       {/* Context Wrapper */}
       <div
         className="context-wrapper w-full h-full flex flex-row items-center p-1 pt-0 gap-2"
@@ -108,12 +108,13 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
           </VSCodeButton>
           {showList && (
             <div
-              className="absolute bottom-full left-0 mb-2 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
+              className="absolute bottom-full left-0 mb-2 w-64 rounded-xs shadow-xs z-10 p-0 dropdown-container"
               style={{
                 backgroundColor: 'var(--vscode-editor-background)',
-                borderColor: 'var(--vscode-editorGroup-border)',
+                // borderColor: 'var(--vscode-editorGroup-border)',
                 color: 'var(--vscode-editor-foreground)',
                 overflow: 'hidden',
+                border: '3px solid var(--vscode-editorGroup-border)',
               }}
             >
               {openEditorFilesList.length > 0 ? (
@@ -132,32 +133,54 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                         vscode
                       )
                     }
-                    className="p-1 cursor-pointer rounded-sm overflow-hidden text-ellipsis whitespace-nowrap"
+                    className="p-1 cursor-pointer rounded-xs overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-2"
                     style={{
                       backgroundColor: 'var(--vscode-editor-background)',
                       borderColor: 'var(--vscode-editorGroup-border)',
                       color: 'var(--vscode-editor-foreground)',
+                      transition: 'background-color 0.2s ease-in-out', // Smooth hover transition
+                      border: '1px solid var(--vscode-editorGroup-border)',
+
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor =
+                        'var(--vscode-button-background)'; // Hover background color
+                      (e.currentTarget as HTMLElement).style.color =
+                        'var(--vscode-button-foreground)'; // Hover text color
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor =
+                        'var(--vscode-editor-background)'; // Reset to default background color
+                      (e.currentTarget as HTMLElement).style.color =
+                        'var(--vscode-editor-foreground)'; // Reset to default text color
                     }}
                     title={file.filePath}
                   >
-                    {file.filePath.length > 30
-                      ? `${file.filePath.slice(0, 7)}...${file.filePath.slice(-23)}`
-                      : file.filePath}
+                    <LanguageIcon fileName={file.fileName || ""} iconSize={20} />
+                    <span>
+                      {file.filePath.length > 30
+                        ? `${file.filePath.slice(0, 7)}...${file.filePath.slice(-23)}`
+                        : file.filePath}
+                    </span>
                   </div>
                 ))
               ) : (
-                <div className="p-1 text-center" style={{ color: 'var(--vscode-editor-foreground)' }}>
+                <div
+                  className="p-1 text-center"
+                  style={{ color: 'var(--vscode-editor-foreground)' }}
+                >
                   No opened editors
-                </div>
+                    </div>
+                )}
+              </div>
               )}
-            </div>
-          )}
           {attachedContext.length > 0 ? (
             attachedContext.map((context, index) =>
               context.fileName && context.filePath ? (
+                
                 <span
                   key={index}
-                  className="rounded-sm px-1 flex items-center h-5 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+                  className="rounded-xs pr-1 flex items-center h-6 text-xs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
                   style={{
                     backgroundColor: 'var(--vscode-editor-background)',
                     borderColor: 'var(--vscode-editorGroup-border)',
@@ -173,17 +196,18 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                         backgroundColor: 'green',
                         borderRadius: '50%',
                         display: 'inline-block',
-                        marginRight: '4px',
+                        marginRight: '2px',
+                        marginLeft: '3px',
                       }}
                     ></span>
                   )}
                   {context.isManuallyAddedByUser && (
                     <span
                       className="codicon codicon-bookmark"
-                      style={{ marginRight: '4px', fontSize: '12px' }}
+                      style={{ marginRight: '2px', fontSize: '12px' }}
                     ></span>
                   )}
-
+                  <LanguageIcon fileName={context.fileName || ""} iconSize={20} />
                   {context.fileName}
                   <VSCodeButton
                     appearance="icon"
@@ -206,7 +230,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
             )
           ) : (
             <span
-              className="rounded-sm px-1 flex items-center h-5 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+              className="rounded-xs px-1 flex items-center h-6 text-xs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
               style={{
                 backgroundColor: 'var(--vscode-editor-background)',
                 borderColor: 'var(--vscode-editorGroup-border)',
@@ -248,6 +272,11 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
+                  if (input.trim() === '') {
+                    // setWarningMessage('Cannot send an empty message.');
+                    setTimeout(() => setWarningMessage(''), 2000); // Clear message after 3 seconds
+                    return; // Prevent sending empty message
+                  }
                   handleSendClick(
                     isTyping,
                     setWarningMessage,
@@ -318,7 +347,12 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                 </VSCodeButton>
               ) : (
                 <VSCodeButton
-                  onClick={() =>
+                  onClick={() => {
+                    if (input.trim() === '') {
+                      // setWarningMessage('Cannot send an empty message.');
+                      setTimeout(() => setWarningMessage(''), 2000); // Clear message after 3 seconds
+                      return; // Prevent sending empty message
+                    }
                     handleSendClick(
                       isTyping,
                       setWarningMessage,
@@ -328,8 +362,8 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                       setInput,
                       handleSendMessage,
                       setIsTyping
-                    )
-                  }
+                    );
+                  }}
                   appearance="icon"
                   aria-label="Send Message"
                   disabled={isTyping}
