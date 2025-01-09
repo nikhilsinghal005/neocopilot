@@ -44,7 +44,7 @@ export const useCoworkerContext = (): CoworkerContextProps => {
 
 export const CoworkerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [chatSession, setChatSession] = useState<ChatSession>(() => {
-    const storedSession = sessionStorage.getItem('chatSession');
+    const storedSession = sessionStorage.getItem('coWorkerSession');
     if (storedSession) {
       try {
         return JSON.parse(storedSession) as ChatSession;
@@ -54,7 +54,7 @@ export const CoworkerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     }else{
       const newSession: ChatSession = createNewChatSession();
-      sessionStorage.setItem('chatSession', JSON.stringify(newSession));
+      sessionStorage.setItem('coWorkerSession', JSON.stringify(newSession));
       return newSession;
     }
   });
@@ -69,7 +69,7 @@ export const CoworkerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   
   useEffect(() => {
-    sessionStorage.setItem('chatSession', JSON.stringify(chatSession));
+    sessionStorage.setItem('coWorkerSession', JSON.stringify(chatSession));
   }, [chatSession]);
 
   const clearChatSession = useCallback(() => {
@@ -95,7 +95,7 @@ export const CoworkerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
     
     const newSession = createNewChatSession();
-    sessionStorage.setItem('chatSession', JSON.stringify(newSession));
+    sessionStorage.setItem('coWorkerSession', JSON.stringify(newSession));
     setChatSession(newSession);
   }, [chatSession, setChatSessionList]);
   
