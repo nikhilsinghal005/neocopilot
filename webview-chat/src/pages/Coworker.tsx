@@ -14,7 +14,9 @@ const Coworker: React.FC = () => {
 
   useEffect(() => {
     // Restore the saved coworker session from VSCode state
-    const savedCoworkerSession = vscode.getState ? vscode.getState() : null;
+    const savedState = vscode.getState ? vscode.getState() : {};
+
+    const savedCoworkerSession = savedState.coworker || null;
     if (savedCoworkerSession) {
       setCoworkerSession(savedCoworkerSession);
     }
@@ -22,6 +24,9 @@ const Coworker: React.FC = () => {
 
   useEffect(() => {
     // Save the coworker session in VSCode state
+    const currentState = vscode.getState() || {};
+    vscode.setState({ ...currentState, coworker: coworkerSession });
+
     if (coworkerSession) {
       vscode.setState(coworkerSession);
     }

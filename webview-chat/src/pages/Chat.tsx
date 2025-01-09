@@ -13,7 +13,9 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     // Restore the saved chat session from VSCode state
-    const savedChatSession = vscode.getState ? vscode.getState() : null;
+    const savedState = vscode.getState ? vscode.getState() : {};
+
+    const savedChatSession = savedState.chat || null;
     if (savedChatSession) {
       setChatSession(savedChatSession);
     }
@@ -21,8 +23,9 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     // Save the chat session in VSCode state
+    const currentState = vscode.getState() || {};
     if (chatSession) {
-      vscode.setState(chatSession);
+      vscode.setState({ ...currentState, chat: chatSession });
     }
   }, [chatSession, vscode]);
 
