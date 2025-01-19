@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import Login from './pages/Login';
-import Chat from './pages/Chat';
-import Tabs from './pages/Tabs';
-import { ChatProvider } from './context/ChatContext';
-import { CoworkerProvider } from './context/CoworkerContext';
-import { VscodeProvider } from './context/VscodeContext';
-import About from './pages/About';
-import Coworker from './pages/Coworker';
+import React, { useState, useEffect } from "react";
+import Login from "./pages/Login";
+import Chat from "./pages/Chat";
+import Tabs from "./pages/Tabs";
+import { ChatProvider } from "./context/ChatContext";
+import { CoworkerProvider } from "./context/CoworkerContext";
+import { VscodeProvider } from "./context/VscodeContext";
+import About from "./pages/About";
+import Coworker from "./pages/Coworker";
 
 declare const acquireVsCodeApi: () => {
   postMessage: (msg: any) => void;
@@ -21,89 +21,62 @@ const vscodeApi = acquireVsCodeApi() as {
 };
 
 const isSessionValid = () => {
-  const sessionData = sessionStorage.getItem('isLoggedIn');
+  const sessionData = sessionStorage.getItem("isLoggedIn");
   if (sessionData) {
     const { value, expiry } = JSON.parse(sessionData);
-    // console.log('Session data:', value, expiry, 'Current time:', Date.now());
     return value && Date.now() < expiry;
   }
-  // console.log('No valid session data found.');
   return false;
 };
 
 const setSessionData = (value: boolean) => {
   const expiry = Date.now() + 60 * 60 * 1000; // 1 hour
   const sessionData = JSON.stringify({ value, expiry });
-  sessionStorage.setItem('isLoggedIn', sessionData);
-  // console.log('Session data set with expiry:', expiry);
+  sessionStorage.setItem("isLoggedIn", sessionData);
 };
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(isSessionValid());
 
-  // Function to check if session is expired and re-validate
-  const checkSessionAndRevalidate = () => {
-    const sessionIsValid = isSessionValid();
-    // console.log('Checking session validity:', sessionIsValid);
-    if (!sessionIsValid) {
-      // console.log("Session expired or invalid, sending 'ready' command to revalidate login status.");
-      vscodeApi.postMessage({ command: 'ready' });
-    }
-  };
-
   useEffect(() => {
-    // console.log('Sending initial "ready" command.');
-    vscodeApi.postMessage({ command: 'ready' });
+    vscodeApi.postMessage({ command: "ready" });
 
     const handleMessage = (event: MessageEvent) => {
-      // console.log('Message received from VSCode:', event.data);
       const message = event.data;
-      if (message.command === 'authStatus') {
-        // console.log('Received authStatus:', message.isLoggedIn);
+      if (message.command === "authStatus") {
         setIsLoggedIn(message.isLoggedIn);
-
         if (message.isLoggedIn) {
           setSessionData(message.isLoggedIn);
         } else {
-          // Clear session data if logged out
-          sessionStorage.removeItem('isLoggedIn');
-          // console.log('Session cleared.');
+          sessionStorage.removeItem("isLoggedIn");
         }
       }
     };
 
-    window.addEventListener('message', handleMessage);
+    window.addEventListener("message", handleMessage);
 
-    // Set an interval to check the session status periodically
     const sessionCheckInterval = setInterval(() => {
-      checkSessionAndRevalidate();
-    }, 60 * 60 * 1000); // Check every 1 minute for testing
+      if (!isSessionValid()) {
+        vscodeApi.postMessage({ command: "ready" });
+      }
+    }, 60 * 1000); // Check every 1 minute
 
     return () => {
-      window.removeEventListener('message', handleMessage);
-      clearInterval(sessionCheckInterval); // Clear the interval when component unmounts
+      window.removeEventListener("message", handleMessage);
+      clearInterval(sessionCheckInterval);
     };
   }, []);
 
   const tabContent = [
-    {
-      label: 'Chat',
-      content: <Chat />,
-    },
-    {
-      label: 'Coworker',
-      content: <Coworker />,
-    },
-    {
-      label: 'About',
-      content: <About vscode={vscodeApi} />,
-    }
+    { label: "Chat", content: <Chat /> },
+    { label: "Coworker", content: <Coworker /> },
+    { label: "About", content: <About vscode={vscodeApi} /> },
   ];
 
   return (
-    <VscodeProvider vscode={vscodeApi}> 
-      <ChatProvider>
-        <CoworkerProvider>
+    <VscodeProvider vscode={vscodeApi}>
+      <CoworkerProvider>
+        <ChatProvider>
           <div className="App h-full flex items-center justify-center overflow-hidden">
             {isLoggedIn ? (
               <Tabs tabs={tabContent} />
@@ -111,8 +84,8 @@ const App: React.FC = () => {
               <Login vscode={vscodeApi} />
             )}
           </div>
-          </CoworkerProvider>
-      </ChatProvider>
+        </ChatProvider>
+      </CoworkerProvider>
     </VscodeProvider>
   );
 };

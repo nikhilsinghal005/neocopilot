@@ -51,15 +51,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         return JSON.parse(storedSession) as ChatSession;
       } catch (error) {
-        console.error("Failed to parse stored chat session:", error);
-        return createNewChatSession();
+        console.error('Failed to parse stored chat session:', error);
       }
-    } else {
-      const newSession: ChatSession = createNewChatSession();
-      sessionStorage.setItem('chatSession', JSON.stringify(newSession));
-      return newSession;
     }
+    return createNewChatSession();
   });
+  
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [chatModel, setChatModel] = useState<string>('neo-7');
