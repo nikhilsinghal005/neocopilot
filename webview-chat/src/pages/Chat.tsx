@@ -13,12 +13,16 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     // Restore the saved chat session from VSCode state
-    const savedState = vscode.getState ? vscode.getState() : {};
+    const savedState = vscode.getState ? vscode.getState() || {} : {};
 
-    const savedChatSession = savedState.chat || null;
-    if (savedChatSession) {
-      setChatSession(savedChatSession);
+    const savedChatSession = savedState.chat || {
+      chatId: uuidv4(),
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      chatName: 'Untitled Chat',
+      messages: [],
     }
+    setChatSession(savedChatSession);
   }, [vscode, setChatSession]);
 
   useEffect(() => {
