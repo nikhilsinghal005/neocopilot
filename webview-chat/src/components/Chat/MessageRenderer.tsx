@@ -131,19 +131,19 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
     
       return (
         <div>
-          <h4 className="text-xs font-semibold text-vscode-editor-foreground mb-1">Referenced Files:</h4>
+          <h4 className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">Referenced Files:</h4>
           <ul className="flex flex-wrap gap-2">
             {attachedContext.map((context, index) => (
               <span
                 key={index}
-                className="rounded-xs pr-1 flex items-center h-6 text-xs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+                className="rounded-xs pr-1 flex items-center h-5 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
                 style={{
                   backgroundColor: 'var(--vscode-editor-background)',
                   borderColor: 'var(--vscode-editorGroup-border)',
                   color: 'var(--vscode-editor-foreground)',
                 }}
               >
-                <LanguageIcon fileName={context.fileName || ""} iconSize={20} />
+                <LanguageIcon fileName={context.fileName || ""} iconSize={16} />
                 {context.fileName}
               </span>
             ))}
@@ -158,7 +158,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
       bottomMargin = 'mb-2';
     }    
     return (
-      <div className={`prose max-w-full text-sm leading-6 space-y-1 ${bottomMargin}`}>
+      <div className={`prose max-w-full text-xs leading-6 space-y-1 ${bottomMargin}`}>
         <ReactMarkdown
           children={text}
           remarkPlugins={[remarkGfm]}
@@ -171,7 +171,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
 
   } else {
     return (
-      <div className="prose max-w-full text-sm leading-6 space-y-2">
+      <div className="prose max-w-full text-xs leading-6 space-y-2">
         <ReactMarkdown
           children={text}
           remarkPlugins={[remarkGfm]}

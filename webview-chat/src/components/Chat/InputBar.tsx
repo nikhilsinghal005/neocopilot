@@ -179,7 +179,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                 
                 <span
                   key={index}
-                  className="rounded-xs pr-1 flex items-center h-6 text-xs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+                  className="rounded-xs pr-1 flex items-center h-5 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
                   style={{
                     backgroundColor: 'var(--vscode-editor-background)',
                     borderColor: 'var(--vscode-editorGroup-border)',
@@ -206,7 +206,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                       style={{ marginRight: '2px', fontSize: '12px' }}
                     ></span>
                   )}
-                  <LanguageIcon fileName={context.fileName || ""} iconSize={20} />
+                  <LanguageIcon fileName={context.fileName || ""} iconSize={16} />
                   {context.fileName}
                   <VSCodeButton
                     appearance="icon"
