@@ -14,12 +14,16 @@ const Coworker: React.FC = () => {
 
   useEffect(() => {
     // Restore the saved coworker session from VSCode state
-    const savedState = vscode.getState ? vscode.getState() : {};
+    const savedState = vscode.getState ? vscode.getState() || {} : {};
 
-    const savedCoworkerSession = savedState.coworker || null;
-    if (savedCoworkerSession) {
-      setCoworkerSession(savedCoworkerSession);
+    const savedCoworkerSession = savedState.coworker || {
+      coworkerId: uuidv4(),
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      coworkerName: 'Untitled Coworker',
+      messages: [],
     }
+    setCoworkerSession(savedCoworkerSession);
   }, [vscode, setCoworkerSession]);
 
   useEffect(() => {

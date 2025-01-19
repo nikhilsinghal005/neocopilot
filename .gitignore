@@ -3,3 +3,9 @@ dist
 node_modules
 .vscode-test/
 *.vsix
+.vscode/
+.vscode-test/
+*.vsix
+*.vsix
+
+**/package-lock.json
