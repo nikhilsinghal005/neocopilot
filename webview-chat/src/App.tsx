@@ -3,8 +3,10 @@ import Login from './pages/Login';
 import Chat from './pages/Chat';
 import Tabs from './pages/Tabs';
 import { ChatProvider } from './context/ChatContext';
+import { CoworkerProvider } from './context/CoworkerContext';
 import { VscodeProvider } from './context/VscodeContext';
 import About from './pages/About';
+import Coworker from './pages/Coworker';
 
 declare const acquireVsCodeApi: () => {
   postMessage: (msg: any) => void;
@@ -89,21 +91,27 @@ const App: React.FC = () => {
       content: <Chat />,
     },
     {
+      label: 'Coworker',
+      content: <Coworker />,
+    },
+    {
       label: 'About',
       content: <About vscode={vscodeApi} />,
-    },
+    }
   ];
 
   return (
-    <VscodeProvider vscode={vscodeApi}>
+    <VscodeProvider vscode={vscodeApi}> 
       <ChatProvider>
-        <div className="App h-full flex items-center justify-center overflow-hidden">
-          {isLoggedIn ? (
-            <Tabs tabs={tabContent} />
-          ) : (
-            <Login vscode={vscodeApi} />
-          )}
-        </div>
+        <CoworkerProvider>
+          <div className="App h-full flex items-center justify-center overflow-hidden">
+            {isLoggedIn ? (
+              <Tabs tabs={tabContent} />
+            ) : (
+              <Login vscode={vscodeApi} />
+            )}
+          </div>
+          </CoworkerProvider>
       </ChatProvider>
     </VscodeProvider>
   );

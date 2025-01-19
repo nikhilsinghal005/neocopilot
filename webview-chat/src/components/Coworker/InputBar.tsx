@@ -1,8 +1,9 @@
 // InputBar.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { VSCodeButton, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
-import { useChatContext } from '../../context/ChatContext';
+import { useCoworkerContext } from '../../context/CoworkerContext';
 import { useVscode } from '../../context/VscodeContext';
+
 import {
   useHandleIncomingMessages,
   sanitizeInput,
@@ -24,15 +25,15 @@ interface InputBarProps {
 const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage, isTyping }) => {
   const [warningMessage, setWarningMessage] = useState('');
   const {
-    chatModel,
-    setChatModel,
+    coworkerModel,
+    setCoworkerModel,
     attachedContext,
     setAttachedContext,
     openEditorFilesList,
     setOpenEditorFilesList,
     setIsTyping,
     setIsInterrupted,
-  } = useChatContext();
+  } = useCoworkerContext();
   const vscode = useVscode();
   const [showList, setShowList] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -306,10 +307,10 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                 color: 'var(--vscode-editor-foreground)',
                 borderColor: 'var(--vscode-editorGroup-border)',
               }}
-              value={chatModel}
+              value={coworkerModel}
               onChange={(e) => {
                 if (e.target) {
-                  setChatModel((e.target as HTMLSelectElement).value);
+                  setCoworkerModel((e.target as HTMLSelectElement).value);
                 }
               }}
             >
