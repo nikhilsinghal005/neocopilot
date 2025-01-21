@@ -221,7 +221,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         <span className="text-xxxs flex items-center"><LanguageIcon fileName={fileName || ""} iconSize={16} />{fileName}</span>
         <div className="flex">
           {state === 'idle' && (
-            <>
+            <div className="flex items-center">
 
               {language === 'bash' || language === 'powershell' || language === 'powershell' ? (
                 // Render "T" button for Bash language
@@ -260,7 +260,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                 disabled={isTyping}
                 buttonName={'Apply'}
               />
-            </>
+            </div>
           )}
           {state === 'processing' && (
             <span className="text-vscode-editor-foreground pr-6">Processing{dots}</span>
