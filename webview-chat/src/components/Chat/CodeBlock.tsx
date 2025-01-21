@@ -211,7 +211,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         borderColor: 'var(--vscode-editorGroup-border)',
       }}
     >
-      <div className="flex h-7 justify-between items-center text-vscode-editor-foreground pl-0 pr-0 py-0 rounded-t-sm border"
+      <div className="flex h-5 justify-between items-center text-vscode-editor-foreground pl-0 pr-0 py-0 rounded-t-sm border"
         style={{
           backgroundColor: 'var(--vscode-editor-background)',
           borderColor: 'var(--vscode-editorGroup-border)'

@@ -64,7 +64,7 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
           aria-label={ariaLabel}
           disabled={disabled}
           appearance="icon"
-          className="inline-flex items-center justify-center h-7 px-1"
+          className="inline-flex items-center justify-center h-5 px-1 text-xs"
           style={{
             backgroundColor: 'transparent',
             border: '1px solid var(--vscode-editorGroup-border)',
@@ -88,7 +88,7 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
           aria-label={ariaLabel}
           disabled={disabled}
           appearance="icon"
-          className="inline-flex items-center justify-center h-7 px-1"
+          className="inline-flex items-center justify-center h-5 px-1 text-xs"
           style={{
             backgroundColor: 'transparent',
             border: '1px solid var(--vscode-editorGroup-border)',
