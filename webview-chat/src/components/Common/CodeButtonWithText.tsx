@@ -11,6 +11,7 @@ interface CodeButtonProps {
   tooltip?: string;
   disabled?: boolean;
   buttonName?: string;
+  fontSize?: string;
 }
 
 const CodeButtonWithText: React.FC<CodeButtonProps> = ({
@@ -21,6 +22,7 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
   tooltip,
   disabled = false,
   buttonName,
+  fontSize,
 }) => {
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [isHovered, setIsHovered] = useState(false);
@@ -69,6 +71,7 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
             backgroundColor: 'transparent',
             border: '1px solid var(--vscode-editorGroup-border)',
             borderRadius: '0px',
+            fontSize: fontSize || '12px',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
@@ -88,11 +91,20 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
           aria-label={ariaLabel}
           disabled={disabled}
           appearance="icon"
-          className="inline-flex items-center justify-center h-5 px-1 text-xs"
+          className="inline-flex items-center justify-center h-5 px-1 text-[12px]"
           style={{
             backgroundColor: 'transparent',
             border: '1px solid var(--vscode-editorGroup-border)',
             borderRadius: '0px',
+            fontSize: fontSize || '12px',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+            e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+            e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
           }}
         >
           <span className={`codicon ${icon} pr-1`}></span>
