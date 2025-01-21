@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import '@vscode/codicons/dist/codicon.css';
 
@@ -29,11 +30,11 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
 
   const handleMouseEnter = () => {
     if (wrapperRef.current) {
-      const rect = wrapperRef.current.getBoundingClientRect();
-      const verticalOffset = 8;
+      const { top, left} = wrapperRef.current.getBoundingClientRect();
+      const tooltipTop = top - 38;
       setTooltipPosition({
-        top: rect.top - verticalOffset - 30,
-        left: rect.left + rect.width / 2,
+        top: tooltipTop,
+        left: Math.max(left, 0) - 15,
       });
       setIsHovered(true);
       hideTooltipTimeout = setTimeout(() => setIsHovered(false), 1500);
@@ -50,19 +51,19 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
   }, []);
 
   return (
-    <div 
+    <div
       ref={wrapperRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className="inline-block relative"
     >
-        {/* If buttonName is provided, render the icon + text. Otherwise, just the icon. */}
-        {buttonName ? (
-          <VSCodeButton
+      {/* If buttonName is provided, render the icon + text. Otherwise, just the icon. */}
+      {buttonName ? (
+        <VSCodeButton
           onClick={onClick}
           aria-label={ariaLabel}
           disabled={disabled}
-          appearance="icon" 
+          appearance="icon"
           className="inline-flex items-center justify-center h-7 px-1"
           style={{
             backgroundColor: 'transparent',
@@ -70,25 +71,25 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
             borderRadius: '0px',
           }}
         >
-        <span className={`codicon ${icon} pr-1`}></span>
-        {buttonName}
-      </VSCodeButton>    
-        ) : (
-          <VSCodeButton
-            onClick={onClick}
-            aria-label={ariaLabel}
-            disabled={disabled}
-            appearance="icon" 
-            className="inline-flex items-center justify-center h-7 px-1"
-            style={{
-              backgroundColor: 'transparent',
-              border: '1px solid var(--vscode-editorGroup-border)',
-              borderRadius: '0px',
-            }}
-          >
+          <span className={`codicon ${icon} pr-1`}></span>
+          {buttonName}
+        </VSCodeButton>
+      ) : (
+        <VSCodeButton
+          onClick={onClick}
+          aria-label={ariaLabel}
+          disabled={disabled}
+          appearance="icon"
+          className="inline-flex items-center justify-center h-7 px-1"
+          style={{
+            backgroundColor: 'transparent',
+            border: '1px solid var(--vscode-editorGroup-border)',
+            borderRadius: '0px',
+          }}
+        >
           <span className={`codicon ${icon} pr-1`}></span>
           {text}
-        </VSCodeButton>        
+        </VSCodeButton>
       )}
 
       {isHovered && tooltip && (
@@ -99,7 +100,7 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
             left: tooltipPosition.left,
             maxWidth: '150px',
             whiteSpace: 'nowrap',
-            backgroundColor: 'rgba(0, 0, 0, 0.15)',
+            backgroundColor: 'rgba(0, 0, 0, 0.92)',
             textAlign: 'right',
           }}
         >

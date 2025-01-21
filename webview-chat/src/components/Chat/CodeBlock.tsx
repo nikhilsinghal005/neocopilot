@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useVscode } from '../../context/VscodeContext';
+import { VscNewFile, VscAdd, VscClose } from "react-icons/vsc"
 import CodeButton from '../Common/CodeButton';
 import CodeButtonWithText from '../Common/CodeButtonWithText';
 import CodeButtonNormal from '../Common/CodeButtonNormal';
@@ -32,7 +33,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   console.log("codeId", codeId)
   const [showNewFileDropdownType1, setShowNewFileDropdownType1] = useState(false);
   const [showNewFileDropdownType2, setShowNewFileDropdownType2] = useState(false);
-  const {isTyping} = useChatContext();
+  const { isTyping } = useChatContext();
 
   useEffect(() => {
     const handleSmartInsertToEditorUpdate = (event: MessageEvent) => {
@@ -54,11 +55,11 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         if (event.data.isAnyFileOpen) {
           setState('newFileRequiredType1');
           setShowNewFileDropdownType1(true);
-        }else{
+        } else {
           setState('newFileRequiredType2');
           setShowNewFileDropdownType2(true);
         }
-         // Show dropdown when new file is required
+        // Show dropdown when new file is required
       }
     };
 
@@ -129,7 +130,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
       data: {
         action: 'rejected',
         codeId: codeId,
-        
+
       },
     });
     setState('idle');
@@ -211,13 +212,13 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
       }}
     >
       <div className="flex h-7 justify-between items-center text-vscode-editor-foreground pl-0 pr-0 py-0 rounded-t-sm border"
-        style={{ 
+        style={{
           backgroundColor: 'var(--vscode-editor-background)',
-          borderColor: 'var(--vscode-editorGroup-border)' 
+          borderColor: 'var(--vscode-editorGroup-border)'
         }}
-      > 
-        
-        <span className="text-xxxs flex items-center"><LanguageIcon fileName={fileName || ""}  iconSize={16} />{fileName}</span>
+      >
+
+        <span className="text-xxxs flex items-center"><LanguageIcon fileName={fileName || ""} iconSize={16} />{fileName}</span>
         <div className="flex">
           {state === 'idle' && (
             <>
@@ -285,95 +286,84 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
             </span>
           )}
           {state === 'newFileRequiredType1' && (
-            <div className="relative">
-              <CodeButtonWithText
-                onClick={() => setShowNewFileDropdownType1(!showNewFileDropdownType1)}
-                ariaLabel="Smart Insert to Editor"
-                icon="codicon-play"
-                tooltip="Smart Insert"
-                disabled={isTyping}
-                buttonName={'Apply'}
+            <div
+              className="absolute right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
+              style={{
+                backgroundColor: 'var(--vscode-editor-background)',
+                borderColor: 'var(--vscode-editorGroup-border)',
+                color: 'var(--vscode-editor-foreground)',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                onClick={() => handleCreateNewFile(code)}
+                className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
+                style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
+                title={`Create new file: ${fileName}`}
               >
-              </CodeButtonWithText>
-              {showNewFileDropdownType1 && (
-                <div
-                  className="absolute right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
-                  style={{
-                    backgroundColor: 'var(--vscode-editor-background)',
-                    borderColor: 'var(--vscode-editorGroup-border)',
-                    color: 'var(--vscode-editor-foreground)',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    onClick={() => handleCreateNewFile(code)}
-                    className="pl-1 text-sm cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                    style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
-                    title={`Create new file: ${fileName}`}
-                  >
-                    Create New File
-                  </div>
-                  <div
-                    onClick={() => handleInsertInCurrentFile(code)}
-                    className="pl-1 text-sm cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                    style={{ borderColor: 'var(--vscode-editorGroup-border)'}}
-                  >
-                    Add to Current Active File
-                  </div>
-                  <div
-                    onClick={handleCancel}
-                    className="pl-1 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                    style={{ borderColor: 'var(--vscode-editorGroup-border)'}}
-                    title="Cancel"
-                  >
-                    Cancel
-                  </div>
-
-                </div>
-              )}
-            </div>
-          )}
-          {state === 'newFileRequiredType2' && (
-            <div className="relative">
-              <CodeButtonWithText
-                onClick={() => setShowNewFileDropdownType2(!showNewFileDropdownType2)}
-                ariaLabel="Smart Insert to Editor"
-                icon="codicon-play"
-                tooltip="Smart Insert"
-                disabled={isTyping}
-                buttonName={'Apply'}
+                <VscNewFile className="mr-2" />
+                <span className="truncate">Create New File</span>
+              </div>
+              <div
+                onClick={() => handleInsertInCurrentFile(code)}
+                className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
+                style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
               >
-              </CodeButtonWithText>
-              {showNewFileDropdownType2 && (
-                <div
-                  className="absolute text-sm right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
-                  style={{
-                    backgroundColor: 'var(--vscode-editor-background)',
-                    borderColor: 'var(--vscode-editorGroup-border)',
-                    color: 'var(--vscode-editor-foreground)',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div
-                    onClick={() => handleCreateNewFile(code)}
-                    className="pl-1 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                    style={{ borderColor: 'var(--vscode-editorGroup-border)'}}
-                    title={`Create new file: ${fileName}`}
-                  >
-                    Create New File
-                  </div>
-                  <div
-                    onClick={handleCancel}
-                    className="pl-1 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                    style={{ borderColor: 'var(--vscode-editorGroup-border)'}}
-                    title="Cancel"
-                  >
-                    Cancel
-                  </div>
-                </div>
-              )}
+                <VscAdd className="mr-2" />
+                <span className="truncate">Add to Current File</span>
+              </div>
+              <div
+                onClick={handleCancel}
+                className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
+                style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
+                title="Cancel"
+              >
+                <VscClose className="mr-2" />
+                <span className="truncate">Cancel</span>
+              </div>
             </div>
-          )}
+          )
+          }
+          {
+            state === "newFileRequiredType2" && (
+              <div
+                className="absolute right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
+                style={{
+                  backgroundColor: "var(--vscode-editor-background)",
+                  borderColor: "var(--vscode-editorGroup-border)",
+                  color: "var(--vscode-editor-foreground)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  onClick={() => handleCreateNewFile(code)}
+                  className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
+                  style={{ borderColor: "var(--vscode-editorGroup-border)" }}
+                  title={`Create new file: ${fileName}`}
+                >
+                  <VscNewFile className="mr-2" />
+                  <span className="truncate">Create New File</span>
+                </div>
+                <div
+                  onClick={() => handleInsertInCurrentFile(code)}
+                  className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
+                  style={{ borderColor: "var(--vscode-editorGroup-border)" }}
+                >
+                  <VscAdd className="mr-2" />
+                  <span className="truncate">Add to Current File</span>
+                </div>
+                <div
+                  onClick={handleCancel}
+                  className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
+                  style={{ borderColor: "var(--vscode-editorGroup-border)" }}
+                  title="Cancel"
+                >
+                  <VscClose className="mr-2" />
+                  <span className="truncate">Cancel</span>
+                </div>
+              </div>
+            )
+          }
         </div>
       </div>
       <div className="rounded-b-sm overflow-hidden hover:overflow-auto transition-all duration-300 bg-vscode-chat-message-incoming !p-0 !m-0">
