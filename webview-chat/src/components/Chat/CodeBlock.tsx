@@ -205,7 +205,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   // console.log(language)
 
   return (
-    <div className="my-4 p-0 rounded-sm shadow-lg border w-full min-w-[200px]"
+    <div className="my-4 p-0 rounded-sm shadow-lg border w-full"
       style={{
         backgroundColor: 'var(--vscode-editor-background)',
         borderColor: 'var(--vscode-editorGroup-border)',
@@ -298,7 +298,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
               </CodeButtonWithText>
               {showNewFileDropdownType1 && (
                 <div
-                  className="fixed right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container mr-[1rem]"
+                  className="absolute right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
                   style={{
                     backgroundColor: 'var(--vscode-editor-background)',
                     borderColor: 'var(--vscode-editorGroup-border)',
@@ -379,7 +379,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
               </CodeButtonWithText>
               {showNewFileDropdownType2 && (
                 <div
-                  className="fixed right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container mr-[1rem]"
+                  className="absolute right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
                   style={{
                     backgroundColor: 'var(--vscode-editor-background)',
                     borderColor: 'var(--vscode-editorGroup-border)',
@@ -449,7 +449,10 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           )}
         </div>
       </div>
-      <div className="rounded-b-sm overflow-hidden hover:overflow-auto transition-all duration-300 bg-vscode-chat-message-incoming !p-0 !m-0">
+      <div
+        className="rounded-b-sm overflow-hidden hover:overflow-auto transition-all duration-300 ease-in bg-vscode-chat-message-incoming !p-0 !m-0"
+        style={{ overflow: "scroll" }}
+      >
         <pre className="!m-0">
           <code className={`${className} block p-2 text-vscode-editor-foreground`} {...props}>
             {codeContent}
@@ -461,5 +464,3 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
 };
 
 export default CodeBlock;
-
-
