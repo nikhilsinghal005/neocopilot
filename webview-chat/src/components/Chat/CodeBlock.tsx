@@ -297,73 +297,138 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
             >
               <div
                 onClick={() => handleCreateNewFile(code)}
-                className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
+                className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                style={{
+                  borderColor: 'var(--vscode-editorGroup-border)',
+                  padding: '4px 8px', // Adjusted padding for consistency
+                }}
                 title={`Create new file: ${fileName}`}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                  e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                  e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                }}
               >
                 <VscNewFile className="mr-2" />
                 <span className="truncate">Create New File</span>
               </div>
               <div
                 onClick={() => handleInsertInCurrentFile(code)}
-                className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
+                className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                style={{
+                  borderColor: 'var(--vscode-editorGroup-border)',
+                  padding: '4px 8px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                  e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                  e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                }}
               >
                 <VscAdd className="mr-2" />
                 <span className="truncate">Add to Current File</span>
               </div>
               <div
                 onClick={handleCancel}
-                className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
+                className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                style={{
+                  borderColor: 'var(--vscode-editorGroup-border)',
+                  padding: '4px 8px',
+                }}
                 title="Cancel"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                  e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                  e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                }}
               >
                 <VscClose className="mr-2" />
                 <span className="truncate">Cancel</span>
               </div>
             </div>
-          )
-          }
-          {
-            state === "newFileRequiredType2" && (
+          )}
+
+          {state === "newFileRequiredType2" && (
+            <div
+              className="absolute right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
+              style={{
+                backgroundColor: 'var(--vscode-editor-background)',
+                borderColor: 'var(--vscode-editorGroup-border)',
+                color: 'var(--vscode-editor-foreground)',
+                overflow: 'hidden',
+              }}
+            >
               <div
-                className="absolute right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
+                onClick={() => handleCreateNewFile(code)}
+                className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
                 style={{
-                  backgroundColor: "var(--vscode-editor-background)",
-                  borderColor: "var(--vscode-editorGroup-border)",
-                  color: "var(--vscode-editor-foreground)",
-                  overflow: "hidden",
+                  borderColor: 'var(--vscode-editorGroup-border)',
+                  padding: '4px 8px',
+                }}
+                title={`Create new file: ${fileName}`}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                  e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                  e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
                 }}
               >
-                <div
-                  onClick={() => handleCreateNewFile(code)}
-                  className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                  style={{ borderColor: "var(--vscode-editorGroup-border)" }}
-                  title={`Create new file: ${fileName}`}
-                >
-                  <VscNewFile className="mr-2" />
-                  <span className="truncate">Create New File</span>
-                </div>
-                <div
-                  onClick={() => handleInsertInCurrentFile(code)}
-                  className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                  style={{ borderColor: "var(--vscode-editorGroup-border)" }}
-                >
-                  <VscAdd className="mr-2" />
-                  <span className="truncate">Add to Current File</span>
-                </div>
-                <div
-                  onClick={handleCancel}
-                  className="flex items-center px-2 py-1 text-sm hover:bg-gray-800 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                  style={{ borderColor: "var(--vscode-editorGroup-border)" }}
-                  title="Cancel"
-                >
-                  <VscClose className="mr-2" />
-                  <span className="truncate">Cancel</span>
-                </div>
+                <VscNewFile className="mr-2" />
+                <span className="truncate">Create New File</span>
               </div>
-            )
-          }
+              <div
+                onClick={() => handleInsertInCurrentFile(code)}
+                className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                style={{
+                  borderColor: 'var(--vscode-editorGroup-border)',
+                  padding: '4px 8px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                  e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                  e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                }}
+              >
+                <VscAdd className="mr-2" />
+                <span className="truncate">Add to Current File</span>
+              </div>
+              <div
+                onClick={handleCancel}
+                className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                style={{
+                  borderColor: 'var(--vscode-editorGroup-border)',
+                  padding: '4px 8px',
+                }}
+                title="Cancel"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                  e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                  e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                }}
+              >
+                <VscClose className="mr-2" />
+                <span className="truncate">Cancel</span>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
       <div className="rounded-b-sm overflow-hidden hover:overflow-auto transition-all duration-300 bg-vscode-chat-message-incoming !p-0 !m-0">

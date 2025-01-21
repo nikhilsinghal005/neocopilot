@@ -70,6 +70,14 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
             border: '1px solid var(--vscode-editorGroup-border)',
             borderRadius: '0px',
           }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+            e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+            e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+          }}
         >
           <span className={`codicon ${icon} pr-1`}></span>
           {buttonName}
