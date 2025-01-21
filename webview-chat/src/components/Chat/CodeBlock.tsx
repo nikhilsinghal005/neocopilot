@@ -450,8 +450,18 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         </div>
       </div>
       <div
-        className="rounded-b-sm overflow-hidden hover:overflow-auto transition-all duration-300 ease-in bg-vscode-chat-message-incoming !p-0 !m-0"
-        style={{ overflow: "scroll" }}
+        className="rounded-b-sm transition-all duration-300 ease-in bg-vscode-chat-message-incoming !p-0 !m-0 overflow-auto"
+        style={{
+          scrollbarColor: 'transparent transparent',
+        }}
+        onMouseEnter={(e) => {
+          const target = e.currentTarget as HTMLElement;
+          target.style.scrollbarColor = 'var(--vscode-scrollbarSlider-background) transparent';
+        }}
+        onMouseLeave={(e) => {
+          const target = e.currentTarget as HTMLElement;
+          target.style.scrollbarColor = 'transparent transparent';
+        }}
       >
         <pre className="!m-0">
           <code className={`${className} block p-2 text-vscode-editor-foreground`} {...props}>
