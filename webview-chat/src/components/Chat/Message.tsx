@@ -81,7 +81,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               type={message.messageType}
               attachedContext={message.attachedContext ?? ([] as CurrentFileContext[])}
             />
-            {message.messageType === 'system' && (
+            {message.messageType === 'system' && !isTyping && (
               <div className='flex justify-end mt-2'>
                 <VSCodeButton
                   appearance='icon'
@@ -89,14 +89,12 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
                 >
                   <span className='codicon codicon-copy' style={{ fontSize: '12px' }}></span>
                 </VSCodeButton>
-                {!isTyping && (
-                  <VSCodeButton
-                    appearance='icon'
-                    onClick={() => handleRefresh(message.id)}
-                  >
-                    <span className='codicon codicon-refresh' style={{ fontSize: '12px' }}></span>
-                  </VSCodeButton>
-                )}
+                <VSCodeButton
+                  appearance='icon'
+                  onClick={() => handleRefresh(message.id)}
+                >
+                  <span className='codicon codicon-refresh' style={{ fontSize: '12px' }}></span>
+                </VSCodeButton>
               </div>
             )}
           </div>
