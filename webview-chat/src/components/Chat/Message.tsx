@@ -1,23 +1,47 @@
+// MessageComponent.tsx
 import React from 'react';
 import { MessageStore } from '../../types/Message';
 import MessageRenderer from './MessageRenderer';
 import { CurrentFileContext } from '../../types/Message';
+import { VSCodeButton } from '@vscode/webview-ui-toolkit/react'
+import { useChatContext } from '../../context/ChatContext'
+import { useVscode } from '../../context/VscodeContext'
 
 interface MessageProps {
   message: MessageStore;
 }
 
 const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
-  console.log(message)
+  const { 
+    chatSession, 
+    setChatSession,
+    setIsTyping,
+    isTyping
+  } = useChatContext()
+
+  const vscode = useVscode()
+
+  const handleRefresh = (messageId: string) => {
+    while(true){
+      const poppedMessage:MessageStore | undefined = chatSession.messages.pop()
+      if(poppedMessage?.id === messageId){
+        break
+      }
+    }
+    setChatSession({ ...chatSession })
+    setIsTyping(true)
+    vscode.postMessage({
+      command: 'send_chat_message',
+      data: chatSession,
+    })
+  }
 
   return (
     <>
-      {/* Divider line after each message */}
-      <div className="divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0"></div>
+    {/* Divider line after each message */}
+      <div className='divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0'></div>
 
-      <div
-        className={`message flex justify-center items-start mb-2 w-full`}
-      >
+      <div className={`message flex justify-center items-start mb-2 w-full`}>
         {/* Icon on the left for NEO's messages */}
         {/* {message.messageType !== 'user' && (
           <div className="flex items-center mr-1 mt-3">
@@ -44,29 +68,24 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
             minWidth: '97%',
           }}
         >
-          <span
-            className={`block text-xs font-semibold mb-2 opacity-75 ${
-              message.messageType === 'user' ? 'text-right' : 'text-left'
-            }`}
-          >
-            {/* {' '}
-            {new Date(message.timestamp).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })} */}
-          </span>
-          <MessageRenderer text={message.text} type={message.messageType} attachedContext={message.attachedContext ?? [] as CurrentFileContext[]} />
-        </div>
-
-        {/* Check mark on the right for the user's messages */}
-        {/* {message.messageType === 'user' && (
-          <div className="flex items-center ml-1 mt-1">
-            <span 
-              className="codicon codicon-account text-vscode-editor-foreground mr-1"
-              style={{ fontSize: '12px' }}
-            ></span>
+          <div className='w-full'>
+            <MessageRenderer
+              text={message.text}
+              type={message.messageType}
+              attachedContext={message.attachedContext ?? ([] as CurrentFileContext[])}
+            />
+            {message.messageType === 'system' && !isTyping && (
+              <div className='flex justify-end mt-2'>
+                <VSCodeButton 
+                  appearance='icon' 
+                  onClick={() => handleRefresh(message.id)}
+                >
+                  <span className='codicon codicon-refresh'></span>
+                </VSCodeButton>
+              </div>
+            )}
           </div>
-        )} */}
+        </div>
       </div>
     </>
   );
