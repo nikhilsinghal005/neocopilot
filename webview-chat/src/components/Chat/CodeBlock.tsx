@@ -205,7 +205,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   // console.log(language)
 
   return (
-    <div className="my-4 p-0 rounded-sm shadow-lg border w-full"
+    <div className="my-4 p-0 rounded-sm shadow-lg border w-full min-w-[200px]"
       style={{
         backgroundColor: 'var(--vscode-editor-background)',
         borderColor: 'var(--vscode-editorGroup-border)',
