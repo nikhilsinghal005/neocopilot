@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Socket } from 'socket.io-client';
 import { CompletionProviderModule } from '../codeCompletion/completionProviderModule';
 import { showErrorNotification } from '../utilities/statusBarNotifications/showErrorNotification';
-
+import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
 import { AuthManager } from './authManager';
 import { VscodeEventsModule } from '../codeCompletion/vscodeEventsModule';
 import { SocketModule } from '../socketModule';
@@ -43,7 +43,7 @@ export async function handleTokenUri(
 
                     if (userProfile) {
                         await authManager.storeUserProfile(userProfile);
-                        showErrorNotification(`Login Successful: Happy Coding ${userProfile.name}`, 10);
+                        showTextNotification(`Login Successful: Happy Coding ${userProfile.name}`, 5);
                         const currentVersion = context.extension.packageJSON.version;
                         const socketConnection: Socket | null = await socketModule.connect(currentVersion, context);
                         initializeAppFunctions(vscodeEventsModule, completionProviderModule, authManager, socketModule, context);
