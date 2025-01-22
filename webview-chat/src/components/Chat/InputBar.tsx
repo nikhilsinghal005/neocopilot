@@ -32,6 +32,8 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
     setOpenEditorFilesList,
     setIsTyping,
     setIsInterrupted,
+    chatModelList,
+    setChatModelList,
   } = useChatContext();
   const vscode = useVscode();
   const [showList, setShowList] = useState(false);
@@ -61,8 +63,8 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
   useEffect(() => {
     handleResize();
   }, [input, isTyping, handleResize]);
-
-  // Close dropdown when clicking outside
+   
+  // Close dropdown when clicking outside 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -81,6 +83,21 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
       window.removeEventListener('click', handleClickOutside);
     };
   }, [showList]);
+
+  useEffect(() => {
+    const messageHandler = (event: MessageEvent) => {
+      if (event.data && event.data.command === 'update_chat_details') {
+        const { model_details } = event.data;
+        if (model_details) {
+          setChatModelList(model_details); 
+        }
+      }
+    };
+    window.addEventListener('message', messageHandler);
+    return () => {
+      window.removeEventListener('message', messageHandler);
+    };
+  }, []);
 
   const handlePlusIconClick = () => {
     setShowList((prev) => !prev);
@@ -313,8 +330,11 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
                 }
               }}
             >
-              <VSCodeOption value="neo-1">Neo-Basic</VSCodeOption>
-              <VSCodeOption value="neo-7">Neo-Expert</VSCodeOption>
+              {chatModelList.map((chatModel) => (
+                <VSCodeOption key={chatModel.modelKey} value={chatModel.modelKey}>
+                  {chatModel.modelName}
+                </VSCodeOption>
+              ))}
             </VSCodeDropdown>
 
             {/* Buttons */}
