@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useVscode } from '../../context/VscodeContext';
+import { VscNewFile, VscAdd, VscClose } from "react-icons/vsc"
 import CodeButton from '../Common/CodeButton';
 import CodeButtonWithText from '../Common/CodeButtonWithText';
 import CodeButtonNormal from '../Common/CodeButtonNormal';
@@ -32,7 +33,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   console.log("codeId", codeId)
   const [showNewFileDropdownType1, setShowNewFileDropdownType1] = useState(false);
   const [showNewFileDropdownType2, setShowNewFileDropdownType2] = useState(false);
-  const {isTyping} = useChatContext();
+  const { isTyping } = useChatContext();
 
   useEffect(() => {
     const handleSmartInsertToEditorUpdate = (event: MessageEvent) => {
@@ -54,11 +55,11 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         if (event.data.isAnyFileOpen) {
           setState('newFileRequiredType1');
           setShowNewFileDropdownType1(true);
-        }else{
+        } else {
           setState('newFileRequiredType2');
           setShowNewFileDropdownType2(true);
         }
-         // Show dropdown when new file is required
+        // Show dropdown when new file is required
       }
     };
 
@@ -129,7 +130,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
       data: {
         action: 'rejected',
         codeId: codeId,
-        
+
       },
     });
     setState('idle');
@@ -210,17 +211,17 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         borderColor: 'var(--vscode-editorGroup-border)',
       }}
     >
-      <div className="flex h-7 justify-between items-center text-vscode-editor-foreground pl-0 pr-0 py-0 rounded-t-sm border"
-        style={{ 
+      <div className="flex h-6 justify-between items-center text-vscode-editor-foreground pl-0 pr-0 py-0 rounded-t-sm border"
+        style={{
           backgroundColor: 'var(--vscode-editor-background)',
-          borderColor: 'var(--vscode-editorGroup-border)' 
+          borderColor: 'var(--vscode-editorGroup-border)'
         }}
-      > 
-        
-        <span className="text-xxxs flex items-center"><LanguageIcon fileName={fileName || ""}  iconSize={16} />{fileName}</span>
+      >
+
+        <span className="text-xxxs flex items-center"><LanguageIcon fileName={fileName || ""} iconSize={16} />{fileName}</span>
         <div className="flex">
           {state === 'idle' && (
-            <>
+            <div className="flex items-center">
 
               {language === 'bash' || language === 'powershell' || language === 'powershell' ? (
                 // Render "T" button for Bash language
@@ -259,7 +260,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                 disabled={isTyping}
                 buttonName={'Apply'}
               />
-            </>
+            </div>
           )}
           {state === 'processing' && (
             <span className="text-vscode-editor-foreground pr-6">Processing{dots}</span>
@@ -291,7 +292,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                 ariaLabel="Smart Insert to Editor"
                 icon="codicon-play"
                 tooltip="Smart Insert"
-                disabled={isTyping}
+                disabled={isTyping || showNewFileDropdownType1}
                 buttonName={'Apply'}
               >
               </CodeButtonWithText>
@@ -307,28 +308,60 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                 >
                   <div
                     onClick={() => handleCreateNewFile(code)}
-                    className="pl-1 text-sm cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                    style={{ borderColor: 'var(--vscode-editorGroup-border)' }}
+                    className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                    style={{
+                      borderColor: 'var(--vscode-editorGroup-border)',
+                    }}
                     title={`Create new file: ${fileName}`}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                      e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                      e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                    }}
                   >
-                    Create New File
+                    <VscNewFile className="mr-2" />
+                    <span className="truncate">Create New File</span>
                   </div>
                   <div
                     onClick={() => handleInsertInCurrentFile(code)}
-                    className="pl-1 text-sm cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                    style={{ borderColor: 'var(--vscode-editorGroup-border)'}}
+                    className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                    style={{
+                      borderColor: 'var(--vscode-editorGroup-border)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                      e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                      e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                    }}
                   >
-                    Add to Current Active File
+                    <VscAdd className="mr-2" />
+                    <span className="truncate">Add to Current File</span>
                   </div>
                   <div
                     onClick={handleCancel}
-                    className="pl-1 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                    style={{ borderColor: 'var(--vscode-editorGroup-border)'}}
+                    className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                    style={{
+                      borderColor: 'var(--vscode-editorGroup-border)',
+                    }}
                     title="Cancel"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                      e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                      e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                    }}
                   >
-                    Cancel
+                    <VscClose className="mr-2" />
+                    <span className="truncate">Cancel</span>
                   </div>
-
                 </div>
               )}
             </div>
@@ -340,13 +373,13 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                 ariaLabel="Smart Insert to Editor"
                 icon="codicon-play"
                 tooltip="Smart Insert"
-                disabled={isTyping}
+                disabled={isTyping || showNewFileDropdownType2}
                 buttonName={'Apply'}
               >
               </CodeButtonWithText>
               {showNewFileDropdownType2 && (
                 <div
-                  className="absolute text-sm right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
+                  className="absolute right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container"
                   style={{
                     backgroundColor: 'var(--vscode-editor-background)',
                     borderColor: 'var(--vscode-editorGroup-border)',
@@ -356,19 +389,59 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                 >
                   <div
                     onClick={() => handleCreateNewFile(code)}
-                    className="pl-1 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                    style={{ borderColor: 'var(--vscode-editorGroup-border)'}}
+                    className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                    style={{
+                      borderColor: 'var(--vscode-editorGroup-border)',
+                    }}
                     title={`Create new file: ${fileName}`}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                      e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                      e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                    }}
                   >
-                    Create New File
+                    <VscNewFile className="mr-2" />
+                    <span className="truncate">Create New File</span>
+                  </div>
+                  <div
+                    onClick={() => handleInsertInCurrentFile(code)}
+                    className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                    style={{
+                      borderColor: 'var(--vscode-editorGroup-border)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                      e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                      e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                    }}
+                  >
+                    <VscAdd className="mr-2" />
+                    <span className="truncate">Add to Current File</span>
                   </div>
                   <div
                     onClick={handleCancel}
-                    className="pl-1 cursor-pointer rounded-sm border mb-0 hover:bg-vscode-list-hoverBackground hover:text-vscode-list-activeSelectionForeground border-transparent"
-                    style={{ borderColor: 'var(--vscode-editorGroup-border)'}}
+                    className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
+                    style={{
+                      borderColor: 'var(--vscode-editorGroup-border)',
+                    }}
                     title="Cancel"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+                      e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+                      e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
+                    }}
                   >
-                    Cancel
+                    <VscClose className="mr-2" />
+                    <span className="truncate">Cancel</span>
                   </div>
                 </div>
               )}
@@ -376,7 +449,20 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
           )}
         </div>
       </div>
-      <div className="rounded-b-sm overflow-hidden hover:overflow-auto transition-all duration-300 bg-vscode-chat-message-incoming !p-0 !m-0">
+      <div
+        className="rounded-b-sm transition-all duration-300 ease-in bg-vscode-chat-message-incoming !p-0 !m-0 overflow-auto"
+        style={{
+          scrollbarColor: 'transparent transparent',
+        }}
+        onMouseEnter={(e) => {
+          const target = e.currentTarget as HTMLElement;
+          target.style.scrollbarColor = 'var(--vscode-scrollbarSlider-background) transparent';
+        }}
+        onMouseLeave={(e) => {
+          const target = e.currentTarget as HTMLElement;
+          target.style.scrollbarColor = 'transparent transparent';
+        }}
+      >
         <pre className="!m-0">
           <code className={`${className} block p-2 text-vscode-editor-foreground`} {...props}>
             {codeContent}
@@ -388,5 +474,3 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
 };
 
 export default CodeBlock;
-
-
