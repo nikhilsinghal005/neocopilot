@@ -80,7 +80,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
                   appearance='icon' 
                   onClick={() => handleRefresh(message.id)}
                 >
-                  <span className='codicon codicon-refresh'></span>
+                  <span className='codicon codicon-refresh' style={{ fontSize: '12px' }}></span>
                 </VSCodeButton>
               </div>
             )}
