@@ -13,6 +13,7 @@ import {
   handleListItemClickFunction,
 } from '../../hooks/InputBarUtils';
 import LanguageIcon from '../Common/LanguageIcon';
+import { chatModelDetail } from '../../types/AppDetails';
 
 interface InputBarProps {
   input: string;
@@ -32,6 +33,8 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
     setOpenEditorFilesList,
     setIsTyping,
     setIsInterrupted,
+    chatModelList,
+    setChatModelList,
   } = useChatContext();
   const vscode = useVscode();
   const [showList, setShowList] = useState(false);
@@ -61,8 +64,8 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
   useEffect(() => {
     handleResize();
   }, [input, isTyping, handleResize]);
-
-  // Close dropdown when clicking outside
+   
+  // Close dropdown when clicking outside 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -81,6 +84,42 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
       window.removeEventListener('click', handleClickOutside);
     };
   }, [showList]);
+
+  useEffect(() => {
+    const messageHandler = (event: MessageEvent) => {
+      if (event.data && event.data.command === 'update_chat_details') {
+        const model_details: chatModelDetail[] = event.data.model_details;
+        const storedChatModelDetails = sessionStorage.getItem('chatModelDetails');
+        if (storedChatModelDetails) {
+          const parsedChatModelDetails = JSON.parse(storedChatModelDetails) as chatModelDetail[];
+          // Ensure model details from the event are not treated as base models initially.
+          model_details.forEach((model) => {
+            model.isBaseModel = false;
+          });
+          // Update isBaseModel property based on stored model details.
+          parsedChatModelDetails.forEach((model) => {
+            const matchingModel = model_details.find((m) => m.modelKey === model.modelKey);
+            if (matchingModel) {
+              matchingModel.isBaseModel = model.isBaseModel;
+            }
+          });
+        }
+        
+        if (model_details) {
+          const baseModel = model_details.find((model) => model.isBaseModel);
+          if (baseModel) {
+            setChatModel(baseModel.modelKey);
+          }
+          setChatModelList(model_details); 
+          sessionStorage.setItem('chatModelDetails', JSON.stringify(model_details));          
+        }
+      }
+    };
+    window.addEventListener('message', messageHandler);
+    return () => {
+      window.removeEventListener('message', messageHandler);
+    };
+  }, []);
 
   const handlePlusIconClick = () => {
     setShowList((prev) => !prev);
@@ -310,11 +349,28 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
               onChange={(e) => {
                 if (e.target) {
                   setChatModel((e.target as HTMLSelectElement).value);
+                  const storedChatModelDetails = sessionStorage.getItem('chatModelDetails');
+                  if (storedChatModelDetails) {
+                    try {
+                      const parsedChatModelDetails = JSON.parse(storedChatModelDetails) as chatModelDetail[];
+                      const updatedChatModelDetails = parsedChatModelDetails.map((model) => ({
+                        ...model,
+                        isBaseModel: model.modelKey === (e.target as HTMLSelectElement).value,
+                      }));
+                      sessionStorage.setItem('chatModelDetails', JSON.stringify(updatedChatModelDetails));
+                      console.log('Updated chat model details:', updatedChatModelDetails);
+                    } catch (error) {
+                      console.error('Failed to parse stored chat session:', error);
+                    }
+                  }
                 }
               }}
             >
-              <VSCodeOption value="neo-1">Neo-Basic</VSCodeOption>
-              <VSCodeOption value="neo-7">Neo-Expert</VSCodeOption>
+              {chatModelList.map((chatModel) => (
+                <VSCodeOption key={chatModel.modelKey} value={chatModel.modelKey}>
+                  {chatModel.modelName}
+                </VSCodeOption>
+              ))}
             </VSCodeDropdown>
 
             {/* Buttons */}
