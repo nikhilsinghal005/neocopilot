@@ -109,12 +109,11 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
             e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
           }}
         >
-          <div className="flex items-center">
+          <div className="flex items-center justify-center space-x-1 ml-1">
           <span
             className={`codicon ${icon} pr-1`}
             style={{ fontSize: fontSize ? fontSize : '12px' }}
           ></span>
-          {text}
           </div>
         </VSCodeButton>
       )}
