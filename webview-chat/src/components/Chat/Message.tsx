@@ -1,4 +1,4 @@
-// MessageComponent.tsx
+// Message.tsx
 import React from 'react';
 import { MessageStore } from '../../types/Message';
 import MessageRenderer from './MessageRenderer';

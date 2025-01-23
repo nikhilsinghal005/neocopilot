@@ -6,10 +6,11 @@ import { MessageStore, MessageOutput } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 import { useChatContext } from '../context/ChatContext';
 import { useVscode } from '../context/VscodeContext';
+import { chatModelDetail } from '../types/AppDetails';
 
 const Chat: React.FC = () => {
   const vscode = useVscode();
-  const { chatSession, setChatSession, isTyping, setIsTyping, chatModel, attachedContext, input, setInput } = useChatContext();
+  const { chatSession, setChatSession, isTyping, setIsTyping, chatModel, attachedContext, input, setInput, setChatModel, setChatModelList } = useChatContext();
 
   useEffect(() => {
     // Restore the saved chat session from VSCode state
@@ -24,6 +25,20 @@ const Chat: React.FC = () => {
     }
     setChatSession(savedChatSession);
   }, [vscode, setChatSession]);
+
+  useEffect(() => {
+    // Restore the saved chat model details from session storage
+    const storedChatModelDetails = sessionStorage.getItem('chatModelDetails');
+    if (!storedChatModelDetails) return;
+
+    const parsedChatModelDetails = JSON.parse(storedChatModelDetails) as chatModelDetail[];
+    setChatModelList(parsedChatModelDetails);
+    // Set the base model as the current chat model
+    const baseModelKey = parsedChatModelDetails.find(model => model.isBaseModel)?.modelKey;
+    if (!baseModelKey) return;
+    setChatModel(baseModelKey);
+    
+  }, [vscode, setChatModel, setChatModelList]);
 
   useEffect(() => {
     // Save the chat session in VSCode state
