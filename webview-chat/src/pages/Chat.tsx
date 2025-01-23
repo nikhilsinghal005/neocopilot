@@ -1,8 +1,8 @@
 // src/pages/Chat.tsx
-import React, { useState, useEffect } from 'react';
+import React, {useEffect } from 'react';
 import ChatContainer from '../components/Chat/ChatContainer';
 import { useChatListener } from '../hooks/useChatListener';
-import { MessageStore, MessageOutput } from '../types/Message';
+import { MessageStore, ChatSession } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 import { useChatContext } from '../context/ChatContext';
 import { useVscode } from '../context/VscodeContext';
@@ -14,16 +14,18 @@ const Chat: React.FC = () => {
 
   useEffect(() => {
     // Restore the saved chat session from VSCode state
-    const savedState = vscode.getState ? vscode.getState() || {} : {};
-
-    const savedChatSession = savedState.chat || {
-      chatId: uuidv4(),
-      timestamp: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      chatName: 'Untitled Chat',
-      messages: [],
+    const chatSession = sessionStorage.getItem('chatSession');
+    if (chatSession) {
+      const parsedChatSession = JSON.parse(chatSession) as ChatSession;
+      setChatSession({
+        ...parsedChatSession,
+        chatId: parsedChatSession.chatId || uuidv4(),
+        chatName: parsedChatSession.chatName || 'Untitled Chat',
+        messages: parsedChatSession.messages || [],
+        createdAt: parsedChatSession.createdAt || new Date().toISOString(),
+        timestamp: parsedChatSession.timestamp || new Date().toISOString(),
+      });
     }
-    setChatSession(savedChatSession);
   }, [vscode, setChatSession]);
 
   useEffect(() => {
