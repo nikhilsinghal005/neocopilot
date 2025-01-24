@@ -1,6 +1,7 @@
 import React from 'react';
 import { useChatContext } from '../../context/ChatContext';
 import { MessageStore } from '../../types/Message';
+import { VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 
 interface ModelSelectDropdownProps {
   message: MessageStore;
@@ -12,13 +13,14 @@ const ModelSelectDropdown: React.FC<ModelSelectDropdownProps> = ({
   handleRefresh,
 }) => {
   const { chatModelList } = useChatContext();
+  
   return (
-    <select
+    <VSCodeDropdown
       className="rounded-md h-5"
       style={{
         backgroundColor: 'transparent',
-        fontSize: '10px',
-        lineHeight: '12px',
+        border: 'none',
+        fontSize: '10px'
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.backgroundColor = 'var(--vscode-button-secondaryHoverBackground)';
@@ -30,14 +32,14 @@ const ModelSelectDropdown: React.FC<ModelSelectDropdownProps> = ({
         e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
       }}
       value={message.modelSelected}
-      onChange={(e)=>{handleRefresh(message.id,e.target.value)}}
+      onChange={(e) => { handleRefresh(message.id, (e.target as HTMLSelectElement).value) }}
     >
       {chatModelList.map((chatModel) => (
-        <option key={chatModel.modelKey} value={chatModel.modelKey}>
+        <VSCodeOption key={chatModel.modelKey} value={chatModel.modelKey}>
           {chatModel.modelName}
-        </option>
+        </VSCodeOption>
       ))}
-    </select>
+    </VSCodeDropdown>
   );
 };
 
