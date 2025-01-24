@@ -53,12 +53,7 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
   }, []);
 
   return (
-    <div
-      ref={wrapperRef}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className="inline-block relative"
-    >
+    <>
       {/* If buttonName is provided, render the icon + text. Otherwise, just the icon. */}
       {buttonName ? (
         <VSCodeButton
@@ -66,14 +61,16 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
           aria-label={ariaLabel}
           disabled={disabled}
           appearance="icon"
-          className="inline-flex items-center justify-center h-5 mb-1"
+          className="inline-flex items-center justify-center h-5"
           style={{
             backgroundColor: 'transparent',
             width: '100%',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+            e.currentTarget.style.backgroundColor = 'var(--vscode-button-secondaryHoverBackground)';
             e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+            e.currentTarget.style.borderRadius = '7%';
+
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
@@ -91,23 +88,24 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
           aria-label={ariaLabel}
           disabled={disabled}
           appearance="icon"
-          className="inline-flex items-center justify-center h-5 mb-1"
+          className="inline-flex items-center justify-center h-5"
           style={{
             backgroundColor: 'transparent',
-            width: '100%',
+            // width: '100%',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
+            e.currentTarget.style.backgroundColor = 'var(--vscode-button-secondaryHoverBackground)';
             e.currentTarget.style.color = 'var(--vscode-button-foreground)';
+            e.currentTarget.style.borderRadius = '10%';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
             e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
           }}
         >
-          <div className="flex items-center justify-center space-x-1 ml-1">
+          <div className="flex items-center justify-center">
           <span
-            className={`codicon ${icon} pr-1`}
+            className={`codicon ${icon}`}
             style={{ fontSize: fontSize ? fontSize : '12px' }}
           ></span>
           </div>
@@ -129,7 +127,7 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
           {tooltip}
         </div>
       )}
-    </div>
+    </>
   );
 };
 

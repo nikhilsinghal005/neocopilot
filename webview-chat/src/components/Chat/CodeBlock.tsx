@@ -205,21 +205,23 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   // console.log(language)
 
   return (
-    <div className="my-4 p-0 rounded-sm shadow-lg border w-full min-w-[200px]"
+    <div className="my-4 p-0 rounded-sm shadow-lg w-full min-w-[200px]"
       style={{
         backgroundColor: 'var(--vscode-editor-background)',
         borderColor: 'var(--vscode-editorGroup-border)',
+        border: '1px solid var(--vscode-editorGroup-border)',
       }}
     >
-      <div className="flex h-6 justify-between items-center text-vscode-editor-foreground pl-1 pr-1 py-0 rounded-t-sm border"
+      <div className="flex h-6 justify-between items-center text-vscode-editor-foreground pl-1 pr-1 py-0 rounded-t-sm"
         style={{
           backgroundColor: 'var(--vscode-editor-background)',
-          borderColor: 'var(--vscode-editorGroup-border)'
+          borderColor: 'var(--vscode-editorGroup-border)',
+          borderBottom: '1px solid var(--vscode-editorGroup-border)',
         }}
       >
 
         <span className="text-xxxs flex items-center"><LanguageIcon fileName={fileName || ""} iconSize={16} />{fileName}</span>
-        <div className="flex">
+        <div className="flex items-center">
           {state === 'idle' && (
             <div className="flex items-center">
 
