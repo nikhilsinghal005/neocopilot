@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
+import CodeButtonWithText from '../Common/CodeButtonWithText';
 import { MessageStore, CurrentFileContext } from '../../types/Message';
 import { useVscode } from '../../context/VscodeContext';
 import MessageRenderer from './MessageRenderer';
+import ModelSelectDropdown from '../Common/ModelSelectDropdown';
 
 interface MessageProps {
   message: MessageStore;
@@ -11,7 +12,6 @@ interface MessageProps {
 
 const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   const { chatSession, setChatSession, setIsTyping, isTyping, chatModelList, setChatModelList } = useChatContext();
-  const [dropdownVisible, setDropdownVisible] = useState<boolean>(false);
 
   const vscode = useVscode();
 
@@ -32,6 +32,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
       data: chatSession,
     })
   };
+  console.log(chatSession.messages)
   const handleCopy = (messageId: string) => {
     const messageToCopy = chatSession.messages.find((message) => message.id === messageId);
     if (messageToCopy) {
@@ -59,7 +60,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
       {/* Divider line after each message */}
       <div className='divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0'></div>
 
-      <div className={`message flex justify-center items-start mb-2 w-full`}>
+      <div className={`message flex justify-center items-start mb-5 w-full`}>
         {/* Icon on the left for NEO's messages */}
         {/* {message.messageType !== 'user' && (
           <div className="flex items-center mr-1 mt-3">
@@ -78,9 +79,9 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               message.messageType === 'user'
                 ? 'var(--vscode-input-background)'
                 : undefined,
-            border:message.messageType === 'user'
-                ? '2px solid var(--vscode-editorGroup-border)'
-                : undefined,
+            border: message.messageType === 'user'
+              ? '2px solid var(--vscode-editorGroup-border)'
+              : undefined,
             overflowX: 'auto',
             flexGrow: 1,
             minWidth: '97%',
@@ -93,68 +94,20 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               attachedContext={message.attachedContext ?? ([] as CurrentFileContext[])}
             />
             {message.messageType === 'system' && !isTyping && (
-              <div className='flex justify-end'>
-                <VSCodeButton
-                  appearance='icon'
+              <div className="flex justify-end">
+                <CodeButtonWithText
                   onClick={() => handleCopy(message.id)}
-                  className ="hover:bg-vscode-button-background hover:text-vscode-button-foreground mt-1"
-                >
-                  <span className='codicon codicon-copy' style={{ fontSize: '12px' }}></span>
-                </VSCodeButton>
-                <div className='relative'>
-                <VSCodeButton
-                  onClick={() => setDropdownVisible(!dropdownVisible)}
-                  aria-label={"Refresh"}
-                  appearance="icon"
-                  className="inline-flex items-center justify-center h-6 px-1 hover:bg-vscode-button-background hover:text-vscode-button-foreground"
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                  }}
-                  >
-                  <div className="flex items-center hover:bg-vscode-button-background hover:text-vscode-button-foreground" style={{ fontSize: '12px' }}>
-                    <span className={`codicon codicon-refresh mr-1`} style={{ fontSize: '12px' }}></span>
-                    {message.modelSelected === 'neo-1' ? 'Neo-Basic' : 'Neo-Expert'}
-                  </div>
-                </VSCodeButton>
-                {dropdownVisible && (
-                  <div
-                    className="absolute right-0 mt-0 w-56 border rounded shadow-md z-10 p-0 dropdown-container mr-1"
-                    style={{
-                      backgroundColor: 'var(--vscode-editor-background)',
-                      borderColor: 'var(--vscode-editorGroup-border)',
-                      color: 'var(--vscode-editor-foreground)',
-                      overflow: 'hidden',
-                      bottom: '100%', // Position the dropdown above the button
-                      transform: 'translateY(-10px)',
-                    }}
-                  >
-                    {chatModelList.map((chatModel) => (
-                      <div
-                        key={chatModel.modelKey}
-                        onClick={() => {
-                          setDropdownVisible(false);
-                          handleRefresh(message.id, chatModel.modelKey);
-                        }}
-                        className="flex items-center p-1 text-xs cursor-pointer rounded-sm border mb-0"
-                        style={{
-                          borderColor: 'var(--vscode-editorGroup-border)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'var(--vscode-button-background)';
-                          e.currentTarget.style.color = 'var(--vscode-button-foreground)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
-                          e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
-                        }}
-                      >
-                        <span className="truncate">{chatModel.modelName}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                </div>
+                  ariaLabel="Copy"
+                  icon="codicon-copy"
+                  tooltip="Copy"
+                  disabled={isTyping}
+                  buttonName={''}
+                />
+                {/* Model select dropdown component */}
+                <ModelSelectDropdown
+                  message={message}
+                  handleRefresh={handleRefresh}
+                />
               </div>
             )}
           </div>

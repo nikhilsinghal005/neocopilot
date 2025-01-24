@@ -66,11 +66,9 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
           aria-label={ariaLabel}
           disabled={disabled}
           appearance="icon"
-          className="inline-flex items-center justify-center h-6 px-1"
+          className="inline-flex items-center justify-center h-5 mb-1"
           style={{
             backgroundColor: 'transparent',
-            border: '1px solid var(--vscode-editorGroup-border)',
-            borderRadius: '0px',
             width: '100%',
           }}
           onMouseEnter={(e) => {
@@ -78,7 +76,7 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
             e.currentTarget.style.color = 'var(--vscode-button-foreground)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+            e.currentTarget.style.backgroundColor = 'transparent';
             e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
           }}
         >
@@ -93,11 +91,9 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
           aria-label={ariaLabel}
           disabled={disabled}
           appearance="icon"
-          className="inline-flex items-center justify-center h-6 px-1"
+          className="inline-flex items-center justify-center h-5 mb-1"
           style={{
             backgroundColor: 'transparent',
-            border: '1px solid var(--vscode-editorGroup-border)',
-            borderRadius: '0px',
             width: '100%',
           }}
           onMouseEnter={(e) => {
@@ -105,7 +101,7 @@ const CodeButtonWithText: React.FC<CodeButtonProps> = ({
             e.currentTarget.style.color = 'var(--vscode-button-foreground)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'var(--vscode-editor-background)';
+            e.currentTarget.style.backgroundColor = 'transparent';
             e.currentTarget.style.color = 'var(--vscode-editor-foreground)';
           }}
         >
