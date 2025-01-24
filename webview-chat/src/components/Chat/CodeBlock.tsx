@@ -223,7 +223,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
         <span className="text-xxxs flex items-center"><LanguageIcon fileName={fileName || ""} iconSize={16} />{fileName}</span>
         <div className="flex items-center">
           {state === 'idle' && (
-            <div className="flex items-center">
+            <div className="flex items-center space-x-1">
 
               {language === 'bash' || language === 'powershell' || language === 'powershell' ? (
                 // Render "T" button for Bash language
