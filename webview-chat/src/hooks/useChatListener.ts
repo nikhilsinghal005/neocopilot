@@ -80,6 +80,7 @@ export const useChatListener = () => {
           messageType: 'system',
           text: accumulatedResponseRef.current,
           isComplete: data.isComplete,
+          modelSelected: data.modelSelected,
         };
       } else {
         messageInProgressRef.current.text += data.response;
@@ -124,6 +125,7 @@ export const useChatListener = () => {
                   ...msg,
                   text: msg.text + data.response,
                   isComplete: data.isComplete,
+                  modelSelected: data.modelSelected,
                 }
               : msg
           );

@@ -171,7 +171,7 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
 
   } else {
     return (
-      <div className="prose max-w-full text-xs leading-6 space-y-2">
+      <div className="prose max-w-full text-xs leading-6 space-y-2 mb-2">
         <ReactMarkdown
           children={text}
           remarkPlugins={[remarkGfm]}
