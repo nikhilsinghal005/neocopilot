@@ -84,7 +84,7 @@ const InputBar: React.FC<InputBarProps> = ({
         >
           <ContextWrapper isTyping={isTyping} />
           {/* Textarea */}
-          <div className="top-section flex items-center gap-2">
+          <div className="top-section flex items-center gap-2 text-xxs">
           <style>{placeholderStyle}</style>
             <textarea
               value={input}
@@ -92,8 +92,8 @@ const InputBar: React.FC<InputBarProps> = ({
                 setInput(e.target.value);
                 handleResize();
               }}
+              className="flex-grow bg-transparent outline-none p-2 resize-none input-textarea text-xxs rounded-md"
               placeholder="Type your message..."
-              className="flex-grow bg-transparent outline-none p-2 resize-none input-textarea text-sm rounded-md"
               style={{
                 color: 'var(--vscode-editor-foreground)',
                 minHeight: '1.5em',
