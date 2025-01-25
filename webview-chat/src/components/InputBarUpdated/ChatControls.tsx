@@ -2,7 +2,7 @@
 import React from 'react';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
-import { Send,CircleStop,Paperclip } from "lucide-react";
+import { Send,CircleStop,Paperclip, XCircle } from "lucide-react";
 import {
   handleCodeInsertClickFunction,
   handleStopClickFunction,
@@ -27,12 +27,29 @@ const ChatControls: React.FC<ChatControlsProps> = ({
   handleSendMessage,
   isTyping,
 }) => {
-  const {setIsTyping, setIsInterrupted } = useChatContext();
+  const {setIsTyping, setIsInterrupted, isEditing, setIsEditing } = useChatContext();
   const vscode = useVscode();
+
+const handleCancleClick = () => {
+  setIsEditing(false);
+  setIsTyping(false);
+}
 
 
   return (
     <div className="button-group flex items-center gap-2" style={{ marginRight: '4px' }}>
+      {isEditing && (
+        <VSCodeButton
+          onClick={() => handleCancleClick()}
+          appearance="icon"
+          aria-label="Stop"
+          className="rounded-md text-green-500"
+        >
+          <span><XCircle size={14}/></span>
+        </VSCodeButton>
+      )
+      }
+      
       <VSCodeButton
         onClick={() => handleCodeInsertClickFunction(vscode)}
         appearance="icon"
@@ -45,6 +62,9 @@ const ChatControls: React.FC<ChatControlsProps> = ({
       >
         <span><Paperclip size={14}/></span>
       </VSCodeButton>
+
+
+
 
       {isTyping ? (
         <VSCodeButton

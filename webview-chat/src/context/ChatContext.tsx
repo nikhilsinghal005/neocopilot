@@ -8,6 +8,8 @@ interface ChatContextProps {
   setChatSession: React.Dispatch<React.SetStateAction<ChatSession>>;
   isTyping: boolean;
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>;
+  isEditing: boolean;
+  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
   chatModel: string;
   setChatModel: React.Dispatch<React.SetStateAction<string>>;
   attachedContext: CurrentFileContext[],
@@ -59,6 +61,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const [chatModel, setChatModel] = useState<string>('neo-7');
   const [attachedContext, setAttachedContext] = useState<CurrentFileContext[]>([]);
   const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
@@ -126,6 +129,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setChatSessionList,
         input,
         setInput, // Provide input state here
+        isEditing,
+        setIsEditing
+
       }}
     >
       {children}

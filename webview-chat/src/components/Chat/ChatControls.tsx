@@ -5,11 +5,12 @@ import CodeButton from '../Common/CodeButton';
 
 const ChatControls: React.FC = () => {
   const vscode = useVscode(); // Consume vscode from context
-  const { clearChatSession, setIsTyping, isTyping } = useChatContext();
+  const { clearChatSession, setIsTyping, isTyping, setIsEditing } = useChatContext();
 
   const handleRefreshClick = () => {
     clearChatSession();
     setIsTyping(false);
+    setIsEditing(false);
   };
 
   const handleToggleClick = () => {
