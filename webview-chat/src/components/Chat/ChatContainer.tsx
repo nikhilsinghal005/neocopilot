@@ -2,7 +2,8 @@
 import React from 'react';
 import MessageList from './MessageList';
 import TypingIndicator from './TypingIndicator';
-import InputBar from './InputBar';
+// import InputBar from './InputBar';
+import InputBar from "../InputBarUpdated/InputBar";
 import { useChatContext } from '../../context/ChatContext';
 import NewChatPanel from './NewChatPanel';
 
@@ -33,7 +34,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         <>
           {/* Messages Container */}
           <div
-            className="messages-container fixed left-0 right-0 overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2"
+            className="messages-container fixed left-0 right-0 overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-3 pt-2"
             style={{
               top: '40px',
               bottom: `calc(var(--input-container-height, 130px) + 0px)`, // Adjusted to match the dynamic height of input container
