@@ -21,6 +21,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     setChatModelList,
     setIsEditing,
     isEditing,
+    setAttachedContext,
   } = useChatContext();
 
   const vscode = useVscode();
@@ -57,6 +58,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   const handleEditButtonClick = (messageId: string) => {
     setIsEditing(true); // Now a boolean
     setEditingMessageId(messageId); // Track the specific message ID
+    setAttachedContext(message.attachedContext ?? ([] as CurrentFileContext[])); // Set the attached context of the message
   };
 
   const handleEditSave = () => {
@@ -67,6 +69,10 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
       setIsEditing(false); // End editing mode
       setEditingMessageId(null); // Reset the editing message ID
     }
+    vscode.postMessage({
+      command: 'send_chat_message',
+      data: chatSession,
+    });
   };
 
   useEffect(() => {
@@ -100,7 +106,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
       ) : (
         <div className={`message flex justify-center items-start mb-5 w-full`}>
           <div
-            className={`rounded-sm flex items-center break-words px-2 max-w-[97%] text-vscode-editor-foreground`}
+            className={`rounded-sm flex items-center break-words px-2 max-w-[97%] text-vscode-editor-foreground relative`}
             style={{
               backgroundColor:
                 message.messageType === 'user'
@@ -112,26 +118,26 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               overflowX: 'auto',
               flexGrow: 1,
               minWidth: '97%',
+              zIndex: 2,
             }}
           >
+            {message.messageType === 'user' && (
+              <div className="absolute top-1 right-1 z-10">
+                <CodeButtonWithText
+                  onClick={() => handleEditButtonClick(message.id)}
+                  ariaLabel="Edit"
+                  icon="codicon-edit"
+                  tooltip="Edit"
+                  disabled={isTyping}
+                />
+              </div>
+            )}
             <div className="w-full">
               <MessageRenderer
                 text={message.text}
                 type={message.messageType}
                 attachedContext={message.attachedContext ?? ([] as CurrentFileContext[])}
               />
-              {message.messageType === 'user' && (
-                <div className="flex justify-end">
-                  <CodeButtonWithText
-                    onClick={() => handleEditButtonClick(message.id)}
-                    ariaLabel="Edit"
-                    icon="codicon-edit"
-                    tooltip="Edit"
-                    disabled={isTyping}
-                    buttonName="Edit"
-                  />
-                </div>
-              )}
               {message.messageType === 'system' && !isTyping && (
                 <div className="flex justify-end">
                 {/* Model select dropdown component */}

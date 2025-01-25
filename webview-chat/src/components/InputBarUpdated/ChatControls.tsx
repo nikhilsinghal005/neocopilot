@@ -27,10 +27,10 @@ const ChatControls: React.FC<ChatControlsProps> = ({
   handleSendMessage,
   isTyping,
 }) => {
-  const {setIsTyping, setIsInterrupted, isEditing, setIsEditing } = useChatContext();
+  const {setIsTyping, setIsInterrupted, isEditing, setIsEditing, setAttachedContext } = useChatContext();
   const vscode = useVscode();
 
-const handleCancleClick = () => {
+const handleCancelClick = () => {
   setIsEditing(false);
   setIsTyping(false);
 }
@@ -40,10 +40,10 @@ const handleCancleClick = () => {
     <div className="button-group flex items-center gap-2" style={{ marginRight: '4px' }}>
       {isEditing && (
         <VSCodeButton
-          onClick={() => handleCancleClick()}
+          onClick={() => handleCancelClick()}
           appearance="icon"
           aria-label="Stop"
-          className="rounded-md text-green-500"
+          className="rounded-md text-yellow-500"
         >
           <span><XCircle size={14}/></span>
         </VSCodeButton>

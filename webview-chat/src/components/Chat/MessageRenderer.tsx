@@ -8,7 +8,6 @@ import CodeBlock from './CodeBlock';
 import { CurrentFileContext } from '../../types/Message';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import LanguageIcon from '../Common/LanguageIcon';
-import {Pencil} from "lucide-react";
 
 interface MessageRendererProps {
   text: string;
@@ -153,76 +152,20 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
       );
     };
 
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [editedText, setEditedText] = React.useState(text);
-
-  const handleEditClick = () => {
-    setIsEditing(true);
-    setEditedText(text);
-  };
-
-  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditedText(event.target.value);
-  };
-
-  const handleSave = () => {
-    setIsEditing(false);
-    // need to send edited text to the backend
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-  };
-
   if (type === 'user') {
     let bottomMargin: string = "";
     if (attachedContext.length > 0){
       bottomMargin = 'mb-2';
     }    
     return (
-      <div className={`prose max-w-full text-xs leading-6 space-y-1 ${bottomMargin} relative`}>
-        {!isEditing && (
-          <>
-            <ReactMarkdown
-              children={text}
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-              components={components}
-            />
-            {renderAttachedContext()}
-            <style>
-              {`
-                vscode-button::part(control) {
-                  font-size: 10px; /* Adjust the font size as needed */
-                  border: none;
-                }
-              `}
-            </style>
-            <VSCodeButton
-              className="absolute top-0 right-0 border-none bg-transparent"
-              onClick={handleEditClick}
-            >
-              <Pencil size={8} />
-            </VSCodeButton>
-          </>
-        )}
-
-        {isEditing && (
-          <div className="relative">
-            <textarea
-              value={editedText}
-              onChange={handleTextChange}
-              className="w-full p-2 border rounded text-xs bg-transparent text-vscode-editor-foreground"
-              style={{
-                outline: 'none',
-              }}
-            />
-            <div className="mt-2 flex gap-2">
-              <VSCodeButton onClick={handleSave}>Save</VSCodeButton>
-              <VSCodeButton onClick={handleCancel}>Cancel</VSCodeButton>
-            </div>
-          </div>
-        )}
+      <div className={`prose max-w-full text-xs leading-6 space-y-1 ${bottomMargin}`}>
+        <ReactMarkdown
+          children={text}
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+          components={components}
+        />
+        {renderAttachedContext()}
       </div>
     );
 
