@@ -21,12 +21,12 @@ const ModelSelectDropdown: React.FC<ModelSelectDropdownProps> = ({
           vscode-dropdown::part(control) {
             font-size: 11px; /* Adjust the font size as needed */
             border: none;
-            border-radius: 7%;
+            // border-radius: 7%;
           }
           vscode-option::part(control) {  
             font-size: 11px; /* Adjust the font size as needed */
             border: none;
-            border-radius: 7%;
+            // border-radius: 7%;
           }
         `}
       </style>
@@ -38,7 +38,7 @@ const ModelSelectDropdown: React.FC<ModelSelectDropdownProps> = ({
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = 'var(--vscode-button-secondaryHoverBackground)';
           e.currentTarget.style.color = 'var(--vscode-button-foreground)';
-          e.currentTarget.style.borderRadius = '7%';
+          // e.currentTarget.style.borderRadius = '7%';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = 'transparent';

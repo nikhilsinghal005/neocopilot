@@ -95,6 +95,11 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
             />
             {message.messageType === 'system' && !isTyping && (
               <div className="flex justify-end">
+                {/* Model select dropdown component */}
+                <ModelSelectDropdown
+                  message={message}
+                  handleRefresh={handleRefresh}
+                />
                 <CodeButtonWithText
                   onClick={() => handleCopy(message.id)}
                   ariaLabel="Copy"
@@ -103,13 +108,9 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
                   disabled={isTyping}
                   buttonName={''}
                 />
-                {/* Model select dropdown component */}
-                <ModelSelectDropdown
-                  message={message}
-                  handleRefresh={handleRefresh}
-                />
               </div>
             )}
+        <div className='divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0'></div>
           </div>
         </div>
       </div>
