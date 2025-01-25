@@ -268,7 +268,7 @@ const InputBar: React.FC<InputBarProps> = ({ input, setInput, handleSendMessage,
             )
           ) : (
             <span
-              className="rounded-xs px-1 flex items-center h-6 text-xs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+              className="rounded-xs px-1 flex items-center h-6 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
               style={{
                 backgroundColor: 'var(--vscode-editor-background)',
                 borderColor: 'var(--vscode-editorGroup-border)',

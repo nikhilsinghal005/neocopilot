@@ -1,54 +1,66 @@
-// Message.tsx
-import React from 'react';
-import { MessageStore } from '../../types/Message';
+import React, { useState, useEffect } from 'react';
+import { useChatContext } from '../../context/ChatContext';
+import CodeButtonWithText from '../Common/CodeButtonWithText';
+import { MessageStore, CurrentFileContext } from '../../types/Message';
+import { useVscode } from '../../context/VscodeContext';
 import MessageRenderer from './MessageRenderer';
-import { CurrentFileContext } from '../../types/Message';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react'
-import { useChatContext } from '../../context/ChatContext'
-import { useVscode } from '../../context/VscodeContext'
+import ModelSelectDropdown from '../Common/ModelSelectDropdown';
 
 interface MessageProps {
   message: MessageStore;
 }
 
 const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
-  const { 
-    chatSession, 
-    setChatSession,
-    setIsTyping,
-    isTyping
-  } = useChatContext()
+  const { chatSession, setChatSession, setIsTyping, isTyping, chatModelList, setChatModelList } = useChatContext();
 
-  const vscode = useVscode()
+  const vscode = useVscode();
 
-  const handleRefresh = (messageId: string) => {
-    while(true){
-      const poppedMessage:MessageStore | undefined = chatSession.messages.pop()
-      if(poppedMessage?.id === messageId){
+  const handleRefresh = (messageId: string, model: string) => {
+    while (true) {
+      const poppedMessage: MessageStore | undefined = chatSession.messages.pop()
+      if (poppedMessage?.id === messageId) {
         break
       }
     }
+    //update modelselected in last message
+    const lastMessage = chatSession.messages[chatSession.messages.length - 1]
+    lastMessage.modelSelected = model
     setChatSession({ ...chatSession })
     setIsTyping(true)
     vscode.postMessage({
       command: 'send_chat_message',
       data: chatSession,
     })
-  }
-
+  };
+  console.log(chatSession.messages)
   const handleCopy = (messageId: string) => {
-    const messageToCopy = chatSession.messages.find(message => message.id === messageId)
+    const messageToCopy = chatSession.messages.find((message) => message.id === messageId);
     if (messageToCopy) {
-      navigator.clipboard.writeText(messageToCopy.text)
+      navigator.clipboard.writeText(messageToCopy.text);
     }
-  }
+  };
+
+  useEffect(() => {
+    const messageHandler = (event: MessageEvent) => {
+      if (event.data && event.data.command === 'update_chat_details') {
+        const { model_details } = event.data;
+        if (model_details) {
+          setChatModelList(model_details);
+        }
+      }
+    };
+    window.addEventListener('message', messageHandler);
+    return () => {
+      window.removeEventListener('message', messageHandler);
+    };
+  }, [setChatModelList]);
 
   return (
     <>
-    {/* Divider line after each message */}
+      {/* Divider line after each message */}
       <div className='divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0'></div>
 
-      <div className={`message flex justify-center items-start mb-2 w-full`}>
+      <div className={`message flex justify-center items-start mb-5 w-full`}>
         {/* Icon on the left for NEO's messages */}
         {/* {message.messageType !== 'user' && (
           <div className="flex items-center mr-1 mt-3">
@@ -67,9 +79,9 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               message.messageType === 'user'
                 ? 'var(--vscode-input-background)'
                 : undefined,
-            border:message.messageType === 'user'
-                ? '2px solid var(--vscode-editorGroup-border)'
-                : undefined,
+            border: message.messageType === 'user'
+              ? '2px solid var(--vscode-editorGroup-border)'
+              : undefined,
             overflowX: 'auto',
             flexGrow: 1,
             minWidth: '97%',
@@ -82,21 +94,23 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               attachedContext={message.attachedContext ?? ([] as CurrentFileContext[])}
             />
             {message.messageType === 'system' && !isTyping && (
-              <div className='flex justify-end mt-2'>
-                <VSCodeButton
-                  appearance='icon'
+              <div className="flex justify-end">
+                {/* Model select dropdown component */}
+                <ModelSelectDropdown
+                  message={message}
+                  handleRefresh={handleRefresh}
+                />
+                <CodeButtonWithText
                   onClick={() => handleCopy(message.id)}
-                >
-                  <span className='codicon codicon-copy' style={{ fontSize: '12px' }}></span>
-                </VSCodeButton>
-                <VSCodeButton
-                  appearance='icon'
-                  onClick={() => handleRefresh(message.id)}
-                >
-                  <span className='codicon codicon-refresh' style={{ fontSize: '12px' }}></span>
-                </VSCodeButton>
+                  ariaLabel="Copy"
+                  icon="codicon-copy"
+                  tooltip="Copy"
+                  disabled={isTyping}
+                  buttonName={''}
+                />
               </div>
             )}
+        <div className='divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0'></div>
           </div>
         </div>
       </div>

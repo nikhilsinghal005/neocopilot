@@ -23,15 +23,15 @@ const TypingIndicator: React.FC = () => {
   }, [input, setInput]);
 
   return (
-    <div className="message flex justify-start mb-4">
-      <span className="text-vscode-editor-foreground mr-2"></span>
-      <div
-        className="px-2 rounded-lg max-w-full break-words shadow-md text-vscode-editor-foreground"
-        // style={{
-        //   backgroundColor: 'var(--vscode-editor-background)',
-        // }}
+    <div className="message flex justify-start mb-4 ml-3">
+      <span
+        className="rounded-xs px-1 flex items-center h-6 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+        style={{
+          backgroundColor: 'var(--vscode-editor-background)',
+          borderColor: 'var(--vscode-editorGroup-border)',
+          color: 'var(--vscode-editor-foreground)',
+        }}
       >
-        <div className="flex items-center space-x-2">
           <span>{input}</span>
           <div className="flex space-x-1">
             <span
@@ -53,8 +53,7 @@ const TypingIndicator: React.FC = () => {
               }}
             ></span>
           </div>
-        </div>
-      </div>
+      </span>
     </div>
   );
 };

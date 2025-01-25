@@ -11,6 +11,7 @@ export class AiChatMessageHandler {
   private socketModule: SocketModule;
   private messageQueue: MessageResponse[] = [];
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
+  private currentChatModel: string = "neo-1";
 
   constructor(
     private aiChatPanel: AiChatPanel,
@@ -126,7 +127,8 @@ export class AiChatMessageHandler {
           chatId: data.chatId,
           response: data.response,
           unique_id: data.id,
-          isComplete: data.isComplete
+          isComplete: data.isComplete,
+          modelSelected: this.currentChatModel
         }
       });
     } catch (error) {
@@ -151,7 +153,8 @@ export class AiChatMessageHandler {
               chatId: data.chatId,
               response: data.response,
               id: data.id,
-              isComplete: data.isComplete
+              isComplete: data.isComplete,
+              modelSelected: this.currentChatModel
             }
           });
         } catch (error) {
@@ -168,8 +171,9 @@ export class AiChatMessageHandler {
     let messageList = chat.messages.slice(-5);
 
     // Process each message in the list
-    const lastMessage = messageList[messageList.length - 1]; 
-
+    const lastMessage = messageList[messageList.length - 1];
+    this.currentChatModel = lastMessage.modelSelected; 
+    
     if (lastMessage && lastMessage.attachedContext?.length > 0) {
         for (const contextTemp of lastMessage.attachedContext) {
             try {
