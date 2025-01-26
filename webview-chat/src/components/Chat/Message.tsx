@@ -21,7 +21,18 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     setChatModelList,
     setIsEditing,
     isEditing,
+    attachedContext,
     setAttachedContext,
+    previousChatModel,
+    chatModel,
+    setChatModel,
+    setPreviousChatModel,
+    previousInput,
+    setPreviousInput,
+    input,
+    setInput,
+    previousAttachedContext,
+    setPreviousAttachedContext,
   } = useChatContext();
 
   const vscode = useVscode();
@@ -56,9 +67,17 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   };
 
   const handleEditButtonClick = (messageId: string) => {
+    // Store the current input values
+    setPreviousInput(input);
+    setPreviousChatModel(chatModel);
+    setPreviousAttachedContext(attachedContext);
+
+    // Setting Up new input Box and replce the old one
     setIsEditing(true); // Now a boolean
     setEditingMessageId(messageId); // Track the specific message ID
-    setAttachedContext(message.attachedContext ?? ([] as CurrentFileContext[])); // Set the attached context of the message
+    setAttachedContext(message.attachedContext ?? ([] as CurrentFileContext[]));
+    setChatModel(message.modelSelected || "");
+     // Set the attached context of the message
   };
 
   const handleEditSave = () => {

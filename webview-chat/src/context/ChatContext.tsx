@@ -26,6 +26,14 @@ interface ChatContextProps {
   setChatSessionList:  React.Dispatch<React.SetStateAction<ChatSessionList>>;
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
+
+  // Previous State Input
+  previousInput: string;
+  setPreviousInput: React.Dispatch<React.SetStateAction<string>>;
+  previousChatModel: string;
+  setPreviousChatModel: React.Dispatch<React.SetStateAction<string>>;
+  previousAttachedContext: CurrentFileContext[];
+  setPreviousAttachedContext: React.Dispatch<React.SetStateAction<CurrentFileContext[]>>;
 }
 
 const createNewChatSession = (): ChatSession => ({
@@ -63,12 +71,15 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [chatModel, setChatModel] = useState<string>('neo-7');
+  const [previousChatModel, setPreviousChatModel] = useState<string>('neo-7');
   const [attachedContext, setAttachedContext] = useState<CurrentFileContext[]>([]);
+  const [previousAttachedContext, setPreviousAttachedContext] = useState<CurrentFileContext[]>([]);
   const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
   const [isInterrupted, setIsInterrupted] = useState<boolean>(false);
   const [chatModelList, setChatModelList] = useState<chatModelDetail[]>([]);
   const [chatSessionList, setChatSessionList] = useState<ChatSessionList>([]);
   const [input, setInput] = useState<string>(''); // Add input state here
+  const [previousInput, setPreviousInput] = useState<string>(''); // Add input state here
 
   useEffect(() => {
     sessionStorage.setItem('chatSession', JSON.stringify(chatSession));
@@ -115,6 +126,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsTyping,
         chatModel,
         setChatModel,
+
         attachedContext,
         setAttachedContext,
         openEditorFilesList,
@@ -130,7 +142,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         input,
         setInput, // Provide input state here
         isEditing,
-        setIsEditing
+        setIsEditing,
+
+        previousInput,
+        setPreviousInput,
+        previousChatModel,
+        setPreviousChatModel,
+        previousAttachedContext,
+        setPreviousAttachedContext,
 
       }}
     >
