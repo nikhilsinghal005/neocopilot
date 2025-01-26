@@ -16,6 +16,7 @@ interface InputBarProps {
   setInput: (input: string) => void;
   handleSendMessage: () => void;
   isTyping: boolean;
+  isEditing: boolean;
 }
 
 const InputBar: React.FC<InputBarProps> = ({
@@ -23,6 +24,7 @@ const InputBar: React.FC<InputBarProps> = ({
   setInput,
   handleSendMessage,
   isTyping,
+  isEditing,
 }) => {
   const [warningMessage, setWarningMessage] = useState('');
   const vscode = useVscode();
@@ -67,12 +69,12 @@ const InputBar: React.FC<InputBarProps> = ({
 `;
 
   return (
-    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0">
+    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0 mb-1">
       {/* Context Wrapper */}
       
 
       {/* Chat Wrapper */}
-      <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0">
+      <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0 mb-1">
       
         <div
           className="input-container flex flex-col gap-0 w-full max-w-2xl p-1 border rounded-md"
@@ -82,7 +84,7 @@ const InputBar: React.FC<InputBarProps> = ({
             color: 'var(--vscode-editor-foreground)',
           }}
         >
-          <ContextWrapper isTyping={isTyping} />
+          <ContextWrapper isTyping={isTyping} isEditing={isEditing} />
           {/* Textarea */}
           <div className="top-section flex items-center gap-2 text-xxs">
           <style>{placeholderStyle}</style>

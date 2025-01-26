@@ -27,12 +27,20 @@ const ChatControls: React.FC<ChatControlsProps> = ({
   handleSendMessage,
   isTyping,
 }) => {
-  const {setIsTyping, setIsInterrupted, isEditing, setIsEditing, setAttachedContext } = useChatContext();
+  const {setIsTyping, setIsInterrupted, isEditing, setIsEditing,
+    setAttachedContext,
+    previousChatModel,
+    setChatModel,
+    previousInput,
+    previousAttachedContext} = useChatContext();
   const vscode = useVscode();
 
 const handleCancelClick = () => {
   setIsEditing(false);
   setIsTyping(false);
+  setInput(previousInput);
+  setChatModel(previousChatModel);
+  setAttachedContext(previousAttachedContext);
 }
 
 

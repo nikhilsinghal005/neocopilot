@@ -8,9 +8,11 @@ import SelectedContextTags from './SelectedContextTags';
 
 interface ContextWrapperProps {
   isTyping: boolean;
+  isEditing: boolean;
 }
 
-const ContextWrapper: React.FC<ContextWrapperProps> = ({ isTyping }) => {
+const ContextWrapper: React.FC<ContextWrapperProps> = () => {
+  const { isTyping, isEditing } = useChatContext();
   const [showList, setShowList] = useState(false);
 
   // Close dropdown when clicking outside
@@ -60,7 +62,7 @@ const ContextWrapper: React.FC<ContextWrapperProps> = ({ isTyping }) => {
 
         {showList && (
           <div
-            className="absolute bottom-full left-0 mb-2 w-64 rounded-md shadow-md z-10 p-0 dropdown-container"
+            className={`absolute ${isEditing ? 'top-full' : 'bottom-full'} left-0 mb-2 w-64 rounded-md shadow-md z-10 p-0 dropdown-container`}
             style={{
               backgroundColor: 'var(--vscode-editor-background)',
               color: 'var(--vscode-editor-foreground)',

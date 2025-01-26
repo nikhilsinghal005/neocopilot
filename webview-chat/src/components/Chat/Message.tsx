@@ -81,19 +81,35 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   };
 
   const handleEditSave = () => {
-    const messageToEdit = chatSession.messages.find((msg) => msg.id === message.id);
-    if (messageToEdit) {
-      messageToEdit.text = editInput;
-      setChatSession({ ...chatSession });
-      setIsEditing(false); // End editing mode
-      setEditingMessageId(null); // Reset the editing message ID
+    let editingMessage = null;
+    // Pop messages until we find the message to edit (user1)
+    while (chatSession.messages.length > 0) {
+      const poppedMessage = chatSession.messages.pop();
+      if (poppedMessage?.id === editingMessageId) {
+        editingMessage = poppedMessage;
+        break;
+      }
     }
+    if (!editingMessage) {
+      console.error("Editing message not found.");
+      return;
+    }
+    editingMessage.text = editInput;
+    editingMessage.attachedContext = attachedContext;
+    chatSession.messages = [editingMessage];
+    setChatSession({ ...chatSession });
+    setIsEditing(false);
+    setEditingMessageId(null); // Reset the editing message ID
     vscode.postMessage({
-      command: 'send_chat_message',
+      command: "send_chat_message",
       data: chatSession,
     });
+    // Reset inputs
+    setInput(previousInput);
+    setChatModel(previousChatModel);
+    setAttachedContext(previousAttachedContext);
   };
-
+  
   useEffect(() => {
     const messageHandler = (event: MessageEvent) => {
       if (event.data && event.data.command === 'update_chat_details') {
@@ -120,6 +136,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
             setInput={setEditInput}
             handleSendMessage={handleEditSave}
             isTyping={isTyping}
+            isEditing={isEditing}
           />
         </div>
       ) : (

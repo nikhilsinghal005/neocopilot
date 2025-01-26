@@ -5,7 +5,7 @@ import CodeButton from '../Common/CodeButton';
 
 const ChatControls: React.FC = () => {
   const vscode = useVscode(); // Consume vscode from context
-  const { clearChatSession, setIsTyping, isTyping, setIsEditing } = useChatContext();
+  const { clearChatSession, setIsTyping, isTyping, setIsEditing, } = useChatContext();
 
   const handleRefreshClick = () => {
     clearChatSession();
