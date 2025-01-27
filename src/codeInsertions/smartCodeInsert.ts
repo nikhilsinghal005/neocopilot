@@ -142,57 +142,57 @@ export class SmartInsertionManager {
     if (!insertion) {
       showErrorNotification('Insertion not found.');
       return;
-  }
+    }
 
-  if (!this.currentEditor) {
-    showErrorNotification('No active editor found.');
-    return;
-  }
+    if (!this.currentEditor) {
+      showErrorNotification('No active editor found.');
+      return;
+    }
 
-  if (vscode.window.activeTextEditor?.document.uri) {
-      if (vscode.window.activeTextEditor.document.uri.toString() !== this.currentEditor.document.uri.toString()) {
-        const document = await vscode.workspace.openTextDocument(this.currentEditor.document.uri);
-        await vscode.window.showTextDocument(document);
-        // add a sleep
-        await new Promise(resolve => setTimeout(resolve, 300));
-        this.currentEditor = vscode.window.activeTextEditor;
-      }  
-  }
+    if (vscode.window.activeTextEditor?.document.uri) {
+        if (vscode.window.activeTextEditor.document.uri.toString() !== this.currentEditor.document.uri.toString()) {
+          const document = await vscode.workspace.openTextDocument(this.currentEditor.document.uri);
+          await vscode.window.showTextDocument(document);
+          // add a sleep
+          await new Promise(resolve => setTimeout(resolve, 300));
+          this.currentEditor = vscode.window.activeTextEditor;
+        }  
+    }
 
-  const success = await this.currentEditor.edit((editBuilder) => {
-    // Delete ranges for deleted lines
-    insertion.deletedRanges.forEach((range) => {
-      const fullLineRange = new vscode.Range(
-        range.start.line,
-        0,
-        range.start.line + 1,
-        0 // Move to the start of the next line to capture the newline
-      ); 
-      editBuilder.delete(fullLineRange);
+    const success = await this.currentEditor.edit((editBuilder) => {
+      // Delete ranges for deleted lines
+      insertion.deletedRanges.forEach((range) => {
+        const fullLineRange = new vscode.Range(
+          range.start.line,
+          0,
+          range.start.line + 1,
+          0 // Move to the start of the next line to capture the newline
+        ); 
+        editBuilder.delete(fullLineRange);
+      });
     });
-  });
 
-  if (success) {
-    // Dispose of decorations
-    insertion.decorationType.dispose();
-    if (insertion.deletedDecorationType) {
-      insertion.deletedDecorationType.dispose();
-    }
-    if (insertion.sameDecorationType) {
-      insertion.sameDecorationType.dispose();
-    }
+    if (success) {
+      // Dispose of decorations
+      insertion.decorationType.dispose();
+      if (insertion.deletedDecorationType) {
+        insertion.deletedDecorationType.dispose();
+      }
+      if (insertion.sameDecorationType) {
+        insertion.sameDecorationType.dispose();
+      }
 
-    this.insertions.delete(this.uniqueId);
-    this.currentEditor?.setDecorations(this.insertedDecorationType, []);
-    this.currentEditor?.setDecorations(this.deletedDecorationType, []);
-    this.currentEditor?.setDecorations(this.sameDecorationType, []);
-    // showTextNotification('Code accepted', 2);
-    this.reinitialize()
-  } else {
-    this.reinitialize()
-    showErrorNotification('Failed to accept the insertion.');
+      this.insertions.delete(this.uniqueId);
+      this.currentEditor?.setDecorations(this.insertedDecorationType, []);
+      this.currentEditor?.setDecorations(this.deletedDecorationType, []);
+      this.currentEditor?.setDecorations(this.sameDecorationType, []);
+      // showTextNotification('Code accepted', 2);
+      this.reinitialize()
+    } else {
+      this.reinitialize()
+      showErrorNotification('Failed to accept the insertion.');
+    }
   }
-}
 /**
  * Rejects an insertion, keeping only the same lines and removing updated and deleted lines.
  * @param id Unique identifier for the insertion.
