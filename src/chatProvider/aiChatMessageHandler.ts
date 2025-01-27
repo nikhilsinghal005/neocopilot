@@ -201,4 +201,20 @@ export class AiChatMessageHandler {
         });
     }
   }
+
+  public async postImageDetailsToWebview(
+    webviewView: vscode.WebviewView,
+    uploadedImages: any[]
+  ): Promise<void> {
+    try {
+      webviewView.webview.postMessage({
+        command: 'receive_image_message',
+        data: {
+          uploadedImages: uploadedImages
+        }
+      });
+    } catch (error) {
+      console.error("Failed to post queued message to webview", error);
+    }
+  }
 }

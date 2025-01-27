@@ -10,7 +10,7 @@ import { chatModelDetail } from '../types/AppDetails';
 
 const Chat: React.FC = () => {
   const vscode = useVscode();
-  const { chatSession, setChatSession, isTyping, setIsTyping, chatModel, attachedContext, input, setInput, setChatModel, setChatModelList } = useChatContext();
+  const { chatSession, setChatSession, isTyping, setIsTyping, chatModel, attachedContext, input, setInput, setChatModel, setChatModelList, uploadImage, setUploadImage } = useChatContext();
 
   useEffect(() => {
     // Restore the saved chat session from VSCode state
@@ -61,7 +61,8 @@ const Chat: React.FC = () => {
       messageType: 'user',
       text: input.trim(),
       modelSelected: chatModel,
-      attachedContext: attachedContext
+      attachedContext: attachedContext,
+      uploadedImages: uploadImage
     };
     console.log("----------------------" , newMessageStore);
     setChatSession((prevSession) => {
