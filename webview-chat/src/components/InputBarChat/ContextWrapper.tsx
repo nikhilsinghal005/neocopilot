@@ -5,6 +5,7 @@ import { useChatContext } from '../../context/ChatContext';
 import { CirclePlus } from "lucide-react";
 import FileListDropdown from './FileListDropdown';
 import SelectedContextTags from './SelectedContextTags';
+import UploadedFileTags from './UploadedFileTags';
 
 interface ContextWrapperProps {
   isTyping: boolean;
@@ -75,6 +76,7 @@ const ContextWrapper: React.FC<ContextWrapperProps> = () => {
         )}
 
         <SelectedContextTags />
+        <UploadedFileTags />
       </div>
     </div>
   );

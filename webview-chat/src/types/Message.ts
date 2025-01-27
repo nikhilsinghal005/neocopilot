@@ -15,6 +15,14 @@ export type CurrentFileContext = {
   isManuallyAddedByUser: boolean;
 };
 
+export type UploadedImage = {
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  isActive: boolean;
+  isManuallyAddedByUser: boolean;
+};
+
 // For input messages (e.g., when receiving or sending new messages)
 export type MessageInput = {
   chatId: string;

@@ -4,10 +4,10 @@ import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
 import { Send,CircleStop,Paperclip, XCircle } from "lucide-react";
 import {
-  handleCodeInsertClickFunction,
   handleStopClickFunction,
   handleSendClick,
   sanitizeInput,
+  handleImageUpload
 } from '../../hooks/InputBarUtils';
 import { useVscode } from '../../context/VscodeContext';
 
@@ -32,7 +32,7 @@ const ChatControls: React.FC<ChatControlsProps> = ({
     previousChatModel,
     setChatModel,
     previousInput,
-    previousAttachedContext} = useChatContext();
+    previousAttachedContext, uploadImage, setUploadImage} = useChatContext();
   const vscode = useVscode();
 
 const handleCancelClick = () => {
@@ -59,7 +59,11 @@ const handleCancelClick = () => {
       }
       
       <VSCodeButton
-        onClick={() => handleCodeInsertClickFunction(vscode)}
+        onClick={() => handleImageUpload(
+          vscode,
+          uploadImage,       
+          setUploadImage,    
+        )}
         appearance="icon"
         aria-label="Attach Image"
         disabled={isTyping}

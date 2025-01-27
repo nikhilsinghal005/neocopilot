@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { ChatSession, MessageStore, CurrentFileContext, EditorOpenFileList, ChatSessionList } from '../types/Message';
+import { ChatSession, MessageStore, CurrentFileContext, EditorOpenFileList, ChatSessionList, UploadedImage } from '../types/Message';
 import { chatModelDetail } from '../types/AppDetails';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -26,6 +26,8 @@ interface ChatContextProps {
   setChatSessionList:  React.Dispatch<React.SetStateAction<ChatSessionList>>;
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
+  uploadImage: UploadedImage[];
+  setUploadImage: React.Dispatch<React.SetStateAction<UploadedImage[]>>;
 
   // Previous State Input
   previousInput: string;
@@ -80,6 +82,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [chatSessionList, setChatSessionList] = useState<ChatSessionList>([]);
   const [input, setInput] = useState<string>(''); // Add input state here
   const [previousInput, setPreviousInput] = useState<string>(''); // Add input state here
+  const [uploadImage, setUploadImage] = useState<UploadedImage[]>([]);
 
   useEffect(() => {
     sessionStorage.setItem('chatSession', JSON.stringify(chatSession));
@@ -143,6 +146,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setInput, // Provide input state here
         isEditing,
         setIsEditing,
+        uploadImage,
+        setUploadImage,
 
         previousInput,
         setPreviousInput,
