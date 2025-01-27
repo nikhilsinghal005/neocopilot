@@ -36,6 +36,8 @@ interface ChatContextProps {
   setPreviousChatModel: React.Dispatch<React.SetStateAction<string>>;
   previousAttachedContext: CurrentFileContext[];
   setPreviousAttachedContext: React.Dispatch<React.SetStateAction<CurrentFileContext[]>>;
+  previousUploadImage: UploadedImage[];
+  setPreviousUploadImage: React.Dispatch<React.SetStateAction<UploadedImage[]>>;
 }
 
 const createNewChatSession = (): ChatSession => ({
@@ -83,6 +85,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [input, setInput] = useState<string>(''); // Add input state here
   const [previousInput, setPreviousInput] = useState<string>(''); // Add input state here
   const [uploadImage, setUploadImage] = useState<UploadedImage[]>([]);
+  const [previousUploadImage, setPreviousUploadImage] = useState<UploadedImage[]>([]);
 
   useEffect(() => {
     sessionStorage.setItem('chatSession', JSON.stringify(chatSession));
@@ -155,6 +158,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPreviousChatModel,
         previousAttachedContext,
         setPreviousAttachedContext,
+        previousUploadImage,
+        setPreviousUploadImage,
 
       }}
     >

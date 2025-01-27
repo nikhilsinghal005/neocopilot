@@ -2,13 +2,14 @@
 import React from 'react';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
-import {X,File} from "lucide-react";
+import {X,Image} from "lucide-react";
 import {handleRemoveImage  } from '../../hooks/InputBarUtils';
 
 const UploadedFileTags: React.FC = () => {
   const {
     uploadImage,
     setUploadImage,
+    isEditing,
   } = useChatContext();
 
   if (uploadImage.length === 0) {
@@ -51,9 +52,10 @@ const UploadedFileTags: React.FC = () => {
               ></span>
             )}
             <span className="flex items-center">
-              <File size={12} className="mr-1"/>
+              <Image size={12} className="mr-1 ml-1"/>
               <span style={{fontSize:"10px"}}>{context.fileName}</span>
             </span>
+            {!isEditing ? (
             <VSCodeButton
               appearance="icon"
               aria-label="Remove Context"
@@ -68,6 +70,7 @@ const UploadedFileTags: React.FC = () => {
             >
               <span className="mr-1"><X size={12}/></span>
             </VSCodeButton>
+            ) : null}
           </span>
         ) : null
       )}

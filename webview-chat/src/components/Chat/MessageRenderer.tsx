@@ -5,14 +5,16 @@ import '../../themes/prism-tomorrow.css';
 import './custom-overrides.css';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from './CodeBlock';
-import { CurrentFileContext } from '../../types/Message';
+import { CurrentFileContext, UploadedImage } from '../../types/Message';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import LanguageIcon from '../Common/LanguageIcon';
+import { Image } from "lucide-react"
 
 interface MessageRendererProps {
   text: string;
   type: string;
   attachedContext: CurrentFileContext[]
+  uploadedImage: UploadedImage[];
 }
 
 interface CodeProps {
@@ -22,7 +24,7 @@ interface CodeProps {
   [key: string]: any;  // Allow other arbitrary props
 }
 
-const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedContext = [] }) => {
+const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedContext, uploadedImage = [] }) => {
   // Define custom components for rendering specific markdown elements
 
   const getFileName = (relativePath: string): string => {
@@ -123,15 +125,18 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
     ),
   };
 
-    // Render tags for attached context
-    const renderAttachedContext = () => {
-      if (!attachedContext || attachedContext.length === 0) {
-        return null;
-      }
-    
-      return (
-        <div>
-          <h4 className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">Referenced Files:</h4>
+  // Render tags for attached context
+  const renderAttachedContext = () => {
+    const hasAttachedContext = attachedContext && attachedContext.length > 0;
+    const hasUploadedImages = uploadedImage && uploadedImage.length > 0;
+    if (!hasAttachedContext && !hasUploadedImages) {
+      return null;
+    }
+
+    return (
+      <div>
+        <h4 className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">Referenced Files:</h4>
+        <div className="flex items-center gap-1">
           <ul className="flex flex-wrap gap-2">
             {attachedContext.map((context, index) => (
               <span
@@ -148,9 +153,26 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
               </span>
             ))}
           </ul>
+          <ul className="flex flex-wrap gap-2">
+            {uploadedImage.map((image, index) => (
+              <span
+                key={index}
+                className="rounded-xs pr-1 flex items-center h-5 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+                style={{
+                  backgroundColor: 'var(--vscode-editor-background)',
+                  borderColor: 'var(--vscode-editorGroup-border)',
+                  color: 'var(--vscode-editor-foreground)',
+                }}
+              >
+                <Image size={12} className="ml-1 mr-1" />
+                {image.fileName}
+              </span>
+            ))}
+          </ul>
         </div>
-      );
-    };
+      </div>
+    );
+  };
 
   if (type === 'user') {
     let bottomMargin: string = "";

@@ -32,7 +32,7 @@ const ChatControls: React.FC<ChatControlsProps> = ({
     previousChatModel,
     setChatModel,
     previousInput,
-    previousAttachedContext, uploadImage, setUploadImage} = useChatContext();
+    previousAttachedContext, uploadImage, setUploadImage, previousUploadImage} = useChatContext();
   const vscode = useVscode();
 
 const handleCancelClick = () => {
@@ -41,6 +41,7 @@ const handleCancelClick = () => {
   setInput(previousInput);
   setChatModel(previousChatModel);
   setAttachedContext(previousAttachedContext);
+  setUploadImage(previousUploadImage);
 }
 
 

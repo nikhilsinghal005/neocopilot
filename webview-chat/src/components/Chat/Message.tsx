@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useChatContext } from '../../context/ChatContext';
 import CodeButtonWithText from '../Common/CodeButtonWithText';
-import { MessageStore, CurrentFileContext } from '../../types/Message';
+import { MessageStore, CurrentFileContext, UploadedImage } from '../../types/Message';
 import { useVscode } from '../../context/VscodeContext';
 import MessageRenderer from './MessageRenderer';
 import ModelSelectDropdown from '../Common/ModelSelectDropdown';
@@ -33,6 +33,10 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     setInput,
     previousAttachedContext,
     setPreviousAttachedContext,
+    uploadImage,
+    setUploadImage,
+    previousUploadImage,
+    setPreviousUploadImage,
   } = useChatContext();
 
   const vscode = useVscode();
@@ -73,12 +77,14 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     setPreviousInput(input);
     setPreviousChatModel(chatModel);
     setPreviousAttachedContext(attachedContext);
+    setPreviousUploadImage(uploadImage);
 
     // Setting Up new input Box and replce the old one
     setIsEditing(true); // Now a boolean
     setEditingMessageId(messageId); // Track the specific message ID
     setAttachedContext(message.attachedContext ?? ([] as CurrentFileContext[]));
     setChatModel(message.modelSelected || "");
+    setUploadImage(message.uploadedImages ?? ([] as UploadedImage[]));
     setInput(message.text);
      // Set the attached context of the message
   };
@@ -99,6 +105,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     }
     editingMessage.text = input;
     editingMessage.attachedContext = attachedContext;
+    editingMessage.modelSelected = chatModel;
     chatSession.messages = [editingMessage];
     setChatSession({ ...chatSession });
     setIsEditing(false);
@@ -111,6 +118,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     setInput(previousInput);
     setChatModel(previousChatModel);
     setAttachedContext(previousAttachedContext);
+    setUploadImage(previousUploadImage);
   };
   
   useEffect(() => {
@@ -176,6 +184,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
                 text={message.text}
                 type={message.messageType}
                 attachedContext={message.attachedContext ?? ([] as CurrentFileContext[])}
+                uploadedImage={message.uploadedImages ?? ([] as UploadedImage[])}
               />
               {message.messageType === 'system' && !isTyping && (
                 <div className="flex justify-end">
