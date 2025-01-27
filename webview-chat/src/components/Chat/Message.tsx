@@ -40,8 +40,6 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   // Separate state to track which message is being edited
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
-  const [editInput, setEditInput] = useState(message.text);
-
   const handleRefresh = (messageId: string, model: string) => {
     while (true) {
       const poppedMessage: MessageStore | undefined = chatSession.messages.pop();
@@ -67,6 +65,10 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   };
 
   const handleEditButtonClick = (messageId: string) => {
+    console.log('handleEditButtonClick');
+    console.log('Current Editable Message ID: ', messageId);
+    console.log('Current Editable Message: ',message)
+
     // Store the current input values
     setPreviousInput(input);
     setPreviousChatModel(chatModel);
@@ -77,6 +79,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     setEditingMessageId(messageId); // Track the specific message ID
     setAttachedContext(message.attachedContext ?? ([] as CurrentFileContext[]));
     setChatModel(message.modelSelected || "");
+    setInput(message.text);
      // Set the attached context of the message
   };
 
@@ -94,7 +97,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
       console.error("Editing message not found.");
       return;
     }
-    editingMessage.text = editInput;
+    editingMessage.text = input;
     editingMessage.attachedContext = attachedContext;
     chatSession.messages = [editingMessage];
     setChatSession({ ...chatSession });
@@ -132,8 +135,8 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
       {editingMessageId === message.id && isEditing ? (
         <div className="w-full">
           <InputBar
-            input={editInput}
-            setInput={setEditInput}
+            input={input}
+            setInput={setInput}
             handleSendMessage={handleEditSave}
             isTyping={isTyping}
             isEditing={isEditing}
@@ -191,7 +194,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
                   />
                 </div>
               )}
-              <div className="divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0"></div>
+              {message.messageType  !== 'user' && <div className="divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0"></div>}
             </div>
           </div>
         </div>
