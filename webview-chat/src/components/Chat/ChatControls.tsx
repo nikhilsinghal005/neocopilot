@@ -11,6 +11,10 @@ const ChatControls: React.FC = () => {
     clearChatSession();
     setIsTyping(false);
     setIsEditing(false);
+    vscode.postMessage({
+      command: 'cleanSmartinsertionPreviousStates',
+      data: {},
+    });
   };
 
   const handleToggleClick = () => {
