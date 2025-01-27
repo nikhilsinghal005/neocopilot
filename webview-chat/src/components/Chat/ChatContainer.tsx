@@ -2,7 +2,7 @@
 import React from 'react';
 import MessageList from './MessageList';
 import TypingIndicator from './TypingIndicator';
-import InputBar from '../InputBarUpdated/InputBar';
+import InputBar from '../InputBarChat/InputBar';
 import { useChatContext } from '../../context/ChatContext';
 import NewChatPanel from './NewChatPanel';
 

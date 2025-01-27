@@ -5,7 +5,7 @@ import { MessageStore, CurrentFileContext } from '../../types/Message';
 import { useVscode } from '../../context/VscodeContext';
 import MessageRenderer from './MessageRenderer';
 import ModelSelectDropdown from '../Common/ModelSelectDropdown';
-import InputBar from '../InputBarUpdated/InputBar';
+import InputBar from '../InputBarChat/InputBar';
 
 interface MessageProps {
   message: MessageStore;
