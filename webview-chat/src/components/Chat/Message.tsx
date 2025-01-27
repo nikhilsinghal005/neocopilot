@@ -5,34 +5,60 @@ import { MessageStore, CurrentFileContext } from '../../types/Message';
 import { useVscode } from '../../context/VscodeContext';
 import MessageRenderer from './MessageRenderer';
 import ModelSelectDropdown from '../Common/ModelSelectDropdown';
+import InputBar from '../InputBarUpdated/InputBar';
 
 interface MessageProps {
   message: MessageStore;
 }
 
 const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
-  const { chatSession, setChatSession, setIsTyping, isTyping, chatModelList, setChatModelList } = useChatContext();
+  const {
+    chatSession,
+    setChatSession,
+    setIsTyping,
+    isTyping,
+    chatModelList,
+    setChatModelList,
+    setIsEditing,
+    isEditing,
+    attachedContext,
+    setAttachedContext,
+    previousChatModel,
+    chatModel,
+    setChatModel,
+    setPreviousChatModel,
+    previousInput,
+    setPreviousInput,
+    input,
+    setInput,
+    previousAttachedContext,
+    setPreviousAttachedContext,
+  } = useChatContext();
 
   const vscode = useVscode();
 
+  // Separate state to track which message is being edited
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+
+  const [editInput, setEditInput] = useState(message.text);
+
   const handleRefresh = (messageId: string, model: string) => {
     while (true) {
-      const poppedMessage: MessageStore | undefined = chatSession.messages.pop()
+      const poppedMessage: MessageStore | undefined = chatSession.messages.pop();
       if (poppedMessage?.id === messageId) {
-        break
+        break;
       }
     }
-    //update modelselected in last message
-    const lastMessage = chatSession.messages[chatSession.messages.length - 1]
-    lastMessage.modelSelected = model
-    setChatSession({ ...chatSession })
-    setIsTyping(true)
+    const lastMessage = chatSession.messages[chatSession.messages.length - 1];
+    lastMessage.modelSelected = model;
+    setChatSession({ ...chatSession });
+    setIsTyping(true);
     vscode.postMessage({
       command: 'send_chat_message',
       data: chatSession,
-    })
+    });
   };
-  console.log(chatSession.messages)
+
   const handleCopy = (messageId: string) => {
     const messageToCopy = chatSession.messages.find((message) => message.id === messageId);
     if (messageToCopy) {
@@ -40,6 +66,50 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     }
   };
 
+  const handleEditButtonClick = (messageId: string) => {
+    // Store the current input values
+    setPreviousInput(input);
+    setPreviousChatModel(chatModel);
+    setPreviousAttachedContext(attachedContext);
+
+    // Setting Up new input Box and replce the old one
+    setIsEditing(true); // Now a boolean
+    setEditingMessageId(messageId); // Track the specific message ID
+    setAttachedContext(message.attachedContext ?? ([] as CurrentFileContext[]));
+    setChatModel(message.modelSelected || "");
+     // Set the attached context of the message
+  };
+
+  const handleEditSave = () => {
+    let editingMessage = null;
+    // Pop messages until we find the message to edit (user1)
+    while (chatSession.messages.length > 0) {
+      const poppedMessage = chatSession.messages.pop();
+      if (poppedMessage?.id === editingMessageId) {
+        editingMessage = poppedMessage;
+        break;
+      }
+    }
+    if (!editingMessage) {
+      console.error("Editing message not found.");
+      return;
+    }
+    editingMessage.text = editInput;
+    editingMessage.attachedContext = attachedContext;
+    chatSession.messages = [editingMessage];
+    setChatSession({ ...chatSession });
+    setIsEditing(false);
+    setEditingMessageId(null); // Reset the editing message ID
+    vscode.postMessage({
+      command: "send_chat_message",
+      data: chatSession,
+    });
+    // Reset inputs
+    setInput(previousInput);
+    setChatModel(previousChatModel);
+    setAttachedContext(previousAttachedContext);
+  };
+  
   useEffect(() => {
     const messageHandler = (event: MessageEvent) => {
       if (event.data && event.data.command === 'update_chat_details') {
@@ -57,63 +127,75 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
 
   return (
     <>
-      {/* Divider line after each message */}
-      <div className='divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0'></div>
+      <div className="divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0"></div>
 
-      <div className={`message flex justify-center items-start mb-5 w-full`}>
-        {/* Icon on the left for NEO's messages */}
-        {/* {message.messageType !== 'user' && (
-          <div className="flex items-center mr-1 mt-3">
-            <span 
-              className="codicon codicon-robot text-vscode-editor-foreground"
-              style={{ fontSize: '12px' }}
-            ></span>
-          </div>
-        )} */}
-
-        {/* Message box */}
-        <div
-          className={`rounded-sm flex items-center break-words px-2 max-w-[97%] text-vscode-editor-foreground`}
-          style={{
-            backgroundColor:
-              message.messageType === 'user'
-                ? 'var(--vscode-input-background)'
+      {editingMessageId === message.id && isEditing ? (
+        <div className="w-full">
+          <InputBar
+            input={editInput}
+            setInput={setEditInput}
+            handleSendMessage={handleEditSave}
+            isTyping={isTyping}
+            isEditing={isEditing}
+          />
+        </div>
+      ) : (
+        <div className={`message flex justify-center items-start mb-5 w-full`}>
+          <div
+            className={`rounded-sm flex items-center break-words px-2 max-w-[97%] text-vscode-editor-foreground relative`}
+            style={{
+              backgroundColor:
+                message.messageType === 'user'
+                  ? 'var(--vscode-input-background)'
+                  : undefined,
+              border: message.messageType === 'user'
+                ? '2px solid var(--vscode-editorGroup-border)'
                 : undefined,
-            border: message.messageType === 'user'
-              ? '2px solid var(--vscode-editorGroup-border)'
-              : undefined,
-            overflowX: 'auto',
-            flexGrow: 1,
-            minWidth: '97%',
-          }}
-        >
-          <div className='w-full'>
-            <MessageRenderer
-              text={message.text}
-              type={message.messageType}
-              attachedContext={message.attachedContext ?? ([] as CurrentFileContext[])}
-            />
-            {message.messageType === 'system' && !isTyping && (
-              <div className="flex justify-end">
-                {/* Model select dropdown component */}
-                <ModelSelectDropdown
-                  message={message}
-                  handleRefresh={handleRefresh}
-                />
+              overflowX: 'auto',
+              flexGrow: 1,
+              minWidth: '97%',
+              zIndex: 2,
+            }}
+          >
+            {message.messageType === 'user' && (
+              <div className="absolute top-1 right-1 z-10">
                 <CodeButtonWithText
-                  onClick={() => handleCopy(message.id)}
-                  ariaLabel="Copy"
-                  icon="codicon-copy"
-                  tooltip="Copy"
+                  onClick={() => handleEditButtonClick(message.id)}
+                  ariaLabel="Edit"
+                  icon="codicon-edit"
+                  tooltip="Edit"
                   disabled={isTyping}
-                  buttonName={''}
                 />
               </div>
             )}
-        <div className='divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0'></div>
+            <div className="w-full">
+              <MessageRenderer
+                text={message.text}
+                type={message.messageType}
+                attachedContext={message.attachedContext ?? ([] as CurrentFileContext[])}
+              />
+              {message.messageType === 'system' && !isTyping && (
+                <div className="flex justify-end">
+                {/* Model select dropdown component */}
+                  <ModelSelectDropdown
+                    message={message}
+                    handleRefresh={handleRefresh}
+                  />
+                  <CodeButtonWithText
+                    onClick={() => handleCopy(message.id)}
+                    ariaLabel="Copy"
+                    icon="codicon-copy"
+                    tooltip="Copy"
+                    disabled={isTyping}
+                    buttonName={''}
+                  />
+                </div>
+              )}
+              <div className="divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0"></div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 });

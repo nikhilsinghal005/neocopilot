@@ -243,6 +243,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                   icon="codicon-arrow-right"
                   tooltip="Insert in Editor"
                   disabled={isTyping}
+                  buttonName={'Insert'}
                 />
               )}
               {/* Copy Button */}
@@ -252,6 +253,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
                 icon="codicon-copy"
                 tooltip="Copy"
                 disabled={isTyping}
+                buttonName={'Copy'}
               />
               {/* Smart Insert Button */}
               <CodeButtonWithText
