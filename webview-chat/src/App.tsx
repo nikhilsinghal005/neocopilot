@@ -90,10 +90,10 @@ const App: React.FC = () => {
       label: 'Chat',
       content: <Chat />,
     },
-    {
-      label: 'Coworker',
-      content: <Coworker />,
-    },
+    // {
+    //   label: 'Coworker',
+    //   content: <Coworker />,
+    // },  // Removed Coworker tab
     {
       label: 'About',
       content: <About vscode={vscodeApi} />,
@@ -103,7 +103,7 @@ const App: React.FC = () => {
   return (
     <VscodeProvider vscode={vscodeApi}> 
       <ChatProvider>
-        <CoworkerProvider>
+        {/* <CoworkerProvider> */} {/* Removed CoworkerProvider */}
           <div className="App h-full flex items-center justify-center overflow-hidden">
             {isLoggedIn ? (
               <Tabs tabs={tabContent} />
@@ -111,7 +111,7 @@ const App: React.FC = () => {
               <Login vscode={vscodeApi} />
             )}
           </div>
-          </CoworkerProvider>
+          {/* </CoworkerProvider> */} {/* Removed CoworkerProvider */}
       </ChatProvider>
     </VscodeProvider>
   );
