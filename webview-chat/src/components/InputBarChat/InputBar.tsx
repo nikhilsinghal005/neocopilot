@@ -94,11 +94,11 @@ const InputBar: React.FC<InputBarProps> = ({
                 setInput(e.target.value);
                 handleResize();
               }}
-              className="flex-grow bg-transparent outline-none p-2 resize-none input-textarea text-xxs rounded-md"
+              className="flex-grow bg-transparent outline-none px-2 py-1 resize-none input-textarea text-xxs rounded-md"
               placeholder="Type your message..."
               style={{
                 color: 'var(--vscode-editor-foreground)',
-                minHeight: '1.5em',
+                minHeight: '40px',
                 backgroundColor: 'transparent',
                 outline: 'none',
               }}

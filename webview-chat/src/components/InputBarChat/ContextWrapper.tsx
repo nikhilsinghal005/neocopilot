@@ -44,9 +44,9 @@ const ContextWrapper: React.FC<ContextWrapperProps> = () => {
 
   return (
     <div
-      className="context-wrapper w-full flex flex-row items-center p-1 pt-0 mt-2"
+      className="context-wrapper w-full flex flex-row items-center px-1 my-1"
       style={{
-        height: '20px',
+        height: '18px',
       }}
     >
       <div className="flex items-center gap-1 relative">
@@ -55,14 +55,14 @@ const ContextWrapper: React.FC<ContextWrapperProps> = () => {
           appearance="icon"
           aria-label="Attach Context"
           disabled={isTyping}
-          className="flex items-center justify-center rounded-md plus-icon-button"
+          className="flex items-center justify-center rounded-xs plus-icon-button"
         >
           <span><CirclePlus size={14}/></span>
         </VSCodeButton>
 
         {showList && (
           <div
-            className={`absolute ${isEditing ? 'top-full' : 'bottom-full'} left-0 mb-2 w-64 rounded-md shadow-md z-10 p-0 dropdown-container`}
+            className={`absolute ${isEditing ? 'top-full' : 'bottom-full'} left-0 mb-2 w-64 rounded-xs shadow-md z-10 p-0 dropdown-container`}
             style={{
               backgroundColor: 'var(--vscode-editor-background)',
               color: 'var(--vscode-editor-foreground)',
