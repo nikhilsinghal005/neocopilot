@@ -16,6 +16,7 @@ interface InputBarProps {
   setInput: (input: string) => void;
   handleSendMessage: () => void;
   isTyping: boolean;
+  isEditing: boolean;
 }
 
 const InputBar: React.FC<InputBarProps> = ({
@@ -23,6 +24,7 @@ const InputBar: React.FC<InputBarProps> = ({
   setInput,
   handleSendMessage,
   isTyping,
+  isEditing,
 }) => {
   const [warningMessage, setWarningMessage] = useState('');
   const vscode = useVscode();
@@ -46,16 +48,13 @@ const InputBar: React.FC<InputBarProps> = ({
   });
 
   // Dynamically resize textarea
-  const handleResize = useCallback(() => {
+ const handleResize = useCallback(() => {
     const textarea = document.querySelector('.input-textarea') as HTMLTextAreaElement;
     if (textarea) {
       textarea.style.height = 'auto';
       const newHeight = Math.min(Math.max(textarea.scrollHeight, 50), 140);
       textarea.style.height = `${newHeight}px`;
-      document.documentElement.style.setProperty(
-        '--input-container-height',
-        `${newHeight + 40}px`
-      );
+      document.documentElement.style.setProperty('--input-container-height', `${newHeight + 40}px`);
     }
   }, []);
 
@@ -63,35 +62,45 @@ const InputBar: React.FC<InputBarProps> = ({
     handleResize();
   }, [input, isTyping, handleResize]);
 
+  const placeholderStyle = `
+  .input-textarea::placeholder {
+    font-size: 12px;
+  }
+`;
+
   return (
-    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0">
+    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0 mb-1">
       {/* Context Wrapper */}
-      <ContextWrapper isTyping={isTyping} />
+      
 
       {/* Chat Wrapper */}
-      <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0">
+      <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0 mb-1">
+      
         <div
-          className="input-container flex flex-col gap-0 w-full max-w-2xl p-0 border rounded-sm"
+          className="input-container flex flex-col gap-0 w-full max-w-2xl p-1 border rounded-md"
           style={{
             backgroundColor: 'var(--vscode-editor-background)',
             borderColor: 'var(--vscode-editorGroup-border)',
             color: 'var(--vscode-editor-foreground)',
           }}
         >
+          <ContextWrapper isTyping={isTyping} isEditing={isEditing} />
           {/* Textarea */}
-          <div className="top-section flex items-center gap-2">
+          <div className="top-section flex items-center gap-2 text-xxs">
+          <style>{placeholderStyle}</style>
             <textarea
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
                 handleResize();
               }}
+              className="flex-grow bg-transparent outline-none px-2 py-1 resize-none input-textarea text-xxs rounded-md"
               placeholder="Type your message..."
-              className="flex-grow bg-transparent outline-none p-2 resize-none input-textarea text-sm"
               style={{
                 color: 'var(--vscode-editor-foreground)',
-                minHeight: '1.5em',
+                minHeight: '40px',
                 backgroundColor: 'transparent',
+                outline: 'none',
               }}
               rows={1}
               onKeyDown={(e) => {
@@ -120,9 +129,6 @@ const InputBar: React.FC<InputBarProps> = ({
           {/* Bottom Section */}
           <div
             className="bottom-section flex justify-between items-center gap-2 mt-0 p-0"
-            style={{
-              borderTop: `1px solid var(--vscode-editorGroup-border)`,
-            }}
           >
             {/* Chat Model Dropdown */}
             <ChatModelDropdown />
