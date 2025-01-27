@@ -58,7 +58,7 @@ export class StatusBarManager {
                     "Disable Neo Copilot (15 Min)"
                 );
                 if (result === "Disable Neo Copilot (15 Min)") {
-                    // // console.log("Disable Neo Copilot (15min)");
+                    // // // console.log("Disable Neo Copilot (15min)");
                     vscodeEventsModule.disableFor15Minutes()
                 }
             }else {
@@ -67,7 +67,7 @@ export class StatusBarManager {
                     "Enable Neo Copilot"
                 );
                 if (result === "Enable Neo Copilot") {
-                    // // console.log("Enable Neo Copilot");
+                    // // // console.log("Enable Neo Copilot");
                     vscodeEventsModule.enableCodeCompletion()
                 }
             }

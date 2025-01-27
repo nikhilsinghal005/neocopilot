@@ -34,12 +34,12 @@ export async function handleTokenUri(
                 await authManager.storeAccessToken(accessToken);
                 await authManager.storeRefreshToken(refreshToken);
                 const tokenIsVerified = await authManager.verifyAccessToken();
-                // console.log("Token Verified - " , tokenIsVerified)
+                // // console.log("Token Verified - " , tokenIsVerified)
 
                 if (tokenIsVerified) {
                     await authManager.storeTokenProvider('googleToken');
                     const userProfile = await authManager.fetchUserProfile();
-                    // console.log("Token Stored Locally")
+                    // // console.log("Token Stored Locally")
 
                     if (userProfile) {
                         await authManager.storeUserProfile(userProfile);

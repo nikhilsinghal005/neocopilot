@@ -53,7 +53,7 @@ export class AiCoworkerMessageHandler {
     }
     // Making sure the socket is connected everytime socket connects.
     this.socketModule.socket?.on('connect', () => {
-      console.log("Socket connected. Attaching listeners for Chat messages.");
+      // console.log("Socket connected. Attaching listeners for Chat messages.");
       this.attachSocketListeners();
     });
   }
@@ -66,7 +66,7 @@ export class AiCoworkerMessageHandler {
   public attemptSendCoworkerMessage(inputChat: CoworkerSession, retries = 3): void {
     this.socketModule = SocketModule.getInstance();
     if (this.socketModule.socket?.connected) {
-      console.log("Socket connected. Attaching listeners for Chat messages.");
+      // console.log("Socket connected. Attaching listeners for Chat messages.");
       this.attachSocketListeners();
       this.sendCoworkerMessage(inputChat);
     } else if (retries > 0) {
@@ -87,16 +87,16 @@ export class AiCoworkerMessageHandler {
    * Attach necessary socket listeners.
    */
   private attachSocketListeners(): void {
-    console.log("Attaching listeners for Chat messages.");
+    // console.log("Attaching listeners for Chat messages.");
     if (this.socketModule.socket?.listeners('receive_coworker_response').length === 0) {
-      console.log("Attaching listeners for Chat messages.");
+      // console.log("Attaching listeners for Chat messages.");
       this.socketModule.socket?.on('receive_coworker_response', (data: MessageResponseFromBackEnd) => {
         this.forwardMessageToWebviews(data);
       });
     }
   
     if (this.socketModule.socket?.listeners('typing_indicator').length === 0) {
-      console.log("Attaching listeners for Chat messages.");
+      // console.log("Attaching listeners for Chat messages.");
       this.socketModule.socket?.on('typing_indicator', (data: any) => {
         this.postTypingIndicatorMessageToWebview(this.aiChatPanel.activePanels[0], data.processingState);
       });
@@ -105,7 +105,7 @@ export class AiCoworkerMessageHandler {
 
   private postTypingIndicatorMessageToWebview(webviewView: vscode.WebviewView, processingState: string): void {
     try {
-      // // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
+      // // // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
       webviewView.webview.postMessage({
         command: 'coworker_response_state_info',
         data: {
@@ -119,7 +119,7 @@ export class AiCoworkerMessageHandler {
 
   private postMessageToWebview(webviewView: vscode.WebviewView, data: MessageResponse): void {
     try {
-      // // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
+      // // // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
       webviewView.webview.postMessage({
         command: 'receive_coworker_message',
         data: {
@@ -174,7 +174,7 @@ export class AiCoworkerMessageHandler {
         for (const contextTemp of lastMessage.attachedContext) {
             try {
                 // Retrieve and update fileText for the current context
-                console.log("context", contextTemp.filePath)
+                // console.log("context", contextTemp.filePath)
                 const fileText = await getFileText(contextTemp.filePath );
                 contextTemp.fileText = fileText || '';
             } catch (error) {
