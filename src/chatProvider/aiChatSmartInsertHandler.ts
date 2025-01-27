@@ -80,6 +80,10 @@ export class AiChatSmartInsertHandler {
         case 'smartCodeInsertUserAction':
           this.handleUserAction(message);
           break;
+        case 'cleanSmartinsertionPreviousStates':
+          this.smartInsertionManager.reinitialize();
+          console.log('Cleaned smart insertion previous states');
+          break;
       }
     });
   }
