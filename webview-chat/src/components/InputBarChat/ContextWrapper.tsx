@@ -2,14 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useChatContext } from '../../context/ChatContext';
+import { CirclePlus } from "lucide-react";
 import FileListDropdown from './FileListDropdown';
 import SelectedContextTags from './SelectedContextTags';
 
 interface ContextWrapperProps {
   isTyping: boolean;
+  isEditing: boolean;
 }
 
-const ContextWrapper: React.FC<ContextWrapperProps> = ({ isTyping }) => {
+const ContextWrapper: React.FC<ContextWrapperProps> = () => {
+  const { isTyping, isEditing } = useChatContext();
   const [showList, setShowList] = useState(false);
 
   // Close dropdown when clicking outside
@@ -41,30 +44,30 @@ const ContextWrapper: React.FC<ContextWrapperProps> = ({ isTyping }) => {
 
   return (
     <div
-      className="context-wrapper w-full h-full flex flex-row items-center p-1 pt-0 gap-2"
+      className="context-wrapper w-full flex flex-row items-center px-1 my-1"
       style={{
-        height: 'var(--input-container-height, 35px)',
+        height: '18px',
       }}
     >
       <div className="flex items-center gap-1 relative">
         <VSCodeButton
           onClick={handlePlusIconClick}
           appearance="icon"
-          aria-label="Attach Image"
+          aria-label="Attach Context"
           disabled={isTyping}
-          className="flex items-center justify-center rounded-none p-0 h-4 w-4 plus-icon-button"
+          className="flex items-center justify-center rounded-xs plus-icon-button"
         >
-          <span className="codicon codicon-add text-xs"></span>
+          <span><CirclePlus size={14}/></span>
         </VSCodeButton>
 
         {showList && (
           <div
-            className="absolute bottom-full left-0 mb-2 w-64 rounded-xs shadow-xs z-10 p-0 dropdown-container"
+            className={`absolute ${isEditing ? 'top-full' : 'bottom-full'} left-0 mb-2 w-64 rounded-xs shadow-md z-10 p-0 dropdown-container`}
             style={{
               backgroundColor: 'var(--vscode-editor-background)',
               color: 'var(--vscode-editor-foreground)',
               overflow: 'hidden',
-              border: '3px solid var(--vscode-editorGroup-border)',
+              border: '1px solid var(--vscode-editorGroup-border)',
             }}
           >
             <FileListDropdown />
