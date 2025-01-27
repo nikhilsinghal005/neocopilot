@@ -1,6 +1,6 @@
 // InputBarUtils.ts
 import { useEffect } from 'react';
-import { EditorOpenFileList, CurrentFileContext } from '../types/Message';
+import { EditorOpenFileList, CurrentFileContext, UploadedImage } from '../types/Message';
 
 // Interface for the custom hook's props
 interface UseHandleIncomingMessagesProps {
@@ -231,4 +231,85 @@ export const handleListItemClickFunction = (
       },
     });
   }
+
 };
+
+export const handleImageUpload = (
+  vscode: any,
+  uploadImages: UploadedImage[],
+  setUploadImage: (images: UploadedImage[]) => void
+) => {
+  console.log('Uploading image...');
+
+  // Check if there are already 2 images uploaded
+  if (uploadImages.length >= 2) {
+    vscode.postMessage({
+      command: 'showInfoPopup',
+      data: {
+        title: 'Image Upload',
+        message: 'You can only upload up to 2 images.',
+      },
+    });
+    return;
+  }
+
+  vscode.postMessage({
+    command: 'upload_image',
+    message: 'Please upload an image.',
+  });
+
+  // Listen for messages from the webview
+  window.addEventListener('message', (event) => {
+    const message = event.data;
+    switch (message.command) {
+      case 'receive_image_message':
+        {
+          const { uploadedImages: newImages } = message.data; // Renamed to avoid confusion
+          console.log('Received uploaded images:', newImages);
+          // Filter out already uploaded images
+          const existingImagePaths = new Set(uploadImages.map(img => img.filePath));
+          const filteredImages = newImages.filter((newImage: UploadedImage) => 
+            !existingImagePaths.has(newImage.filePath)
+          );
+          // Limit to 2 images
+          const imagesToAdd = filteredImages.slice(0, 2 - uploadImages.length);
+          if (imagesToAdd.length > 0) {
+            setUploadImage([...uploadImages, ...imagesToAdd]);
+            console.log('Uploaded images:', imagesToAdd);
+          } else {
+            console.log('No new images to upload or already have 2 images.');
+          }
+          if (filteredImages.length < newImages.length) {
+            console.log('Some images were already uploaded:', 
+              newImages.filter((newImage: UploadedImage) => existingImagePaths.has(newImage.filePath))
+            );
+            vscode.postMessage({
+              command: 'showInfoPopup',
+              data: {
+                title: 'Image Upload',
+                message: 'Some images were already uploaded.',
+              },
+            });
+          }
+        }
+        break;
+    }
+  });
+}
+
+//handle remove image
+export const handleRemoveImage = (
+  filePath: string,
+  uploadImage: UploadedImage[],
+  setUploadImage: (images: UploadedImage[]) => void
+) => {
+  const updatedImages = uploadImage.filter((image) => image.filePath !== filePath);
+  setUploadImage(updatedImages);
+};
+
+
+
+
+
+
+

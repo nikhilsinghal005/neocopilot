@@ -14,6 +14,7 @@ import { AiChatSmartInsertHandler } from './aiChatSmartInsertHandler';
 import { AiChatContextHandler } from './aiChatContextHandler';
 import { AiChatModelDetails } from './aiChatModelDetails';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
 
@@ -180,6 +181,38 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               this.aiChatModelDetails.initializeSockets();
             }
             this.getModelDetails();
+            break;
+
+          case 'upload_image':
+            vscode.window.showOpenDialog({
+              canSelectMany: true,
+              canSelectFiles: true,
+              canSelectFolders: false,
+              openLabel: 'Upload Image',
+              filters: { images: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'] },
+            }).then((files) => {
+              if (files && files.length > 0) {
+                const uploadedImages = files.map(file => {
+                  const fileName = path.basename(file.fsPath);
+                  const fileType = path.extname(file.fsPath).slice(1); // Get file extension without dot
+                  const fileSize = fs.statSync(file.fsPath).size;
+                  if (fileSize > 5000000) {
+                    vscode.window.showErrorMessage(
+                      `File ${fileName} is too large. Please upload a file smaller than 5MB.`
+                    );
+                    return;
+                  }
+                  return {
+                    fileName: fileName,
+                    filePath: file.fsPath,
+                    fileType: fileType,
+                    isActive: true, // Set default values as needed
+                    isManuallyAddedByUser: true // Set default values as needed
+                  };
+                });
+                this.aiChatMessageHandler.postImageDetailsToWebview(webviewView, uploadedImages);
+              }
+            });
             break;
         }
       });

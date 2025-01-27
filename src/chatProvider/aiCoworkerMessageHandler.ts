@@ -95,9 +95,8 @@ export class AiCoworkerMessageHandler {
       });
     }
   
-    if (this.socketModule.socket?.listeners('typing_indicator').length === 0) {
-      console.log("Attaching listeners for Chat messages.");
-      this.socketModule.socket?.on('typing_indicator', (data: any) => {
+    if (this.socketModule.socket?.listeners('typing_indicator_coworker').length === 0) {
+      this.socketModule.socket?.on('typing_indicator_coworker', (data: any) => {
         this.postTypingIndicatorMessageToWebview(this.aiChatPanel.activePanels[0], data.processingState);
       });
     }
