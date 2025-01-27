@@ -63,6 +63,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
             setInput={setInput}
             handleSendMessage={handleSendMessage}
             isTyping={isTyping} // Pass isTyping prop
+            isEditing={isEditing}
           />
         </div>
       )}
