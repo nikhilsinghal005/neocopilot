@@ -214,7 +214,7 @@ export class AiChatMessageHandler {
   public async postImageDetailsToWebview(
     webviewView: vscode.WebviewView,
     uploadedImages: UploadedImage[],
-    chat: ChatSession
+    chatId: string
   ): Promise<void> {
     try {
       // Post message to webview
@@ -233,8 +233,9 @@ export class AiChatMessageHandler {
         };
       });
       console.log('Images for backend:', imagesForBackend);
+      console.log('Chat ID:', chatId);
       this.socketModule.socket?.emit('generate_image_response', {
-        chatId: chat.chatId,
+        chatId,
         uploadedImages: imagesForBackend,
         appVersion: this.socketModule.currentVersion,
         userEmail: this.socketModule.email,

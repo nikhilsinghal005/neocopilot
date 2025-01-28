@@ -192,6 +192,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             break;
 
           case 'upload_image':
+            const chatId = message.chatId;
             vscode.window.showOpenDialog({
               canSelectMany: true,
               canSelectFiles: true,
@@ -227,9 +228,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                     );
                   }
                 });
-
                 if (uploadedImages.length > 0) {
-                  this.aiChatMessageHandler.postImageDetailsToWebview(webviewView, uploadedImages);
+                  this.aiChatMessageHandler.postImageDetailsToWebview(webviewView, uploadedImages,chatId);
                 }
               }
             });
