@@ -6,6 +6,15 @@ import { ChatSession, MessageResponse, MessageResponseFromBackEnd } from './type
 import { AiChatPanel } from './aiChatPanel';
 import * as vscode from 'vscode';
 import { getFileText } from '../utilities/editorUtils/getFileText';
+import * as fs from 'fs';
+
+interface UploadedImage{
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  isActive: boolean;
+  isManuallyAddedByUser: boolean;
+};
 
 export class AiChatMessageHandler {
   private socketModule: SocketModule;
@@ -204,17 +213,35 @@ export class AiChatMessageHandler {
 
   public async postImageDetailsToWebview(
     webviewView: vscode.WebviewView,
-    uploadedImages: any[]
+    uploadedImages: UploadedImage[],
+    chat: ChatSession
   ): Promise<void> {
     try {
+      // Post message to webview
       webviewView.webview.postMessage({
         command: 'receive_image_message',
-        data: {
-          uploadedImages: uploadedImages
-        }
+        data: { uploadedImages },
+      });
+      
+      const imagesForBackend = uploadedImages.map(image => {
+        const fileContent = fs.readFileSync(image.filePath); 
+        const base64Content = fileContent.toString('base64'); 
+        return {
+          fileName: image.fileName,
+          fileType: image.fileType,
+          fileContent: base64Content,
+        };
+      });
+      console.log('Images for backend:', imagesForBackend);
+      this.socketModule.socket?.emit('generate_image_response', {
+        chatId: chat.chatId,
+        uploadedImages: imagesForBackend,
+        appVersion: this.socketModule.currentVersion,
+        userEmail: this.socketModule.email,
+        uniqueId: uuidv4(),
       });
     } catch (error) {
-      console.error("Failed to post queued message to webview", error);
+      console.error('Failed to post queued message to webview', error);
     }
   }
 }
