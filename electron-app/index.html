@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electron App</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+        #inputBox {
+            font-size: 20px;
+            padding: 10px;
+            width: 80%;
+            margin-bottom: 10px;
+        }
+        button {
+            font-size: 20px;
+            padding: 10px;
+            width: 50%;
+        }
+    </style>
+</head>
+<body>
+    <input type="text" id="inputBox" placeholder="Type something...">
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        // Send message to the main process
+        function sendMessage() {
+            const message = document.getElementById('inputBox').value;
+            window.electron.sendMessage(message);
+        }
+
+        // Listen for the response from the main process
+        window.electron.onMessageReceived((event, response) => {
+            alert(response); // Handle the response
+        });
+    </script>
+</body>
+</html>

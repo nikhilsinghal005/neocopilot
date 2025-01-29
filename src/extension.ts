@@ -1,13 +1,13 @@
 // src/extension.ts
-
 import * as vscode from 'vscode';
+import { WebSocketServer } from 'ws'; // Use the ws library
 import { SocketModule } from './socketModule';
 import { VscodeEventsModule } from './codeCompletion/vscodeEventsModule';
 import { CompletionProviderModule } from './codeCompletion/completionProviderModule';
 import { StatusBarManager } from './StatusBarManager';
 import { versionConfig } from './versionConfig';
 import { showLoginNotification } from './utilities/statusBarNotifications/showLoginNotification';
-import { Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client'; // You can remove this if you don't need Socket.io anymore
 import { initializeAppFunctions, initializeNonLoginRequiredAppFunctions } from './initializeAppFunctions';
 import { AuthManager } from './authManager/authManager';
 import { handleTokenUri } from './authManager/handleTokenUri';
@@ -71,7 +71,30 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       authManager
     )
   });
-  // Register the AI Chat Panel webview view provider
+
+  // WebSocket server using `ws`
+  const wss = new WebSocketServer({ port: 4001 }); 
+
+
+wss.on('connection', (ws) => {
+    console.log('Connected to Electron');
+
+    // Listen for messages from Electron
+    ws.on('message', (message) => {
+      if (Buffer.isBuffer(message)) {
+          // Convert Buffer to string
+          const messageStr = message.toString();
+      }
+
+      console.log('Received message from Electron:', messageStr);
+      vscode.window.showInformationMessage(`Message from Electron: ${message}`);
+  });
+
+    // Send a message back to Electron if needed
+    ws.send('Hello from VSCode extension!');
+});
+
+
 }
 
 /**
@@ -84,4 +107,3 @@ export function deactivate(): void {
   const socketModule = new SocketModule();
   socketModule.disconnect();
 }
-
