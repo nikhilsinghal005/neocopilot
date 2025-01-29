@@ -19,6 +19,7 @@ export type UploadedImage = {
   fileName: string;
   filePath: string;
   fileType: string;
+  fileContent: string;
   isActive: boolean;
   isManuallyAddedByUser: boolean;
 };

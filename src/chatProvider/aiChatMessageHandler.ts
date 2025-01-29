@@ -12,6 +12,7 @@ interface UploadedImage{
   fileName: string;
   filePath: string;
   fileType: string;
+  fileContent: string;
   isActive: boolean;
   isManuallyAddedByUser: boolean;
 };
@@ -196,7 +197,8 @@ export class AiChatMessageHandler {
             }
         }
     }
-    messageList[-1] = lastMessage
+    messageList[-1] = lastMessage;
+    console.log(lastMessage);
 
     // Emit the updated messageList to the socket
     if (this.socketModule.socket) {
@@ -214,35 +216,12 @@ export class AiChatMessageHandler {
   public async postImageDetailsToWebview(
     webviewView: vscode.WebviewView,
     uploadedImages: UploadedImage[],
-    chatId: string
   ): Promise<void> {
-    try {
+ 
       // Post message to webview
       webviewView.webview.postMessage({
         command: 'receive_image_message',
         data: { uploadedImages },
-      });
-      
-      const imagesForBackend = uploadedImages.map(image => {
-        const fileContent = fs.readFileSync(image.filePath); 
-        const base64Content = fileContent.toString('base64'); 
-        return {
-          fileName: image.fileName,
-          fileType: image.fileType,
-          fileContent: base64Content,
-        };
-      });
-      console.log('Images for backend:', imagesForBackend);
-      console.log('Chat ID:', chatId);
-      this.socketModule.socket?.emit('generate_image_response', {
-        chatId,
-        uploadedImages: imagesForBackend,
-        appVersion: this.socketModule.currentVersion,
-        userEmail: this.socketModule.email,
-        uniqueId: uuidv4(),
-      });
-    } catch (error) {
-      console.error('Failed to post queued message to webview', error);
+      }); 
     }
-  }
 }

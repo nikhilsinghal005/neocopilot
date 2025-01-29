@@ -20,6 +20,7 @@ interface UploadedImage{
   fileName: string;
   filePath: string;
   fileType: string;
+  fileContent: string;
   isActive: boolean;
   isManuallyAddedByUser: boolean;
 };
@@ -218,6 +219,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                         fileName: fileName,
                         filePath: file.fsPath,
                         fileType: fileType,
+                        fileContent: fs.readFileSync(file.fsPath, 'base64'),
                         isActive: true,
                         isManuallyAddedByUser: true,
                       });
