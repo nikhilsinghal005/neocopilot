@@ -16,6 +16,15 @@ import { AiChatModelDetails } from './aiChatModelDetails';
 import * as path from 'path';
 import * as fs from 'fs';
 
+interface UploadedImage{
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  fileContent: string;
+  isActive: boolean;
+  isManuallyAddedByUser: boolean;
+};
+
 export class AiChatPanel implements vscode.WebviewViewProvider {
 
   public static readonly primaryViewType = 'aiChatPanelPrimary';
@@ -184,6 +193,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             break;
 
           case 'upload_image':
+            const chatId = message.chatId;
             vscode.window.showOpenDialog({
               canSelectMany: true,
               canSelectFiles: true,
@@ -192,25 +202,37 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               filters: { images: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'] },
             }).then((files) => {
               if (files && files.length > 0) {
-                const uploadedImages = files.map(file => {
-                  const fileName = path.basename(file.fsPath);
-                  const fileType = path.extname(file.fsPath).slice(1); // Get file extension without dot
-                  const fileSize = fs.statSync(file.fsPath).size;
-                  if (fileSize > 5000000) {
+                const uploadedImages: UploadedImage[] = [];
+
+                files.forEach(file => {
+                  try {
+                    const fileName = path.basename(file.fsPath);
+                    const fileType = path.extname(file.fsPath).slice(1);
+                    const fileSize = fs.statSync(file.fsPath).size;
+
+                    if (fileSize > 5000000) {
+                      vscode.window.showErrorMessage(
+                        `File ${fileName} is too large. Please upload a file smaller than 5MB.`
+                      );
+                    } else {
+                      uploadedImages.push({
+                        fileName: fileName,
+                        filePath: file.fsPath,
+                        fileType: fileType,
+                        fileContent: fs.readFileSync(file.fsPath, 'base64'),
+                        isActive: true,
+                        isManuallyAddedByUser: true,
+                      });
+                    }
+                  } catch (err) {
                     vscode.window.showErrorMessage(
-                      `File ${fileName} is too large. Please upload a file smaller than 5MB.`
+                      `Error processing file ${file.fsPath}: ${(err as Error).message}`
                     );
-                    return;
                   }
-                  return {
-                    fileName: fileName,
-                    filePath: file.fsPath,
-                    fileType: fileType,
-                    isActive: true, // Set default values as needed
-                    isManuallyAddedByUser: true // Set default values as needed
-                  };
                 });
-                this.aiChatMessageHandler.postImageDetailsToWebview(webviewView, uploadedImages);
+                if (uploadedImages.length > 0) {
+                  this.aiChatMessageHandler.postImageDetailsToWebview(webviewView, uploadedImages,chatId);
+                }
               }
             });
             break;

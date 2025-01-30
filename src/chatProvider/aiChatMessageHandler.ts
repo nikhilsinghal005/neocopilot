@@ -6,6 +6,16 @@ import { ChatSession, MessageResponse, MessageResponseFromBackEnd } from './type
 import { AiChatPanel } from './aiChatPanel';
 import * as vscode from 'vscode';
 import { getFileText } from '../utilities/editorUtils/getFileText';
+import * as fs from 'fs';
+
+interface UploadedImage{
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  fileContent: string;
+  isActive: boolean;
+  isManuallyAddedByUser: boolean;
+};
 
 export class AiChatMessageHandler {
   private socketModule: SocketModule;
@@ -187,7 +197,8 @@ export class AiChatMessageHandler {
             }
         }
     }
-    messageList[-1] = lastMessage
+    messageList[-1] = lastMessage;
+    console.log(lastMessage);
 
     // Emit the updated messageList to the socket
     if (this.socketModule.socket) {
@@ -204,17 +215,13 @@ export class AiChatMessageHandler {
 
   public async postImageDetailsToWebview(
     webviewView: vscode.WebviewView,
-    uploadedImages: any[]
+    uploadedImages: UploadedImage[],
   ): Promise<void> {
-    try {
+ 
+      // Post message to webview
       webviewView.webview.postMessage({
         command: 'receive_image_message',
-        data: {
-          uploadedImages: uploadedImages
-        }
-      });
-    } catch (error) {
-      console.error("Failed to post queued message to webview", error);
+        data: { uploadedImages },
+      }); 
     }
-  }
 }
