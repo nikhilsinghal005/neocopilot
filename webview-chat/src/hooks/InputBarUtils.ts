@@ -282,9 +282,6 @@ export const handleImageUpload = (
             // console.log('No new images to upload or already have 2 images.');
           }
           if (filteredImages.length < newImages.length) {
-            // console.log('Some images were already uploaded:', 
-              newImages.filter((newImage: UploadedImage) => existingImagePaths.has(newImage.filePath))
-            );
             vscode.postMessage({
               command: 'showInfoPopup',
               data: {
