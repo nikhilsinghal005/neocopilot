@@ -118,11 +118,12 @@ const NewChatPanel: React.FC = () => {
 
       {chatSessionList.length > 0 && (
         <div
-          className="p-4 mt-4"
+          className="p-4 mt-4 border rounded-md"
           style={{
-            maxWidth: '350px',
-            minWidth: '300px',
+            maxWidth: '600px',
+            minWidth: '400px',
             width: '100%',
+            borderColor: 'var(--vscode-editorGroup-border)',
           }}
         >
           <h2 className="text-sm font-roboto-bold mb-2">Previous Chats</h2>
