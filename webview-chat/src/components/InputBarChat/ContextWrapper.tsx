@@ -28,14 +28,23 @@ const ContextWrapper: React.FC<ContextWrapperProps> = () => {
       }
     };
 
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowList(false);
+      }
+    };
+
     if (showList) {
       window.addEventListener('click', handleClickOutside);
+      window.addEventListener('keydown', handleEscape);
     } else {
       window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleEscape);
     }
 
     return () => {
       window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleEscape);
     };
   }, [showList]);
 
