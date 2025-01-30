@@ -37,7 +37,7 @@ export async function initializeAppFunctions(
   const currentVersion = context.extension.packageJSON.version;
   await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
-  primaryViewProvider.sendAuthStatus(true)
+  await primaryViewProvider.sendAuthStatus(true)
 
   vscode.window.onDidChangeActiveTextEditor(
     editor => primaryViewProvider.aiChatContextHandler.getCurrentFileName(editor, context), null, context.subscriptions
@@ -60,8 +60,10 @@ export async function initializeAppFunctions(
   authManager: AuthManager,
   context: vscode.ExtensionContext
 ): Promise<void> {
-  console.info("%cNeo Copilot: Initializing base functionalities", 'color: green;');
+  console.info("%cNeo Copilot: Initializing base functionalities without login", 'color: green;');
   const primaryViewProvider = AiChatPanel.getInstance(context.extensionUri, context, authManager, AiChatPanel.primaryViewType);
+  await primaryViewProvider.sendAuthStatus(false)
+
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       AiChatPanel.primaryViewType,
