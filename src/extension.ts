@@ -42,8 +42,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const isLoggedIn = await authManager.verifyAccessToken();
   await initializeNonLoginRequiredAppFunctions(authManager, context);
 
-  context.workspaceState.update('isLoggedIn', false);
-
   if (isLoggedIn) {
     const currentVersion = context.extension.packageJSON.version;
     const socketConnection: Socket | null = await socketModule.connect(currentVersion, context);
@@ -57,6 +55,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     );
 
   } else {
+    context.workspaceState.update('isLoggedIn', false);
     showLoginNotification();
   }
 
