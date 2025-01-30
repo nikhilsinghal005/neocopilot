@@ -31,6 +31,7 @@ const NewChatPanel: React.FC = () => {
         className="grid grid-cols-2 gap-4 w-full"
         style={{
           maxWidth: '600px',
+          minWidth: '300px',
           height: '100%',
         }}
       >
@@ -121,7 +122,7 @@ const NewChatPanel: React.FC = () => {
           className="p-4 mt-4 border rounded-md"
           style={{
             maxWidth: '600px',
-            minWidth: '400px',
+            minWidth: '300px',
             width: '100%',
             borderColor: 'var(--vscode-editorGroup-border)',
           }}
