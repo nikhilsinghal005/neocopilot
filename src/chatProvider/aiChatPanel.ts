@@ -231,7 +231,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
                   }
                 });
                 if (uploadedImages.length > 0) {
-                  this.aiChatMessageHandler.postImageDetailsToWebview(webviewView, uploadedImages,chatId);
+                  this.aiChatMessageHandler.postImageDetailsToWebview(webviewView, uploadedImages);
                 }
               }
             });
