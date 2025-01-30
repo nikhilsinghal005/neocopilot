@@ -58,8 +58,8 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
           fileName = getFileName(relativePath)
         }
 
-        console.log(relativePath)
-        console.log(fileName)
+        // console.log(relativePath)
+        // console.log(fileName)
         return (
           <CodeBlock
             inline={inline}

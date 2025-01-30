@@ -64,7 +64,7 @@ export class AiChatMessageHandler {
     }
     // Making sure the socket is connected everytime socket connects.
     this.socketModule.socket?.on('connect', () => {
-      console.log("Socket connected. Attaching listeners for Chat messages.");
+      // console.log("Socket connected. Attaching listeners for Chat messages.");
       this.attachSocketListeners();
     });
   }
@@ -77,7 +77,7 @@ export class AiChatMessageHandler {
   public attemptSendChatMessage(inputChat: ChatSession, retries = 3): void {
     this.socketModule = SocketModule.getInstance();
     if (this.socketModule.socket?.connected) {
-      console.log("Socket connected. Attaching listeners for Chat messages.");
+      // console.log("Socket connected. Attaching listeners for Chat messages.");
       this.attachSocketListeners();
       this.sendChatMessage(inputChat);
     } else if (retries > 0) {
@@ -98,16 +98,16 @@ export class AiChatMessageHandler {
    * Attach necessary socket listeners.
    */
   private attachSocketListeners(): void {
-    console.log("Attaching listeners for Chat messages.");
+    // console.log("Attaching listeners for Chat messages.");
     if (this.socketModule.socket?.listeners('receive_chat_response').length === 0) {
-      console.log("Attaching listeners for Chat messages.");
+      // console.log("Attaching listeners for Chat messages.");
       this.socketModule.socket?.on('receive_chat_response', (data: MessageResponseFromBackEnd) => {
         this.forwardMessageToWebviews(data);
       });
     }
   
     if (this.socketModule.socket?.listeners('typing_indicator').length === 0) {
-      console.log("Attaching listeners for Chat messages.");
+      // console.log("Attaching listeners for Chat messages.");
       this.socketModule.socket?.on('typing_indicator', (data: any) => {
         this.postTypingIndicatorMessageToWebview(this.aiChatPanel.activePanels[0], data.processingState);
       });
@@ -116,7 +116,7 @@ export class AiChatMessageHandler {
 
   private postTypingIndicatorMessageToWebview(webviewView: vscode.WebviewView, processingState: string): void {
     try {
-      // // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
+      // // // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
       webviewView.webview.postMessage({
         command: 'chat_response_state_info',
         data: {
@@ -130,7 +130,7 @@ export class AiChatMessageHandler {
 
   private postMessageToWebview(webviewView: vscode.WebviewView, data: MessageResponse): void {
     try {
-      // // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
+      // // // console.log(`Posting message to webview: ${JSON.stringify(data)}`);
       webviewView.webview.postMessage({
         command: 'receive_chat_message',
         data: {
@@ -188,7 +188,7 @@ export class AiChatMessageHandler {
         for (const contextTemp of lastMessage.attachedContext) {
             try {
                 // Retrieve and update fileText for the current context
-                console.log("context", contextTemp.filePath)
+                // console.log("context", contextTemp.filePath)
                 const fileText = await getFileText(contextTemp.filePath );
                 contextTemp.fileText = fileText || '';
             } catch (error) {
@@ -198,7 +198,7 @@ export class AiChatMessageHandler {
         }
     }
     messageList[-1] = lastMessage;
-    console.log(lastMessage);
+    // console.log(lastMessage);
 
     // Emit the updated messageList to the socket
     if (this.socketModule.socket) {

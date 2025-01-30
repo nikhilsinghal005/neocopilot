@@ -19,12 +19,12 @@ const ChatControls: React.FC = () => {
 
   const handleToggleClick = () => {
     if (isTyping) {
-      // console.log("Please wait for the message to finish.");
+      // // console.log("Please wait for the message to finish.");
       alert("Please wait for the message to finish."); // Optionally, show an alert instead of console log
       return;
     }
     
-    // console.log("VS Code API in ChatControls:", vscode);
+    // // console.log("VS Code API in ChatControls:", vscode);
     vscode.postMessage({
       command: 'toggleSidebar',
       data: {},

@@ -25,7 +25,7 @@ export const useHandleIncomingMessages = ({
   useEffect(() => {
     const handleInsertMessages = (event: MessageEvent) => {
       if (event.data.command === 'insert_messages') {
-        console.log('Received chat message from VS Code:', event.data);
+        // console.log('Received chat message from VS Code:', event.data);
         setInput(event.data.inputText || '');
       }
     };
@@ -100,7 +100,7 @@ export const useHandleIncomingMessages = ({
   useEffect(() => {
     const handleOpenFilesListUpdate = (event: MessageEvent) => {
       if (event.data.command === 'editor_open_files_list_update_event') {
-        console.log('List of Files Received:', event.data);
+        // console.log('List of Files Received:', event.data);
         const updatedOpenFilesList = event.data.openFiles.filter(
           (file: EditorOpenFileList) => !attachedContext.some((context) => context.filePath === file.filePath)
         );
@@ -240,7 +240,7 @@ export const handleImageUpload = (
   setUploadImage: (images: UploadedImage[]) => void,
   chatId: string,
 ) => {
-  console.log('Uploading image...');
+  // console.log('Uploading image...');
 
   // Check if there are already 2 images uploaded
   if (uploadImages.length >= 2) {
@@ -267,7 +267,7 @@ export const handleImageUpload = (
       case 'receive_image_message':
         {
           const { uploadedImages: newImages } = message.data; // Renamed to avoid confusion
-          console.log('Received uploaded images:', newImages);
+          // console.log('Received uploaded images:', newImages);
           // Filter out already uploaded images
           const existingImagePaths = new Set(uploadImages.map(img => img.filePath));
           const filteredImages = newImages.filter((newImage: UploadedImage) => 
@@ -277,12 +277,12 @@ export const handleImageUpload = (
           const imagesToAdd = filteredImages.slice(0, 2 - uploadImages.length);
           if (imagesToAdd.length > 0) {
             setUploadImage([...uploadImages, ...imagesToAdd]);
-            console.log('Uploaded images:', imagesToAdd);
+            // console.log('Uploaded images:', imagesToAdd);
           } else {
-            console.log('No new images to upload or already have 2 images.');
+            // console.log('No new images to upload or already have 2 images.');
           }
           if (filteredImages.length < newImages.length) {
-            console.log('Some images were already uploaded:', 
+            // console.log('Some images were already uploaded:', 
               newImages.filter((newImage: UploadedImage) => existingImagePaths.has(newImage.filePath))
             );
             vscode.postMessage({
