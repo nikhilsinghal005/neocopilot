@@ -237,7 +237,8 @@ export const handleListItemClickFunction = (
 export const handleImageUpload = (
   vscode: any,
   uploadImages: UploadedImage[],
-  setUploadImage: (images: UploadedImage[]) => void
+  setUploadImage: (images: UploadedImage[]) => void,
+  chatId: string,
 ) => {
   console.log('Uploading image...');
 
@@ -256,6 +257,7 @@ export const handleImageUpload = (
   vscode.postMessage({
     command: 'upload_image',
     message: 'Please upload an image.',
+    chatId: chatId,
   });
 
   // Listen for messages from the webview

@@ -32,6 +32,7 @@ const ChatControls: React.FC<ChatControlsProps> = ({
     previousChatModel,
     setChatModel,
     previousInput,
+    chatSession,
     previousAttachedContext, uploadImage, setUploadImage, previousUploadImage} = useChatContext();
   const vscode = useVscode();
 
@@ -64,6 +65,7 @@ const handleCancelClick = () => {
           vscode,
           uploadImage,       
           setUploadImage,    
+          chatSession.chatId,
         )}
         appearance="icon"
         aria-label="Attach Image"
