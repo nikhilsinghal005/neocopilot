@@ -81,10 +81,13 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   ) {
     // Manage visibility and active panels list based on webview's visibility
     if (webviewView.visible) {
+      console.log('Webview is visible');
       this.activePanels.push(webviewView);
     }
 
     webviewView.onDidChangeVisibility(() => {
+      console.log('Webview visibility changed');
+      // Manage visibility and active panels list based on webview's visibility
       if (webviewView.visible) {
         if (!this.activePanels.includes(webviewView)) {
           this.activePanels.push(webviewView);
@@ -117,6 +120,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     };
 
     // Set the HTML content for the webview
+    console.log('Setting webview HTML');
+    await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
     webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
     // Add a listener for messages from the webview (e.g., user actions like sending messages)
@@ -178,7 +183,9 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
           // Checks if the user is logged in and initializes necessary services
           case 'ready':
+            console.log('Checking if user is logged in in the ready part');
             const isLoggedIn = await this._authManager.verifyAccessToken();
+            console.log("Currently user is logged in")
             this.sendAuthStatus(isLoggedIn);
 
             if (isLoggedIn) {
@@ -252,14 +259,32 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
 
   // Send authentication status to the webview
-  public sendAuthStatus(isLoggedIn: boolean): void {
-    this._context.workspaceState.update('isLoggedIn', isLoggedIn);
+  public async sendAuthStatus(isLoggedIn: boolean): Promise<void> {
+    console.log("Sending auth status");
+    // Current auth Status
+    console.log("Auth status: " + isLoggedIn);
+    await this._context.workspaceState.update('isLoggedIn', isLoggedIn);
     this.aiChatContextHandler.getCurrentFileName(vscode.window.activeTextEditor, this._context);
 
     // Notify all active panels about the auth status
-    this.activePanels.forEach(panel => {
-      panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
-    });
+    if(this.activePanels.length > 0){
+      this.activePanels.forEach(panel => {
+        panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
+      });
+    } else {
+      let attempts = 0;
+      const maxAttempts = 5;
+      const interval = 1000;
+      while (attempts < maxAttempts && this.activePanels.length === 0) {
+        await new Promise(resolve => setTimeout(resolve, interval));
+        attempts++;
+      }
+      if(this.activePanels.length > 0){
+        this.activePanels.forEach(panel => {
+          panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
+        });
+      }
+    }
   }
 
   // Inserts messages into the chat interface (handles file paths and code formatting)
