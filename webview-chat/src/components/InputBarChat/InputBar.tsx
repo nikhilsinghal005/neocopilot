@@ -35,6 +35,7 @@ const InputBar: React.FC<InputBarProps> = ({
     setOpenEditorFilesList,
     setIsTyping,
     setIsInterrupted,
+    setUploadImage,
   } = useChatContext();
 
   // Handle incoming messages using the custom hook
@@ -69,12 +70,12 @@ const InputBar: React.FC<InputBarProps> = ({
 `;
 
   return (
-    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0 mb-1">
+    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0">
       {/* Context Wrapper */}
       
 
       {/* Chat Wrapper */}
-      <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0 mb-1">
+      <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0">
       
         <div
           className="input-container flex flex-col gap-0 w-full max-w-2xl p-1 border rounded-md"
@@ -121,6 +122,7 @@ const InputBar: React.FC<InputBarProps> = ({
                     handleSendMessage,
                     setIsTyping
                   );
+                  setUploadImage([]);
                 }
               }}
             />
