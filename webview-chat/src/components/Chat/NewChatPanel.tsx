@@ -36,7 +36,7 @@ const NewChatPanel: React.FC = () => {
       >
         {/* AI-Inline Edit */}
         <div
-          className="card border font-roboto rounded-xs shadow-xl p-4 flex flex-col justify-center items-start"
+          className="card border font-roboto rounded-xs shadow-xl p-4 flex flex-col items-start"
           style={{
             backgroundColor: 'var(--vscode-editor-background)',
             borderColor: 'var(--vscode-editorGroup-border)',
@@ -57,7 +57,7 @@ const NewChatPanel: React.FC = () => {
 
         {/* Real-Time Code Suggestions */}
         <div
-          className="card border font-roboto rounded-xs shadow-xl p-4 flex flex-col justify-center items-start"
+          className="card border font-roboto rounded-xs shadow-xl p-4 flex flex-col items-start"
           style={{
             backgroundColor: 'var(--vscode-editor-background)',
             borderColor: 'var(--vscode-editorGroup-border)',
@@ -77,7 +77,7 @@ const NewChatPanel: React.FC = () => {
 
         {/* Smart Insert and Context */}
         <div
-          className="card border font-roboto rounded-xs shadow-xl p-4 flex flex-col justify-center items-start"
+          className="card border font-roboto rounded-xs shadow-xl p-4 flex flex-col items-start"
           style={{
             backgroundColor: 'var(--vscode-editor-background)',
             borderColor: 'var(--vscode-editorGroup-border)',
@@ -97,7 +97,7 @@ const NewChatPanel: React.FC = () => {
 
         {/* Intelligent Chat */}
         <div
-          className="card border font-roboto rounded-xs shadow-xl p-4 flex flex-col justify-center items-start"
+          className="card border font-roboto rounded-xs shadow-xl p-4 flex flex-col items-start"
           style={{
             backgroundColor: 'var(--vscode-editor-background)',
             borderColor: 'var(--vscode-editorGroup-border)',
