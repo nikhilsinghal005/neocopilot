@@ -88,7 +88,7 @@ const ContextWrapper: React.FC<ContextWrapperProps> = () => {
         <SelectedContextTags />
       </div>
     </div>
-    {attachedContext.length > 0 && uploadImage.length > 0 && (
+    {uploadImage.length > 0 &&(
         <div className="context-wrapper w-full flex flex-row items-center px-1 my-1" style={{ height: '18px' }}>
           <UploadedFileTags />
         </div>

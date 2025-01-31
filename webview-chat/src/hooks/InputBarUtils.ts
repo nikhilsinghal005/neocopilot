@@ -310,6 +310,86 @@ export const handleRemoveImage = (
 };
 
 
+export const handlePaste = (
+  e: React.ClipboardEvent, 
+  setUploadImage: (images: UploadedImage[] | ((prevImages: UploadedImage[]) => UploadedImage[])) => void,
+  chatId: string,
+  vscode: any,
+) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+
+  const hasContent = Array.from(items).length > 0;
+  let imageItems = Array.from(items).filter(
+    item => item.type.indexOf('image') !== -1
+  );
+  if (hasContent && imageItems.length === 0) {
+    vscode.postMessage({
+      command: 'showInfoPopup',
+      data: {
+        title: 'Invalid File Type',
+        message: 'Invalid file type. Only images are supported.',
+      },
+    });
+    e.preventDefault();
+    return;
+  }
+  imageItems = Array.from(items).filter(
+    item => item.type.indexOf('image') !== -1
+  );
+  imageItems.forEach(item => {
+    const blob = item.getAsFile();
+    if (!blob) return;
+    // Check file size (5MB limit)
+    if (blob.size > 5000000) {
+      vscode.postMessage({
+        command: 'showInfoPopup',
+        data: {
+          title: 'Image Upload',
+          message: 'Pasted image is too large. Please use an image smaller than 5MB.',
+        },
+      });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+      const base64Data = reader.result.split(',')[1];
+      const fileType = blob.type.split('/')[1];
+      const pastedImage: UploadedImage = {
+        fileName: `pasted-image-${Date.now()}.${fileType}`,
+        filePath: `pasted-image-${Date.now()}.${fileType}`, // Use fileName as filePath for unique identification
+        fileType: fileType,
+        fileContent: base64Data,
+        isActive: true,
+        isManuallyAddedByUser: true,
+      };
+      setUploadImage((prevImages: UploadedImage[]) => {
+        if (prevImages.length >= 2) {
+          vscode.postMessage({
+            command: 'showInfoPopup',
+            data: {
+              title: 'Image Upload',
+              message: 'You can only upload up to 2 images.',
+            },
+          });
+          return prevImages;
+        }
+        return [...prevImages, pastedImage];
+      });
+      if (reader.result && blob) {
+        vscode.postMessage({
+          command: 'copy_paste_image',
+          chatId: chatId,
+          images: [pastedImage]
+        });
+      }
+    };
+    reader.readAsDataURL(blob);
+  });
+  e.preventDefault();
+};
+
 
 
 
