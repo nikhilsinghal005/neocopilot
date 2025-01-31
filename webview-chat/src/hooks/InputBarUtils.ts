@@ -319,6 +319,11 @@ export const handlePaste = (
   const items = e.clipboardData?.items;
   if (!items) return;
 
+  const textData = e.clipboardData?.getData('text');
+  if (textData) {
+    return;
+  }
+
   const hasContent = Array.from(items).length > 0;
   let imageItems = Array.from(items).filter(
     item => item.type.indexOf('image') !== -1
@@ -387,7 +392,6 @@ export const handlePaste = (
     };
     reader.readAsDataURL(blob);
   });
-  e.preventDefault();
 };
 
 

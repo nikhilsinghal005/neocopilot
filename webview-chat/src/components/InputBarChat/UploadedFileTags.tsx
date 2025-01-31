@@ -24,7 +24,7 @@ const UploadedFileTags: React.FC = () => {
         context.fileName && context.filePath ? (
           <span
             key={index}
-            className="rounded-xs px-1 flex items-center justify-center h-5 text-xxs max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+            className="rounded-xs px-1 flex items-center justify-center h-5 text-xxs max-w-xs overflow-hidden text-ellipsis whitespace-nowrap mr-1"
             style={{
               backgroundColor: 'var(--vscode-diffEditor-unchangedRegionBackground)',
               color: 'var(--vscode-button-foreground)',
