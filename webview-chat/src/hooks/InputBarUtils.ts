@@ -312,9 +312,10 @@ export const handleRemoveImage = (
 
 export const handlePaste = (
   e: React.ClipboardEvent, 
-  setUploadImage: (images: UploadedImage[] | ((prevImages: UploadedImage[]) => UploadedImage[])) => void,
+  setUploadImage: (images: UploadedImage[]) => void,
   chatId: string,
   vscode: any,
+  uploadImage: UploadedImage[]
 ) => {
   const items = e.clipboardData?.items;
   if (!items) return;
@@ -342,11 +343,22 @@ export const handlePaste = (
   imageItems = Array.from(items).filter(
     item => item.type.indexOf('image') !== -1
   );
+
+  if (uploadImage.length + imageItems.length > 2) {
+    vscode.postMessage({
+      command: 'showInfoPopup',
+      data: {
+        title: 'Image Upload',
+        message: 'You can only upload up to 2 images.',
+      },
+    });
+    return;
+  }
   imageItems.forEach(item => {
     const blob = item.getAsFile();
     if (!blob) return;
     // Check file size (5MB limit)
-    if (blob.size > 5000000) {
+    if (blob.size > 5 * 1024 * 1024) {
       vscode.postMessage({
         command: 'showInfoPopup',
         data: {
@@ -363,25 +375,15 @@ export const handlePaste = (
       const fileType = blob.type.split('/')[1];
       const pastedImage: UploadedImage = {
         fileName: `pasted-image-${Date.now()}.${fileType}`,
-        filePath: `pasted-image-${Date.now()}.${fileType}`, // Use fileName as filePath for unique identification
+        filePath: `copy-pasted-image`, // Use fileName as filePath for unique identification
         fileType: fileType,
         fileContent: base64Data,
         isActive: true,
         isManuallyAddedByUser: true,
       };
-      setUploadImage((prevImages: UploadedImage[]) => {
-        if (prevImages.length >= 2) {
-          vscode.postMessage({
-            command: 'showInfoPopup',
-            data: {
-              title: 'Image Upload',
-              message: 'You can only upload up to 2 images.',
-            },
-          });
-          return prevImages;
-        }
-        return [...prevImages, pastedImage];
-      });
+      console.log("pasted image: ",pastedImage);
+      // Add pasted image to the list
+      setUploadImage([...uploadImage, pastedImage]);
       if (reader.result && blob) {
         vscode.postMessage({
           command: 'copy_paste_image',
