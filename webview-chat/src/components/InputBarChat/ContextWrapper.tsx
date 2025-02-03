@@ -13,7 +13,7 @@ interface ContextWrapperProps {
 }
 
 const ContextWrapper: React.FC<ContextWrapperProps> = () => {
-  const { isTyping, isEditing } = useChatContext();
+  const { isTyping, isEditing,attachedContext,uploadImage  } = useChatContext();
   const [showList, setShowList] = useState(false);
 
   // Close dropdown when clicking outside
@@ -28,14 +28,23 @@ const ContextWrapper: React.FC<ContextWrapperProps> = () => {
       }
     };
 
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowList(false);
+      }
+    };
+
     if (showList) {
       window.addEventListener('click', handleClickOutside);
+      window.addEventListener('keydown', handleEscape);
     } else {
       window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleEscape);
     }
 
     return () => {
       window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleEscape);
     };
   }, [showList]);
 
@@ -44,8 +53,9 @@ const ContextWrapper: React.FC<ContextWrapperProps> = () => {
   };
 
   return (
+    <div>
     <div
-      className="context-wrapper w-full flex flex-row items-center px-1 my-1"
+      className="context-wrapper w-full flex flex-row items-center px-1 my-1 mb-1"
       style={{
         height: '18px',
       }}
@@ -76,9 +86,14 @@ const ContextWrapper: React.FC<ContextWrapperProps> = () => {
         )}
 
         <SelectedContextTags />
-        <UploadedFileTags />
       </div>
     </div>
+    {uploadImage.length > 0 &&(
+        <div className="context-wrapper w-full flex flex-row items-center px-1 my-1" style={{ height: '18px' }}>
+          <UploadedFileTags />
+        </div>
+      )}
+  </div>
   );
 };
 

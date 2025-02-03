@@ -90,23 +90,19 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   };
 
   const handleEditSave = () => {
-    let editingMessage = null;
-    // Pop messages until we find the message to edit (user1)
-    while (chatSession.messages.length > 0) {
-      const poppedMessage = chatSession.messages.pop();
-      if (poppedMessage?.id === editingMessageId) {
-        editingMessage = poppedMessage;
-        break;
-      }
+    const messageIndex = chatSession.messages.findIndex(msg => msg.id === editingMessageId);
+    if (messageIndex === -1) {
+        console.error("Editing message not found.");
+        return;
     }
-    if (!editingMessage) {
-      console.error("Editing message not found.");
-      return;
-    }
-    editingMessage.text = input;
-    editingMessage.attachedContext = attachedContext;
-    editingMessage.modelSelected = chatModel;
-    chatSession.messages = [editingMessage];
+    const updatedMessages = chatSession.messages.slice(0, messageIndex + 1);
+    updatedMessages[messageIndex] = {
+        ...updatedMessages[messageIndex],
+        text: input,
+        attachedContext: attachedContext,
+        modelSelected: chatModel
+    };
+    chatSession.messages = updatedMessages;
     setChatSession({ ...chatSession });
     setIsEditing(false);
     setEditingMessageId(null); // Reset the editing message ID
