@@ -310,8 +310,80 @@ export const handleRemoveImage = (
 };
 
 
+export const handlePaste = (
+  e: React.ClipboardEvent, 
+  setUploadImage: (images: UploadedImage[]) => void,
+  chatId: string,
+  vscode: any,
+  uploadImage: UploadedImage[]
+) => {
+  e.preventDefault(); // Prevent default paste behavior
+  
+  const items = e.clipboardData?.items;
+  if (!items) return;
 
+  // Filter out image items from the clipboard
+  const imageItems = Array.from(items).filter(
+    item => item.type.indexOf('image') !== -1
+  );
 
+  // If there are image items, handle the image paste and ignore any text data.
+  if (imageItems.length > 0) {
+    if (uploadImage.length >= 2) {
+      vscode.postMessage({
+        command: 'showInfoPopup',
+        data: {
+          title: 'Image Upload',
+          message: 'You can only upload up to 2 images.',
+        },
+      });
+      return;
+    }
 
+    const item = imageItems[0];
+    const blob = item.getAsFile();
+    
+    if (!blob) return;
 
+    if (blob.size > 5 * 1024 * 1024) {
+      vscode.postMessage({
+        command: 'showInfoPopup',
+        data: {
+          title: 'Image Upload',
+          message: 'Pasted image is too large. Please use an image smaller than 5MB.',
+        },
+      });
+      return;
+    }
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+      const base64Data = reader.result.split(',')[1];
+      const fileType = blob.type.split('/')[1];
+      const timestamp = Date.now();
+      const fileName = blob.name || `pasted-image-${timestamp}.${fileType}`;
+      const pastedImage: UploadedImage = {
+        fileName: fileName,
+        filePath: `pasted-image-${timestamp}`,
+        fileType: fileType,
+        fileContent: base64Data,
+        isActive: true,
+        isManuallyAddedByUser: true,
+      };
+      const allImages = uploadImage.length > 0 ? [...uploadImage, pastedImage] : [pastedImage];
+      setUploadImage(allImages);
+      vscode.postMessage({
+        command: 'copy_paste_image',
+        chatId: chatId,
+        images: allImages
+      });
+    };
+    reader.readAsDataURL(blob);
+  } else {
+    const textData = e.clipboardData?.getData('text');
+    if (textData) {
+      return
+    }
+  }
+};

@@ -35,8 +35,8 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
           <div
             className="messages-container fixed left-0 right-0 overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2"
             style={{
-              top: '40px',
-              bottom: `calc(var(--input-container-height, 130px) + 0px)`, // Adjusted to match the dynamic height of input container
+              top: '50px',
+              bottom: `calc(var(--input-container-height, 150px) + 10px)`, // Adjusted to match the dynamic height of input container
             }}
           >
             <MessageList chatSession={chatSession} />
@@ -50,12 +50,12 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
         <div
           className="input-container absolute left-0 right-0 bg-vscode-editor-background pl-0 pr-0 shadow-md flex items-center"
           style={{
-            minHeight: '110px',
-            maxHeight: '200px',
-            height: 'var(--input-container-height, 130px)',
-            bottom: '20px',
-            transform: `translateY(calc(100% - var(--input-container-height, 130px)))`,
-            transition: 'transform 0.3s ease, height 0.3s ease',
+            // minHeight: '130px',
+            // maxHeight: '220px',
+            // height: 'var(--input-container-height, 130px)',
+            bottom:  '2px',
+            // transform: `translateY(calc(100% - var(--input-container-height, 130px)))`,
+            // transition: 'transform 0.3s ease, height 0.3s ease',
           }}
         >
           <InputBar

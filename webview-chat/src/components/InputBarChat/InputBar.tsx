@@ -10,6 +10,7 @@ import ContextWrapper from './ContextWrapper';
 import ChatModelDropdown from './ChatModelDropdown';
 import ChatControls from './ChatControls';
 import { useVscode } from '../../context/VscodeContext';
+import {handlePaste} from '../../hooks/InputBarUtils';
 
 interface InputBarProps {
   input: string;
@@ -35,6 +36,9 @@ const InputBar: React.FC<InputBarProps> = ({
     setOpenEditorFilesList,
     setIsTyping,
     setIsInterrupted,
+    setUploadImage,
+    chatSession,
+    uploadImage
   } = useChatContext();
 
   // Handle incoming messages using the custom hook
@@ -69,15 +73,15 @@ const InputBar: React.FC<InputBarProps> = ({
 `;
 
   return (
-    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0 mb-1">
+    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0">
       {/* Context Wrapper */}
       
 
       {/* Chat Wrapper */}
-      <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0 mb-1">
+      <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0">
       
         <div
-          className="input-container flex flex-col gap-0 w-full max-w-2xl p-1 border rounded-md"
+          className="input-container flex flex-col gap-0 w-full max-w-2xl p-1 border-2 rounded-md"
           style={{
             backgroundColor: 'var(--vscode-editor-background)',
             borderColor: 'var(--vscode-editorGroup-border)',
@@ -94,6 +98,7 @@ const InputBar: React.FC<InputBarProps> = ({
                 setInput(e.target.value);
                 handleResize();
               }}
+              onPaste={(e) => handlePaste(e, setUploadImage,chatSession.chatId,vscode,uploadImage)}
               className="flex-grow bg-transparent outline-none px-2 py-1 resize-none input-textarea text-xxs rounded-md"
               placeholder="Type your message..."
               style={{
@@ -121,6 +126,7 @@ const InputBar: React.FC<InputBarProps> = ({
                     handleSendMessage,
                     setIsTyping
                   );
+                  setUploadImage([]);
                 }
               }}
             />

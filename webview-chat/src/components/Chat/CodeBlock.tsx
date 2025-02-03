@@ -290,7 +290,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
             </span>
           )}
           {state === 'newFileRequiredType1' && (
-            <div className="relative">
+            <div className="absolute right-1 mr-1">
               <CodeButtonWithText
                 onClick={() => setShowNewFileDropdownType1(!showNewFileDropdownType1)}
                 ariaLabel="Smart Insert to Editor"
@@ -371,7 +371,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
             </div>
           )}
           {state === 'newFileRequiredType2' && (
-            <div className="relative">
+            <div className="absolute right-1 mr-1">
               <CodeButtonWithText
                 onClick={() => setShowNewFileDropdownType2(!showNewFileDropdownType2)}
                 ariaLabel="Smart Insert to Editor"
