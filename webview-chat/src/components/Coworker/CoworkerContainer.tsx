@@ -2,7 +2,7 @@
 import React from 'react';
 import MessageList from './MessageList';
 import TypingIndicator from './TypingIndicator';
-import InputBar from './InputBar';
+import InputBar from '../InputBarCoworker/InputBar';
 import { useCoworkerContext } from '../../context/CoworkerContext';
 import NewChatPanel from './NewChatPanel';
 
@@ -19,7 +19,7 @@ const CoworkerContainer: React.FC<CoworkerContainerProps> = ({
   isTyping,
   handleSendMessage,
 }) => {
-  const { coworkerSession } = useCoworkerContext(); // Access coworkerSession from the context
+  const { coworkerSession, isEditing } = useCoworkerContext(); // Access coworkerSession from the context
 
   // Ensure that coworkerSession and coworkerSession.messages are defined
   const hasMessages = coworkerSession && Array.isArray(coworkerSession.messages) && coworkerSession.messages.length > 0;
@@ -45,25 +45,28 @@ const CoworkerContainer: React.FC<CoworkerContainerProps> = ({
         </>
       )}
 
-      {/* Input Container */}
-      <div
-        className="input-container absolute left-0 right-0 bg-vscode-editor-background pl-0 pr-0 shadow-md flex items-center"
-        style={{
-          minHeight: '110px',
-          maxHeight: '200px',
-          height: 'var(--input-container-height, 130px)',
-          bottom: '20px',
-          transform: `translateY(calc(100% - var(--input-container-height, 130px)))`,
-          transition: 'transform 0.3s ease, height 0.3s ease',
-        }}
-      >
-        <InputBar
-          input={input}
-          setInput={setInput}
-          handleSendMessage={handleSendMessage}
-          isTyping={isTyping} // Pass isTyping prop
-        />
-      </div>
+       {/* Input Container */}
+       {!isEditing && (
+        <div
+          className="input-container absolute left-0 right-0 bg-vscode-editor-background pl-0 pr-0 shadow-md flex items-center"
+          style={{
+            // minHeight: '130px',
+            // maxHeight: '220px',
+            // height: 'var(--input-container-height, 130px)',
+            bottom:  '2px',
+            // transform: `translateY(calc(100% - var(--input-container-height, 130px)))`,
+            // transition: 'transform 0.3s ease, height 0.3s ease',
+          }}
+        >
+          <InputBar
+            input={input}
+            setInput={setInput}
+            handleSendMessage={handleSendMessage}
+            isTyping={isTyping} // Pass isTyping prop
+            isEditing={isEditing}
+          />
+        </div>
+      )}
     </div>
   );
 };
