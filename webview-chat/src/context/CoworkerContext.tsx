@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { CoworkerSession, MessageStore, CurrentFileContext, EditorOpenFileList, CoworkerSessionList } from '../types/CoworkerMessage';
+import { CoworkerSession, MessageStore, CurrentFileContext, EditorOpenFileList, CoworkerSessionList,UploadedImage } from '../types/CoworkerMessage';
 import { chatModelDetail } from '../types/AppDetails';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -8,6 +8,8 @@ interface CoworkerContextProps {
   setCoworkerSession: React.Dispatch<React.SetStateAction<CoworkerSession>>;
   isTyping: boolean;
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>;
+  isEditing: boolean;
+  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
   coworkerModel: string;
   setCoworkerModel: React.Dispatch<React.SetStateAction<string>>;
   attachedContext: CurrentFileContext[],
@@ -22,6 +24,19 @@ interface CoworkerContextProps {
   setCoworkerModelList: React.Dispatch<React.SetStateAction<chatModelDetail[]>>;
   coworkerSessionList: CoworkerSessionList;
   setCoworkerSessionList: React.Dispatch<React.SetStateAction<CoworkerSessionList>>;
+  input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
+  uploadImage: UploadedImage[];
+  setUploadImage: React.Dispatch<React.SetStateAction<UploadedImage[]>>;
+
+  // Previous State Input
+  previousInput: string;
+  setPreviousInput: React.Dispatch<React.SetStateAction<string>>;
+  previousAttachedContext: CurrentFileContext[];
+  setPreviousAttachedContext: React.Dispatch<React.SetStateAction<CurrentFileContext[]>>;
+  previousUploadImage: UploadedImage[];
+  setPreviousUploadImage: React.Dispatch<React.SetStateAction<UploadedImage[]>>;
+  
 }
 
 const createNewCoworkerSession = (): CoworkerSession => ({
@@ -60,12 +75,19 @@ export const CoworkerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const [coworkerModel, setCoworkerModel] = useState<string>('neo-7');
   const [attachedContext, setAttachedContext] = useState<CurrentFileContext[]>([]);
   const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
   const [isInterrupted, setIsInterrupted] = useState<boolean>(false);
   const [coworkerModelList, setCoworkerModelList] = useState<chatModelDetail[]>([]);
   const [coworkerSessionList, setCoworkerSessionList] = useState<CoworkerSessionList>([]);
+  const [input, setInput] = useState<string>(''); // Add input state here
+  const [previousInput, setPreviousInput] = useState<string>(''); // Add input state here
+  const [uploadImage, setUploadImage] = useState<UploadedImage[]>([]);
+  const [previousUploadImage, setPreviousUploadImage] = useState<UploadedImage[]>([]);
+  const [previousAttachedContext, setPreviousAttachedContext] = useState<CurrentFileContext[]>([]);
+  
 
   useEffect(() => {
     sessionStorage.setItem('coworkerSession', JSON.stringify(coworkerSession));
@@ -119,6 +141,19 @@ export const CoworkerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isInterrupted, setIsInterrupted,
         coworkerModelList, setCoworkerModelList,
         coworkerSessionList, setCoworkerSessionList,
+        input,
+        setInput, // Provide input state here
+        isEditing,
+        setIsEditing,
+        uploadImage,
+        setUploadImage,
+
+        previousInput,
+        setPreviousInput,
+        previousAttachedContext,
+        setPreviousAttachedContext,
+        previousUploadImage,
+        setPreviousUploadImage,
       }}>
       {children}
     </CoworkerContext.Provider>

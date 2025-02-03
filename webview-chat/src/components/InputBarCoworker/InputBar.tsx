@@ -7,15 +7,16 @@ import {
   handleSendClick,
 } from '../../hooks/InputBarUtils';
 import ContextWrapper from './ContextWrapper';
-import ChatModelDropdown from './ChatModelDropdown';
 import ChatControls from './ChatControls';
 import { useVscode } from '../../context/VscodeContext';
+// import {handlePaste} from '../../hooks/InputBarUtils';
 
 interface InputBarProps {
   input: string;
   setInput: (input: string) => void;
   handleSendMessage: () => void;
   isTyping: boolean;
+  isEditing: boolean;
 }
 
 const InputBar: React.FC<InputBarProps> = ({
@@ -23,6 +24,7 @@ const InputBar: React.FC<InputBarProps> = ({
   setInput,
   handleSendMessage,
   isTyping,
+  isEditing,
 }) => {
   const [warningMessage, setWarningMessage] = useState('');
   const vscode = useVscode();
@@ -33,6 +35,9 @@ const InputBar: React.FC<InputBarProps> = ({
     setOpenEditorFilesList,
     setIsTyping,
     setIsInterrupted,
+    setUploadImage,
+    coworkerSession,
+    uploadImage
   } = useCoworkerContext();
 
   // Handle incoming messages using the custom hook
@@ -63,91 +68,99 @@ const InputBar: React.FC<InputBarProps> = ({
     handleResize();
   }, [input, isTyping, handleResize]);
 
-  return (
-    <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0">
-      {/* Context Wrapper */}
-      <ContextWrapper isTyping={isTyping} />
+  const placeholderStyle = `
+  .input-textarea::placeholder {
+    font-size: 12px;
+  }
+`;
 
-      {/* Chat Wrapper */}
-      <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0">
-        <div
-          className="input-container flex flex-col gap-0 w-full max-w-2xl p-0 border rounded-sm"
-          style={{
-            backgroundColor: 'var(--vscode-editor-background)',
-            borderColor: 'var(--vscode-editorGroup-border)',
-            color: 'var(--vscode-editor-foreground)',
-          }}
-        >
-          {/* Textarea */}
-          <div className="top-section flex items-center gap-2">
-            <textarea
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                handleResize();
-              }}
-              placeholder="Type your message..."
-              className="flex-grow bg-transparent outline-none p-2 resize-none input-textarea text-sm"
-              style={{
-                color: 'var(--vscode-editor-foreground)',
-                minHeight: '1.5em',
-                backgroundColor: 'transparent',
-              }}
-              rows={1}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  if (input.trim() === '') {
-                    // setWarningMessage('Cannot send an empty message.');
-                    setTimeout(() => setWarningMessage(''), 2000);
-                    return;
-                  }
-                  handleSendClick(
-                    isTyping,
-                    setWarningMessage,
-                    setIsInterrupted,
-                    sanitizeInput,
-                    input,
-                    setInput,
-                    handleSendMessage,
-                    setIsTyping
-                  );
-                }
-              }}
-            />
-          </div>
+return (
+  <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0">
+    {/* Context Wrapper */}
+    
 
-          {/* Bottom Section */}
-          <div
-            className="bottom-section flex justify-between items-center gap-2 mt-0 p-0"
-            style={{
-              borderTop: `1px solid var(--vscode-editorGroup-border)`,
+    {/* Chat Wrapper */}
+    <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0">
+    
+      <div
+        className="input-container flex flex-col gap-0 w-full max-w-2xl p-1 border-2 rounded-md"
+        style={{
+          backgroundColor: 'var(--vscode-editor-background)',
+          borderColor: 'var(--vscode-editorGroup-border)',
+          color: 'var(--vscode-editor-foreground)',
+        }}
+      >
+        <ContextWrapper isTyping={isTyping} isEditing={isEditing} />
+        {/* Textarea */}
+        <div className="top-section flex items-center gap-2 text-xxs">
+        <style>{placeholderStyle}</style>
+          <textarea
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              handleResize();
             }}
-          >
-            {/* Chat Model Dropdown */}
-            <ChatModelDropdown />
-
-            {/* Chat Controls */}
-            <ChatControls
-              input={input}
-              setInput={setInput}
-              warningMessage={warningMessage}
-              setWarningMessage={setWarningMessage}
-              handleSendMessage={handleSendMessage}
-              isTyping={isTyping}
-            />
-          </div>
+            // onPaste={(e) => handlePaste(e, setUploadImage,coworkerSession.coworkerId,vscode,uploadImage)}
+            className="flex-grow bg-transparent outline-none px-2 py-1 resize-none input-textarea text-xxs rounded-md"
+            placeholder="Type your message..."
+            style={{
+              color: 'var(--vscode-editor-foreground)',
+              minHeight: '40px',
+              backgroundColor: 'transparent',
+              outline: 'none',
+            }}
+            rows={1}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (input.trim() === '') {
+                  // setWarningMessage('Cannot send an empty message.');
+                  setTimeout(() => setWarningMessage(''), 2000);
+                  return;
+                }
+                handleSendClick(
+                  isTyping,
+                  setWarningMessage,
+                  setIsInterrupted,
+                  sanitizeInput,
+                  input,
+                  setInput,
+                  handleSendMessage,
+                  setIsTyping
+                );
+                setUploadImage([]);
+              }
+            }}
+          />
         </div>
 
-        {/* Warning Message */}
-        {warningMessage && (
-          <div className="text-sm mt-1" style={{ color: 'var(--vscode-errorForeground)' }}>
-            {warningMessage}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+        {/* Bottom Section */}
+        <div
+          className="bottom-section flex justify-between items-center gap-2 mt-0 p-0"
+        >
+          {/* Chat Model Dropdown */}
+          {/* <ChatModelDropdown /> */}
 
+          {/* Chat Controls */}
+          <ChatControls
+            input={input}
+            setInput={setInput}
+            warningMessage={warningMessage}
+            setWarningMessage={setWarningMessage}
+            handleSendMessage={handleSendMessage}
+            isTyping={isTyping}
+          />
+        </div>
+      </div>
+
+      {/* Warning Message */}
+      {warningMessage && (
+        <div className="text-sm mt-1" style={{ color: 'var(--vscode-errorForeground)' }}>
+          {warningMessage}
+        </div>
+      )}
+    </div>
+  </div>
+);
+};
 export default InputBar;
