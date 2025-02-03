@@ -1,41 +1,30 @@
-// SelectedContextTags.tsx
+// UploadedFileTags.tsx
 import React from 'react';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useCoworkerContext } from '../../context/CoworkerContext';
-import LanguageIcon from '../Common/LanguageIcon';
-import {X} from "lucide-react";
-import { handleRemoveTagFunction } from '../../hooks/InputBarUtils';
+import {X,Image} from "lucide-react";
+import {handleRemoveImage  } from '../../hooks/InputBarUtils';
 
-const SelectedContextTags: React.FC = () => {
+const UploadedFileTags: React.FC = () => {
   const {
-    attachedContext,
-    setAttachedContext,
-    openEditorFilesList,
-    setOpenEditorFilesList,
+    uploadImage,
+    setUploadImage,
+    isEditing,
   } = useCoworkerContext();
 
-  if (attachedContext.length === 0) {
+  if (uploadImage.length === 0) {
     return (
-      <span
-        className="rounded-xs px-1 flex items-center h-6 text-xs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
-        style={{
-          backgroundColor: 'var(--vscode-editor-background)',
-          borderColor: 'var(--vscode-editorGroup-border)',
-          color: 'var(--vscode-editor-foreground)',
-        }}
-      >
-        No file selected
-      </span>
+      <></>
     );
   }
 
   return (
     <>
-      {attachedContext.map((context: any, index: number) =>
+      {uploadImage.map((context: any, index: number) =>
         context.fileName && context.filePath ? (
           <span
             key={index}
-            className="rounded-xs px-1 flex items-center justify-center h-5 text-xxs max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+            className="rounded-xs px-1 flex items-center justify-center h-5 text-xxs max-w-xs overflow-hidden text-ellipsis whitespace-nowrap mr-1"
             style={{
               backgroundColor: 'var(--vscode-diffEditor-unchangedRegionBackground)',
               color: 'var(--vscode-button-foreground)',
@@ -63,25 +52,25 @@ const SelectedContextTags: React.FC = () => {
               ></span>
             )}
             <span className="flex items-center">
-              <LanguageIcon fileName={context.fileName || ''} iconSize={16} />
+              <Image size={12} className="mr-1 ml-1"/>
               <span style={{fontSize:"10px"}}>{context.fileName}</span>
             </span>
+            {!isEditing ? (
             <VSCodeButton
               appearance="icon"
               aria-label="Remove Context"
               className="mt-1 mr-1 rounded-md h-3 w-3 hover:bg-transparent"
               onClick={() =>
-                handleRemoveTagFunction(
+                handleRemoveImage(
                   context.filePath,
-                  attachedContext,
-                  setAttachedContext,
-                  openEditorFilesList,
-                  setOpenEditorFilesList
+                  uploadImage,
+                  setUploadImage,
                 )
               }
             >
               <span className="mr-1"><X size={12}/></span>
             </VSCodeButton>
+            ) : null}
           </span>
         ) : null
       )}
@@ -89,4 +78,4 @@ const SelectedContextTags: React.FC = () => {
   );
 };
 
-export default SelectedContextTags;
+export default UploadedFileTags;

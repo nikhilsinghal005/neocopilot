@@ -15,6 +15,15 @@ export type CurrentFileContext = {
   isManuallyAddedByUser: boolean;
 };
 
+export type UploadedImage = {
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  fileContent: string;
+  isActive: boolean;
+  isManuallyAddedByUser: boolean;
+};
+
 // For input messages (e.g., when receiving or sending new messages)
 export type MessageInput = {
   coworkerId: string;
@@ -45,7 +54,7 @@ export type MessageOutput = {
   useInternet: boolean;
   isProblemsSelected: boolean;
   isTerminalSelected: boolean;
-  imagePaths: [];
+  uploadedImages: UploadedImage[];
 };
 
 // How a message is stored with additional details like files and images
@@ -54,7 +63,8 @@ export type MessageStore = {
   timestamp: string;
   messageType: 'user' | 'system';
   text: string;
-  attachedFiles?: object[];  // List of file paths attached to the message
+  attachedFiles?: object[];
+  uploadedImages?: UploadedImage[]  // List of file paths attached to the message
   imagePaths?: string[];     // List of image paths associated with the message
   isComplete?: boolean; // Indicates if the message is fully received
   modelSelected?: string; // Indicates the model used to generate the response
