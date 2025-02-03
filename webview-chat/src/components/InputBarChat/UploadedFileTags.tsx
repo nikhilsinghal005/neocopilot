@@ -51,9 +51,11 @@ const UploadedFileTags: React.FC = () => {
                 style={{ marginRight: '2px', fontSize: '8px' }}
               ></span>
             )}
-            <span className="flex items-center">
-              <Image size={12} className="mr-1 ml-1"/>
-              <span style={{fontSize:"10px"}}>{context.fileName}</span>
+            <span className="flex items-center min-w-0">
+              <Image size={12} className="mr-1 ml-1 flex-shrink-0" />
+              <span className="truncate text-ellipsis overflow-hidden" style={{ fontSize: '10px', minWidth: '50px' }}>
+                {context.fileName}
+              </span>
             </span>
             {!isEditing ? (
             <VSCodeButton

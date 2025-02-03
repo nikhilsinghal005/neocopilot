@@ -317,47 +317,34 @@ export const handlePaste = (
   vscode: any,
   uploadImage: UploadedImage[]
 ) => {
+  e.preventDefault(); // Prevent default paste behavior
+  
   const items = e.clipboardData?.items;
   if (!items) return;
 
-  const textData = e.clipboardData?.getData('text');
-  if (textData) {
-    return;
-  }
-
-  const hasContent = Array.from(items).length > 0;
-  let imageItems = Array.from(items).filter(
-    item => item.type.indexOf('image') !== -1
-  );
-  if (hasContent && imageItems.length === 0) {
-    vscode.postMessage({
-      command: 'showInfoPopup',
-      data: {
-        title: 'Invalid File Type',
-        message: 'Invalid file type. Only images are supported.',
-      },
-    });
-    e.preventDefault();
-    return;
-  }
-  imageItems = Array.from(items).filter(
+  // Filter out image items from the clipboard
+  const imageItems = Array.from(items).filter(
     item => item.type.indexOf('image') !== -1
   );
 
-  if (uploadImage.length + imageItems.length > 2) {
-    vscode.postMessage({
-      command: 'showInfoPopup',
-      data: {
-        title: 'Image Upload',
-        message: 'You can only upload up to 2 images.',
-      },
-    });
-    return;
-  }
-  imageItems.forEach(item => {
+  // If there are image items, handle the image paste and ignore any text data.
+  if (imageItems.length > 0) {
+    if (uploadImage.length >= 2) {
+      vscode.postMessage({
+        command: 'showInfoPopup',
+        data: {
+          title: 'Image Upload',
+          message: 'You can only upload up to 2 images.',
+        },
+      });
+      return;
+    }
+
+    const item = imageItems[0];
     const blob = item.getAsFile();
+    
     if (!blob) return;
-    // Check file size (5MB limit)
+
     if (blob.size > 5 * 1024 * 1024) {
       vscode.postMessage({
         command: 'showInfoPopup',
@@ -368,36 +355,35 @@ export const handlePaste = (
       });
       return;
     }
+
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result !== 'string') return;
       const base64Data = reader.result.split(',')[1];
       const fileType = blob.type.split('/')[1];
+      const timestamp = Date.now();
+      const fileName = blob.name || `pasted-image-${timestamp}.${fileType}`;
       const pastedImage: UploadedImage = {
-        fileName: `pasted-image-${Date.now()}.${fileType}`,
-        filePath: `copy-pasted-image`, // Use fileName as filePath for unique identification
+        fileName: fileName,
+        filePath: `pasted-image-${timestamp}`,
         fileType: fileType,
         fileContent: base64Data,
         isActive: true,
         isManuallyAddedByUser: true,
       };
-      console.log("pasted image: ",pastedImage);
-      // Add pasted image to the list
-      setUploadImage([...uploadImage, pastedImage]);
-      if (reader.result && blob) {
-        vscode.postMessage({
-          command: 'copy_paste_image',
-          chatId: chatId,
-          images: [pastedImage]
-        });
-      }
+      const allImages = uploadImage.length > 0 ? [...uploadImage, pastedImage] : [pastedImage];
+      setUploadImage(allImages);
+      vscode.postMessage({
+        command: 'copy_paste_image',
+        chatId: chatId,
+        images: allImages
+      });
     };
     reader.readAsDataURL(blob);
-  });
+  } else {
+    const textData = e.clipboardData?.getData('text');
+    if (textData) {
+      return
+    }
+  }
 };
-
-
-
-
-
-
