@@ -119,11 +119,14 @@ const NewChatPanel: React.FC = () => {
 
       {chatSessionList.length > 0 && (
         <div
-          className="p-4 mt-4 border rounded-md"
+          className="p-4 mt-4 border rounded-md overflow-y-auto"
           style={{
             maxWidth: '600px',
             minWidth: '300px',
+            maxHeight: '130px',
             width: '100%',
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'var(--vscode-scrollbarSlider-background) transparent',
             borderColor: 'var(--vscode-editorGroup-border)',
           }}
         >

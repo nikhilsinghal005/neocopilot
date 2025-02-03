@@ -135,45 +135,53 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
 
     return (
       <div>
-        <h4 className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">Referenced Files:</h4>
-        <div className="flex items-center gap-1">
-          <ul className="flex flex-wrap gap-2">
-            {attachedContext.map((context, index) => (
-              <span
-                key={index}
-                className="rounded-xs pr-1 flex items-center h-5 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
-                style={{
-                  backgroundColor: 'var(--vscode-editor-background)',
-                  borderColor: 'var(--vscode-editorGroup-border)',
-                  color: 'var(--vscode-editor-foreground)',
-                }}
-              >
-                <LanguageIcon fileName={context.fileName || ""} iconSize={16} />
-                {context.fileName}
-              </span>
-            ))}
-          </ul>
-          <ul className="flex flex-wrap gap-2">
-            {uploadedImage.map((image, index) => (
-              <span
-                key={index}
-                className="rounded-xs pr-1 flex items-center h-5 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
-                style={{
-                  backgroundColor: 'var(--vscode-editor-background)',
-                  borderColor: 'var(--vscode-editorGroup-border)',
-                  color: 'var(--vscode-editor-foreground)',
-                }}
-              >
-                <Image size={12} className="ml-1 mr-1" />
-                {image.fileName}
-              </span>
-            ))}
-          </ul>
-        </div>
+        <h4 className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">References</h4>
+        {hasAttachedContext && (
+          <div className="flex items-center gap-1">
+            <span className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">Code:</span>
+            <ul className="flex flex-wrap gap-1">
+              {attachedContext.map((context, index) => (
+                <span
+                  key={index}
+                  className="rounded-xs pr-1 flex items-center h-5 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+                  style={{
+                    backgroundColor: 'var(--vscode-editor-background)',
+                    borderColor: 'var(--vscode-editorGroup-border)',
+                    color: 'var(--vscode-editor-foreground)',
+                  }}
+                >
+                  <LanguageIcon fileName={context.fileName || ""} iconSize={16} />
+                  {context.fileName}
+                </span>
+              ))}
+            </ul>
+          </div>
+        )}
+        {hasUploadedImages && (
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">Files:</span>
+            <ul className="flex flex-wrap gap-1">
+              {uploadedImage.map((image, index) => (
+                <span
+                  key={index}
+                  className="rounded-xs pr-1 flex items-center h-5 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+                  style={{
+                    backgroundColor: 'var(--vscode-editor-background)',
+                    borderColor: 'var(--vscode-editorGroup-border)',
+                    color: 'var(--vscode-editor-foreground)',
+                  }}
+                >
+                  <Image size={12} className="ml-1 mr-1" />
+                  {image.fileName}
+                </span>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     );
   };
-
+  
   if (type === 'user') {
     let bottomMargin: string = "";
     if (attachedContext.length > 0){
@@ -190,8 +198,8 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
         {renderAttachedContext()}
       </div>
     );
-
-  } else {
+  }
+   else {
     return (
       <div className="prose max-w-full text-xs leading-6 space-y-2 mb-2">
         <ReactMarkdown
