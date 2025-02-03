@@ -1,73 +1,191 @@
-import React from 'react';
-import { MessageStore } from '../../types/Message';
+import React, { useState} from 'react';
+import { useCoworkerContext } from '../../context/CoworkerContext';
+import CodeButtonWithText from '../Common/CodeButtonWithText';
+import {MessageStore, CurrentFileContext, UploadedImage } from '../../types/CoworkerMessage';
 import MessageRenderer from './MessageRenderer';
-import { CurrentFileContext } from '../../types/Message';
+import { useVscode } from '../../context/VscodeContext';
+import InputBar from '../InputBarCoworker/InputBar';
 
 interface MessageProps {
   message: MessageStore;
 }
 
 const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
-  return (
-    <>
-      {/* Divider line after each message */}
-      <div className="divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0"></div>
 
-      <div
-        className={`message flex justify-center items-start mb-2 w-full`}
-      >
-        {/* Icon on the left for NEO's messages */}
-        {/* {message.messageType !== 'user' && (
-          <div className="flex items-center mr-1 mt-3">
-            <span 
-              className="codicon codicon-robot text-vscode-editor-foreground"
-              style={{ fontSize: '12px' }}
-            ></span>
+  const {
+      coworkerSession,
+      setCoworkerSession,
+      setIsTyping,
+      isTyping,
+      setIsEditing,
+      isEditing,
+      attachedContext,
+      setAttachedContext,
+      previousInput,
+      setPreviousInput,
+      input,
+      setInput,
+      previousAttachedContext,
+      setPreviousAttachedContext,
+      uploadImage,
+      setUploadImage,
+      previousUploadImage,
+      setPreviousUploadImage,
+    } = useCoworkerContext();
+  const vscode = useVscode();
+
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  
+    const handleRefresh = (messageId: string) => {
+      const messageIndex = coworkerSession.messages.findIndex(msg => msg.id === messageId);
+      if (messageIndex === -1) {
+          console.error("Refresh message not found.");
+          return;
+      }
+      const updatedMessages = coworkerSession.messages.slice(0, messageIndex + 1);
+      updatedMessages[messageIndex] = {
+          ...updatedMessages[messageIndex],
+          text: input,
+          attachedContext: attachedContext,
+      };
+      coworkerSession.messages = updatedMessages;
+      setCoworkerSession({ ...coworkerSession });
+      setIsTyping(true);
+      vscode.postMessage({
+        command: 'send_chat_message',
+        data: coworkerSession,
+      });
+    };
+  
+    const handleCopy = (messageId: string) => {
+      const messageToCopy = coworkerSession.messages.find((message) => message.id === messageId);
+      if (messageToCopy) {
+        navigator.clipboard.writeText(messageToCopy.text);
+      }
+    };
+  
+    const handleEditButtonClick = (messageId: string) => {
+      console.log('handleEditButtonClick');
+      console.log('Current Editable Message ID: ', messageId);
+      console.log('Current Editable Message: ',message)
+  
+      // Store the current input values
+      setPreviousInput(input);
+      setPreviousAttachedContext(attachedContext);
+      setPreviousUploadImage(uploadImage);
+  
+      // Setting Up new input Box and replce the old one
+      setIsEditing(true); // Now a boolean
+      setEditingMessageId(messageId); // Track the specific message ID
+      setAttachedContext(message.attachedContext ?? ([] as CurrentFileContext[]));
+      setUploadImage(message.uploadedImages ?? ([] as UploadedImage[]));
+      setInput(message.text);
+       // Set the attached context of the message
+    };
+  
+    const handleEditSave = () => {
+      const messageIndex = coworkerSession.messages.findIndex(msg => msg.id === editingMessageId);
+      if (messageIndex === -1) {
+          console.error("Editing message not found.");
+          return;
+      }
+      const updatedMessages = coworkerSession.messages.slice(0, messageIndex + 1);
+      updatedMessages[messageIndex] = {
+          ...updatedMessages[messageIndex],
+          text: input,
+          attachedContext: attachedContext,
+      };
+      coworkerSession.messages = updatedMessages;
+      setCoworkerSession({ ...coworkerSession });
+      setIsEditing(false);
+      setEditingMessageId(null); // Reset the editing message ID
+      vscode.postMessage({
+        command: "send_chat_message",
+        data: coworkerSession,
+      });
+      // Reset inputs
+      setInput(previousInput);
+      setAttachedContext(previousAttachedContext);
+      setUploadImage(previousUploadImage);
+    };
+
+    return (
+      <>
+        <div className="divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0"></div>
+  
+        {editingMessageId === message.id && isEditing ? (
+          <div className="w-full">
+            <InputBar
+              input={input}
+              setInput={setInput}
+              handleSendMessage={handleEditSave}
+              isTyping={isTyping}
+              isEditing={isEditing}
+            />
           </div>
-        )} */}
-
-        {/* Message box */}
-        <div
-          className={`rounded-sm flex items-center break-words px-2 max-w-[97%] text-vscode-editor-foreground`}
-          style={{
-            backgroundColor:
-              message.messageType === 'user'
-                ? 'var(--vscode-input-background)'
-                : undefined,
-            border:message.messageType === 'user'
-                ? '2px solid var(--vscode-editorGroup-border)'
-                : undefined,
-            overflowX: 'auto',
-            flexGrow: 1,
-            minWidth: '97%',
-          }}
-        >
-          <span
-            className={`block text-xs font-semibold mb-2 opacity-75 ${
-              message.messageType === 'user' ? 'text-right' : 'text-left'
-            }`}
-          >
-            {/* {' '}
-            {new Date(message.timestamp).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })} */}
-          </span>
-          <MessageRenderer text={message.text} type={message.messageType} attachedContext={message.attachedContext ?? [] as CurrentFileContext[]} />
-        </div>
-
-        {/* Check mark on the right for the user's messages */}
-        {/* {message.messageType === 'user' && (
-          <div className="flex items-center ml-1 mt-1">
-            <span 
-              className="codicon codicon-account text-vscode-editor-foreground mr-1"
-              style={{ fontSize: '12px' }}
-            ></span>
+        ) : (
+          <div className={`message flex justify-center items-start mb-5 w-full`}>
+            <div
+              className={`rounded-sm flex items-center break-words px-2 max-w-[97%] text-vscode-editor-foreground relative`}
+              style={{
+                backgroundColor:
+                  message.messageType === 'user'
+                    ? 'var(--vscode-input-background)'
+                    : undefined,
+                border: message.messageType === 'user'
+                  ? '2px solid var(--vscode-editorGroup-border)'
+                  : undefined,
+                overflowX: 'auto',
+                flexGrow: 1,
+                minWidth: '97%',
+                zIndex: 2,
+              }}
+            >
+              {message.messageType === 'user' && (
+                <div className="absolute top-1 right-1 z-10">
+                  <CodeButtonWithText
+                    onClick={() => handleEditButtonClick(message.id)}
+                    ariaLabel="Edit"
+                    icon="codicon-edit"
+                    tooltip="Edit"
+                    disabled={isTyping}
+                  />
+                </div>
+              )}
+              <div className="w-full">
+                <MessageRenderer
+                  text={message.text}
+                  type={message.messageType}
+                  attachedContext={message.attachedContext ?? ([] as CurrentFileContext[])}
+                  uploadedImage={message.uploadedImages ?? ([] as UploadedImage[])}
+                />
+                {message.messageType === 'system' && !isTyping && (
+                  <div className="flex justify-end">
+                  <CodeButtonWithText
+                      onClick={() => handleRefresh(message.id)}
+                      ariaLabel="Refresh"
+                      icon="codicon-refresh"
+                      tooltip="Copy"
+                      disabled={isTyping}
+                      buttonName={''}
+                    />
+                    <CodeButtonWithText
+                      onClick={() => handleCopy(message.id)}
+                      ariaLabel="Copy"
+                      icon="codicon-copy"
+                      tooltip="Copy"
+                      disabled={isTyping}
+                      buttonName={''}
+                    />
+                  </div>
+                )}
+                {message.messageType  !== 'user' && <div className="divider-line w-full h-[1px] m-0 p-0 py-1 bg-opacity-0"></div>}
+              </div>
+            </div>
           </div>
-        )} */}
-      </div>
-    </>
-  );
-});
-
-export default MessageComponent;
+        )}
+      </>
+    );
+  });
+  
+  export default MessageComponent;

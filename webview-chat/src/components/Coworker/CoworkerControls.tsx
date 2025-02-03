@@ -5,11 +5,16 @@ import CodeButton from '../Common/CodeButton';
 
 const CoworkerControls: React.FC = () => {
   const vscode = useVscode(); // Consume vscode from context
-  const { clearCoworkerSession, setIsTyping, isTyping } = useCoworkerContext();
+  const { clearCoworkerSession, setIsTyping, isTyping, setIsEditing } = useCoworkerContext();
 
   const handleRefreshClick = () => {
     clearCoworkerSession();
     setIsTyping(false);
+    setIsEditing(false);
+    vscode.postMessage({
+      command: 'cleanSmartinsertionPreviousStates',
+      data: {},
+    });
   };
 
   const handleToggleClick = () => {
