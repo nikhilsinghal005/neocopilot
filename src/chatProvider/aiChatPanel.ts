@@ -16,7 +16,7 @@ import { AiChatModelDetails } from './aiChatModelDetails';
 import * as path from 'path';
 import * as fs from 'fs';
 
-interface UploadedImage{
+interface UploadedImage {
   fileName: string;
   filePath: string;
   fileType: string;
@@ -53,7 +53,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     this.aiChatMessageHandler = new AiChatMessageHandler(this, this._authManager, this._context);
     this.aiCoworkerMessageHandler = new AiCoworkerMessageHandler(this, this._authManager, this._context);
     this.aiChatSmartInsertHandler = new AiChatSmartInsertHandler(this, this._authManager, this._context);
-    this.aiChatContextHandler = new AiChatContextHandler(this, this._authManager, this._context); 
+    this.aiChatContextHandler = new AiChatContextHandler(this, this._authManager, this._context);
     this.aiChatModelDetails = new AiChatModelDetails(this, this._authManager, this._context);
   }
 
@@ -67,7 +67,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     if (!AiChatPanel.primaryInstance) {
       console.log('Creating new AiChatPanel instance');
       AiChatPanel.primaryInstance = new AiChatPanel(extensionUri, context, authManager, viewType);
-    }else{
+    } else {
       console.log('Reusing existing AiChatPanel instance');
     }
     return AiChatPanel.primaryInstance;
@@ -95,21 +95,21 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       } else {
         this.activePanels = this.activePanels.filter(panel => panel !== webviewView);
       }
-    // Save visibility state
-    this._context.workspaceState.update('webviewPanelState', {
-      isVisible: webviewView.visible,
-      viewType: this.viewType,
-    });
+      // Save visibility state
+      this._context.workspaceState.update('webviewPanelState', {
+        isVisible: webviewView.visible,
+        viewType: this.viewType,
+      });
     });
 
     webviewView.onDidDispose(() => {
       this.activePanels = this.activePanels.filter(panel => panel !== webviewView);
 
-    // Save state on disposal
-    this._context.workspaceState.update('webviewPanelState', {
-      isVisible: false,
-      viewType: this.viewType,
-    });
+      // Save state on disposal
+      this._context.workspaceState.update('webviewPanelState', {
+        isVisible: false,
+        viewType: this.viewType,
+      });
     });
 
     // Set options for the webview (enabling scripts and setting local resource roots)
@@ -243,6 +243,22 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               }
             });
             break;
+            case 'copy_paste_image':
+              try {
+                const pastedImages = message.images;
+                if (pastedImages && pastedImages.length > 0) {
+                  // Store images in the chat session
+                  const uploadedImages = pastedImages.map((image: UploadedImage) => ({
+                    ...image,
+                  }));
+                  this.aiChatMessageHandler.postImageDetailsToWebview(webviewView, uploadedImages);
+                }
+              } catch (error: any) {
+                console.error('Error handling pasted image:', error);
+                vscode.window.showErrorMessage(`Error processing pasted image: ${error.message}`);
+              }
+              break;
+
         }
       });
     }
@@ -250,12 +266,12 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
   public async getModelDetails() {
     if (this.socketModule.socket) {
-        this.socketModule.socket.emit('get_model_details', {
-            userEmail: this.socketModule.email,
-        });
+      this.socketModule.socket.emit('get_model_details', {
+        userEmail: this.socketModule.email,
+      });
     }
   }
-  
+
 
 
   // Send authentication status to the webview
@@ -267,7 +283,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     this.aiChatContextHandler.getCurrentFileName(vscode.window.activeTextEditor, this._context);
 
     // Notify all active panels about the auth status
-    if(this.activePanels.length > 0){
+    if (this.activePanels.length > 0) {
       this.activePanels.forEach(panel => {
         panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
       });
@@ -279,7 +295,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         await new Promise(resolve => setTimeout(resolve, interval));
         attempts++;
       }
-      if(this.activePanels.length > 0){
+      if (this.activePanels.length > 0) {
         this.activePanels.forEach(panel => {
           panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
         });

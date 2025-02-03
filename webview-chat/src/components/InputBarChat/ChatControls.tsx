@@ -98,6 +98,7 @@ const handleCancelClick = () => {
               setTimeout(() => setWarningMessage(''), 2000);
               return;
             }
+            setUploadImage([]);
             handleSendClick(
               isTyping,
               setWarningMessage,
