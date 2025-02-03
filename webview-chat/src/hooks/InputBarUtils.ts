@@ -373,9 +373,8 @@ export const handlePaste = (
       if (typeof reader.result !== 'string') return;
       const base64Data = reader.result.split(',')[1];
       const fileType = blob.type.split('/')[1];
-      const fileName = blob.name;
       const pastedImage: UploadedImage = {
-        fileName: fileName || `pasted-image-${Date.now()}.${fileType}`,
+        fileName: `pasted-image-${Date.now()}.${fileType}`,
         filePath: `copy-pasted-image`, // Use fileName as filePath for unique identification
         fileType: fileType,
         fileContent: base64Data,
@@ -395,7 +394,6 @@ export const handlePaste = (
     };
     reader.readAsDataURL(blob);
   });
-  e.preventDefault();
 };
 
 

@@ -2,12 +2,11 @@
 import React from 'react';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useCoworkerContext } from '../../context/CoworkerContext';
-import { Send,CircleStop,Paperclip, XCircle } from "lucide-react";
 import {
+  handleCodeInsertClickFunction,
   handleStopClickFunction,
   handleSendClick,
   sanitizeInput,
-  handleImageUpload
 } from '../../hooks/InputBarUtils';
 import { useVscode } from '../../context/VscodeContext';
 
@@ -23,96 +22,74 @@ interface ChatControlsProps {
 const ChatControls: React.FC<ChatControlsProps> = ({
   input,
   setInput,
+  warningMessage,
   setWarningMessage,
   handleSendMessage,
   isTyping,
 }) => {
-  const {setIsTyping, setIsInterrupted,isEditing, setIsEditing,
-    setAttachedContext,
-    previousInput,
-    coworkerSession,
-    previousAttachedContext, uploadImage, setUploadImage, previousUploadImage } = useCoworkerContext();
+  const {setIsTyping, setIsInterrupted } = useCoworkerContext();
   const vscode = useVscode();
-
-  const handleCancelClick = () => {
-    setIsEditing(false);
-    setIsTyping(false);
-    setInput(previousInput);
-    setAttachedContext(previousAttachedContext);
-    setUploadImage(previousUploadImage);
-  }
 
 
   return (
-      <div className="button-group flex items-center gap-2" style={{ marginRight: '4px' }}>
-        {isEditing && (
-          <VSCodeButton
-            onClick={() => handleCancelClick()}
-            appearance="icon"
-            aria-label="Stop"
-            className="rounded-md text-yellow-500"
-          >
-            <span><XCircle size={14}/></span>
-          </VSCodeButton>
-        )
-        }
-        
+    <div className="button-group flex items-center gap-2" style={{ marginRight: '4px' }}>
+      <VSCodeButton
+        onClick={() => handleCodeInsertClickFunction(vscode)}
+        appearance="icon"
+        aria-label="Attach Image"
+        disabled={isTyping}
+        className="rounded-none"
+        style={{
+          color: 'var(--vscode-button-foreground)',
+        }}
+      >
+        <span className="codicon codicon-file-media"></span>
+      </VSCodeButton>
+
+      {isTyping ? (
         <VSCodeButton
-          onClick={() => handleImageUpload(
-            vscode,
-            uploadImage,       
-            setUploadImage,    
-            coworkerSession.coworkerId,
-          )}
+          onClick={() => handleStopClickFunction(setIsTyping, setIsInterrupted)}
           appearance="icon"
-          aria-label="Attach Image"
-          disabled={isTyping}
-          className="rounded-md"
+          aria-label="Stop"
+          className="rounded-none"
           style={{
             color: 'var(--vscode-button-foreground)',
           }}
         >
-          <span><Paperclip size={14}/></span>
+          <span className="codicon codicon-debug-stop"></span>
         </VSCodeButton>
-        {isTyping ? (
-          <VSCodeButton
-            onClick={() => handleStopClickFunction(setIsTyping, setIsInterrupted)}
-            appearance="icon"
-            aria-label="Stop"
-            className="rounded-md text-red-500"
-          >
-            <span><CircleStop size={14}/></span>
-          </VSCodeButton>
-        ) : (
-          <VSCodeButton
-            onClick={() => {
-              if (input.trim() === '') {
-                // setWarningMessage('Cannot send an empty message.');
-                setTimeout(() => setWarningMessage(''), 2000);
-                return;
-              }
-              setUploadImage([]);
-              handleSendClick(
-                isTyping,
-                setWarningMessage,
-                setIsInterrupted,
-                sanitizeInput,
-                input,
-                setInput,
-                handleSendMessage,
-                setIsTyping
-              );
-            }}
-            appearance="icon"
-            aria-label="Send Message"
-            disabled={isTyping}
-            className="rounded-md text-green-500"
-          >
-            <span><Send size={14}/></span>
-          </VSCodeButton>
-        )}
-      </div>
-    );
-  };
+      ) : (
+        <VSCodeButton
+          onClick={() => {
+            if (input.trim() === '') {
+              // setWarningMessage('Cannot send an empty message.');
+              setTimeout(() => setWarningMessage(''), 2000);
+              return;
+            }
+            handleSendClick(
+              isTyping,
+              setWarningMessage,
+              setIsInterrupted,
+              sanitizeInput,
+              input,
+              setInput,
+              handleSendMessage,
+              setIsTyping
+            );
+          }}
+          appearance="icon"
+          aria-label="Send Message"
+          disabled={isTyping}
+          className="rounded-none"
+          style={{
+            color: 'var(--vscode-button-foreground)',
+          }}
+        >
+          <span className="codicon codicon-send"></span>
+        </VSCodeButton>
+      )}
+    </div>
+  );
+};
 
 export default ChatControls;

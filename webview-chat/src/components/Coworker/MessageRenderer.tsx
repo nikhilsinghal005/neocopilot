@@ -5,16 +5,14 @@ import '../../themes/prism-tomorrow.css';
 import './custom-overrides.css';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from './CodeBlock';
-import { CurrentFileContext,UploadedImage } from '../../types/CoworkerMessage';
+import { CurrentFileContext } from '../../types/Message';
 import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import LanguageIcon from '../Common/LanguageIcon';
-import { Image } from "lucide-react"
 
 interface MessageRendererProps {
   text: string;
   type: string;
   attachedContext: CurrentFileContext[]
-  uploadedImage: UploadedImage[];
 }
 
 interface CodeProps {
@@ -24,7 +22,7 @@ interface CodeProps {
   [key: string]: any;  // Allow other arbitrary props
 }
 
-const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedContext, uploadedImage = [] }) => {
+const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedContext = [] }) => {
   // Define custom components for rendering specific markdown elements
 
   const getFileName = (relativePath: string): string => {
@@ -127,91 +125,63 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
 
     // Render tags for attached context
     const renderAttachedContext = () => {
-      const hasAttachedContext = attachedContext && attachedContext.length > 0;
-      const hasUploadedImages = uploadedImage && uploadedImage.length > 0;
-      if (!hasAttachedContext && !hasUploadedImages) {
+      if (!attachedContext || attachedContext.length === 0) {
         return null;
       }
     
       return (
         <div>
-          <h4 className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">References</h4>
-          {hasAttachedContext && (
-            <div className="flex items-center gap-1">
-              <span className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">Code:</span>
-              <ul className="flex flex-wrap gap-1">
-                {attachedContext.map((context, index) => (
-                  <span
-                    key={index}
-                    className="rounded-xs pr-1 flex items-center h-5 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
-                    style={{
-                      backgroundColor: 'var(--vscode-editor-background)',
-                      borderColor: 'var(--vscode-editorGroup-border)',
-                      color: 'var(--vscode-editor-foreground)',
-                    }}
-                  >
-                    <LanguageIcon fileName={context.fileName || ""} iconSize={16} />
-                    {context.fileName}
-                  </span>
-                ))}
-              </ul>
-            </div>
-          )}
-          {hasUploadedImages && (
-            <div className="flex items-center gap-1 mt-1">
-              <span className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">Files:</span>
-              <ul className="flex flex-wrap gap-1">
-                {uploadedImage.map((image, index) => (
-                  <span
-                    key={index}
-                    className="rounded-xs pr-1 flex items-center h-5 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
-                    style={{
-                      backgroundColor: 'var(--vscode-editor-background)',
-                      borderColor: 'var(--vscode-editorGroup-border)',
-                      color: 'var(--vscode-editor-foreground)',
-                    }}
-                  >
-                    <Image size={12} className="ml-1 mr-1" />
-                    {image.fileName}
-                  </span>
-                ))}
-              </ul>
-            </div>
-          )}
+          <h4 className="text-xs font-semibold text-vscode-editor-foreground mb-1">Referenced Files:</h4>
+          <ul className="flex flex-wrap gap-2">
+            {attachedContext.map((context, index) => (
+              <span
+                key={index}
+                className="rounded-xs pr-1 flex items-center h-6 text-xs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+                style={{
+                  backgroundColor: 'var(--vscode-editor-background)',
+                  borderColor: 'var(--vscode-editorGroup-border)',
+                  color: 'var(--vscode-editor-foreground)',
+                }}
+              >
+                <LanguageIcon fileName={context.fileName || ""} iconSize={20} />
+                {context.fileName}
+              </span>
+            ))}
+          </ul>
         </div>
       );
     };
-    
-    if (type === 'user') {
-      let bottomMargin: string = "";
-      if (attachedContext.length > 0){
-        bottomMargin = 'mb-2';
-      }    
-      return (
-        <div className={`prose max-w-full text-xs leading-6 space-y-1 ${bottomMargin}`}>
-          <ReactMarkdown
-            children={text}
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-            components={components}
-          />
-          {renderAttachedContext()}
-        </div>
-      );
-    }
-     else {
-      return (
-        <div className="prose max-w-full text-xs leading-6 space-y-2 mb-2">
-          <ReactMarkdown
-            children={text}
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
-            components={components}
-          />
-        </div>
-      );
-    }
-  
-  };
-  
-  export default MessageRenderer;
+
+  if (type === 'user') {
+    let bottomMargin: string = "";
+    if (attachedContext.length > 0){
+      bottomMargin = 'mb-2';
+    }    
+    return (
+      <div className={`prose max-w-full text-sm leading-6 space-y-1 ${bottomMargin}`}>
+        <ReactMarkdown
+          children={text}
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+          components={components}
+        />
+        {renderAttachedContext()}
+      </div>
+    );
+
+  } else {
+    return (
+      <div className="prose max-w-full text-sm leading-6 space-y-2">
+        <ReactMarkdown
+          children={text}
+          remarkPlugins={[remarkGfm]}
+          rehypePlugins={[[rehypePrism, { ignoreMissing: true }]]}
+          components={components}
+        />
+      </div>
+    );
+  }
+
+};
+
+export default MessageRenderer;

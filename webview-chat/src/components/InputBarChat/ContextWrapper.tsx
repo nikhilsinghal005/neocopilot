@@ -13,7 +13,7 @@ interface ContextWrapperProps {
 }
 
 const ContextWrapper: React.FC<ContextWrapperProps> = () => {
-  const { isTyping, isEditing,uploadImage  } = useChatContext();
+  const { isTyping, isEditing,attachedContext,uploadImage  } = useChatContext();
   const [showList, setShowList] = useState(false);
 
   // Close dropdown when clicking outside
