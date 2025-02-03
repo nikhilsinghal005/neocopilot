@@ -136,7 +136,7 @@ return (
 
         {/* Bottom Section */}
         <div
-          className="bottom-section flex justify-between items-center gap-2 mt-0 p-0"
+          className="bottom-section flex justify-end items-center gap-2 mt-0 p-0"
         >
           {/* Chat Model Dropdown */}
           {/* <ChatModelDropdown /> */}

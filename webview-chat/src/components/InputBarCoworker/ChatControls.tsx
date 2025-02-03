@@ -44,7 +44,7 @@ const ChatControls: React.FC<ChatControlsProps> = ({
 
 
   return (
-      <div className="button-group flex items-center gap-2" style={{ marginRight: '4px' }}>
+      <div className="button-group flex items-center gap-2 justify-end" style={{ marginRight: '4px' }}>
         {isEditing && (
           <VSCodeButton
             onClick={() => handleCancelClick()}
