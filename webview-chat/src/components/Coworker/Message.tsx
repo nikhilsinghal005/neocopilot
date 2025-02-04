@@ -141,7 +141,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
                 zIndex: 2,
               }}
             >
-              {message.messageType === 'user' && (
+              {/* {message.messageType === 'user' && (
                 <div className="absolute top-1 right-1 z-10">
                   <CodeButtonWithText
                     onClick={() => handleEditButtonClick(message.id)}
@@ -151,7 +151,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
                     disabled={isTyping}
                   />
                 </div>
-              )}
+              )} */}
               <div className="w-full">
                 <MessageRenderer
                   text={message.text}
@@ -161,14 +161,14 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
                 />
                 {message.messageType === 'system' && !isTyping && (
                   <div className="flex justify-end">
-                  <CodeButtonWithText
+                  {/* <CodeButtonWithText
                       onClick={() => handleRefresh(message.id)}
                       ariaLabel="Refresh"
                       icon="codicon-refresh"
                       tooltip="Copy"
                       disabled={isTyping}
                       buttonName={''}
-                    />
+                    /> */}
                     <CodeButtonWithText
                       onClick={() => handleCopy(message.id)}
                       ariaLabel="Copy"

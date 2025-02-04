@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useVscode } from '../../context/VscodeContext';
 import { VscNewFile, VscAdd, VscClose } from "react-icons/vsc"
-import CodeButton from '../Common/CodeButton';
 import CodeButtonWithText from '../Common/CodeButtonWithText';
-import CodeButtonNormal from '../Common/CodeButtonNormal';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
-// import CodeButtonWithName from '../Common/CodeButtonWithName';
 import { useCoworkerContext } from '../../context/CoworkerContext';
 import LanguageIcon from '../Common/LanguageIcon';
 

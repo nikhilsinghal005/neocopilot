@@ -1,6 +1,6 @@
 // src/components/Chat/TypingIndicator.tsx
 import { useVscode } from '../../context/VscodeContext';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect} from 'react';
 
 const TypingIndicator: React.FC = () => {
   // Setting a default value for input

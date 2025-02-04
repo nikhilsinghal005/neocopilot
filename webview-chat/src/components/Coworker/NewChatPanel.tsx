@@ -1,6 +1,4 @@
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useVscode } from '../../context/VscodeContext';
 import { useCoworkerContext } from '../../context/CoworkerContext';
 import { Brain, CodeXml, Plug2, BotMessageSquare, MessageSquare } from "lucide-react";

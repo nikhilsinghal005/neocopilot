@@ -6,7 +6,6 @@ import './custom-overrides.css';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from './CodeBlock';
 import { CurrentFileContext, UploadedImage } from '../../types/Message';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import LanguageIcon from '../Common/LanguageIcon';
 import { Image } from "lucide-react"
 

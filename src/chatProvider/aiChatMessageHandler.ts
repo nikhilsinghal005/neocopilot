@@ -6,7 +6,6 @@ import { ChatSession, MessageResponse, MessageResponseFromBackEnd } from './type
 import { AiChatPanel } from './aiChatPanel';
 import * as vscode from 'vscode';
 import { getFileText } from '../utilities/editorUtils/getFileText';
-import * as fs from 'fs';
 
 interface UploadedImage{
   fileName: string;

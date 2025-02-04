@@ -1,21 +1,18 @@
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
-import { useVscode } from '../../context/VscodeContext';
 import { useChatContext } from '../../context/ChatContext';
 import { Brain, CodeXml, Plug2, BotMessageSquare, MessageSquare } from "lucide-react";
 
 const NewChatPanel: React.FC = () => {
-  const vscode = useVscode();
+  // const vscode = useVscode();
   const { chatSessionList, setChatSession } = useChatContext();
 
-  // Toggle Webview action handler
-  const handleToggleWebview = () => {
-    vscode.postMessage({
-      command: 'toggle_webview',
-      message: 'Toggling the webview.',
-    });
-  };
+  // // Toggle Webview action handler
+  // const handleToggleWebview = () => {
+  //   vscode.postMessage({
+  //     command: 'toggle_webview',
+  //     message: 'Toggling the webview.',
+  //   });
+  // };
 
   const handleChatClick = (session: any) => {
     setChatSession(session);
