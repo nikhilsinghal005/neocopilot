@@ -65,9 +65,9 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     };
   
     const handleEditButtonClick = (messageId: string) => {
-      console.log('handleEditButtonClick');
-      console.log('Current Editable Message ID: ', messageId);
-      console.log('Current Editable Message: ',message)
+      // console.log('handleEditButtonClick');
+      // console.log('Current Editable Message ID: ', messageId);
+      // console.log('Current Editable Message: ',message)
   
       // Store the current input values
       setPreviousInput(input);

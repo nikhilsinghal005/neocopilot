@@ -85,7 +85,7 @@ export class CodeSelectionCommandHandler {
     if (isEmpty) {
       // Check if anything exists in the current line after trimming
       const currentLine = editor.document.lineAt(selection.start.line).text.trim();
-      console.log("currentLine", currentLine);
+      // console.log("currentLine", currentLine);
       if (currentLine.length > 0) {
         vscode.window.showErrorMessage('Please select any text to use this command.');
         return;
@@ -115,7 +115,7 @@ export class CodeSelectionCommandHandler {
           const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
           let retries = 0;
           while (retries < 4) {
-            console.log("retries", retries);
+            // console.log("retries", retries);
             if (this.socketModule.socket?.connected) {
               this.attachSocketListeners();
               await this.handleClick();
@@ -228,7 +228,7 @@ export class CodeSelectionCommandHandler {
 
         // Check if the line is complete and there are no errors or rate limits
         if (data.isLineComplete && !data.isError && !data.isRateLimit) {
-          console.log("Line complete");
+          // console.log("Line complete");
           // Replace line endings and enqueue the snippet line by line
           const tempText: string = this.updatedtext
             .replace(/\r\n|\r/g, '\n')
@@ -249,8 +249,8 @@ export class CodeSelectionCommandHandler {
           this.stopAnimation();
 
           if (data.isRateLimit) {
-            console.log("Rate Limit Exceeded");
-            console.log(data.rateLimitResponse);
+            // console.log("Rate Limit Exceeded");
+            // console.log(data.rateLimitResponse);
             showCustomNotification(data.rateLimitResponse);
             this.updatedtext = "";
             this.codeInsertionManager.reinitialize();
@@ -332,7 +332,7 @@ export class CodeSelectionCommandHandler {
    * Handles the "Code Factor" command.
    */
   private async handleCodeFactorCommand(selection: vscode.Selection) {
-    console.log("With Selection");
+    // console.log("With Selection");
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       vscode.window.showErrorMessage('No active editor found.');
@@ -420,7 +420,7 @@ export class CodeSelectionCommandHandler {
       documentLanguage
     );
 
-    console.log("File Name----------------", this.currentFileName);
+    // console.log("File Name----------------", this.currentFileName);
 
     // Place cursor at the start of selection so it's no longer highlighted
     const position = editor.selection.start;
@@ -438,7 +438,7 @@ export class CodeSelectionCommandHandler {
     nextLineCharacter: string,
     actionType: string
   ) {
-    console.log("Message to socket from backend");
+    // console.log("Message to socket from backend");
     if (this.socketModule.socket) {
       this.socketModule.socket.emit('generate_editor_code_refactor', {
         uniqueId: uniqueId,

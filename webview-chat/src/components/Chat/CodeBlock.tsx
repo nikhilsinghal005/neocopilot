@@ -30,7 +30,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
   const [state, setState] = useState<'idle' | 'processing' | 'review' | 'newFileRequiredType1' | 'newFileRequiredType2'>('idle');
   const [dots, setDots] = useState('');
   const codeId = React.useMemo(() => Math.random().toString(36).substr(2, 9), []); // Generate unique ID for the code block
-  console.log("codeId", codeId)
+  // console.log("codeId", codeId)
   const [showNewFileDropdownType1, setShowNewFileDropdownType1] = useState(false);
   const [showNewFileDropdownType2, setShowNewFileDropdownType2] = useState(false);
   const { isTyping } = useChatContext();
@@ -50,7 +50,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
 
     const handleNewFileRequired = (event: MessageEvent) => {
       if (event.data.command === 'file_does_not_exist' && event.data.codeId === codeId) {
-        console.log("Check the data recived from the extension", event.data)
+        // console.log("Check the data recived from the extension", event.data)
         // console.log("File does not exist")
         if (event.data.isAnyFileOpen) {
           setState('newFileRequiredType1');
