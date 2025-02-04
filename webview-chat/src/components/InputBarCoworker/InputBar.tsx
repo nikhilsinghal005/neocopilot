@@ -51,16 +51,13 @@ const InputBar: React.FC<InputBarProps> = ({
   });
 
   // Dynamically resize textarea
-  const handleResize = useCallback(() => {
+ const handleResize = useCallback(() => {
     const textarea = document.querySelector('.input-textarea') as HTMLTextAreaElement;
     if (textarea) {
       textarea.style.height = 'auto';
       const newHeight = Math.min(Math.max(textarea.scrollHeight, 50), 140);
       textarea.style.height = `${newHeight}px`;
-      document.documentElement.style.setProperty(
-        '--input-container-height',
-        `${newHeight + 40}px`
-      );
+      document.documentElement.style.setProperty('--input-container-height', `${newHeight + 40}px`);
     }
   }, []);
 
@@ -105,7 +102,7 @@ return (
             placeholder="Type your message..."
             style={{
               color: 'var(--vscode-editor-foreground)',
-              minHeight: '40px',
+              minHeight: '50px',
               backgroundColor: 'transparent',
               outline: 'none',
             }}
