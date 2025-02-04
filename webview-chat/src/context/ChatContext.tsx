@@ -74,7 +74,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [chatModel, setChatModel] = useState<string>('neo-7');
+  const [chatModel, setChatModel] = useState<string>('');
   const [previousChatModel, setPreviousChatModel] = useState<string>('neo-7');
   const [attachedContext, setAttachedContext] = useState<CurrentFileContext[]>([]);
   const [previousAttachedContext, setPreviousAttachedContext] = useState<CurrentFileContext[]>([]);

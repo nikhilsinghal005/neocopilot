@@ -2,6 +2,7 @@
 import React from "react";
 import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
 import { useChatContext } from "../../context/ChatContext";
+import { chatModelDetail } from "../../types/AppDetails";
 
 const ChatModelDropdown: React.FC = () => {
   const { chatModel, setChatModel, chatModelList, setChatModelList, isTyping } =
@@ -13,6 +14,12 @@ const ChatModelDropdown: React.FC = () => {
         const { model_details } = event.data;
         if (model_details) {
           setChatModelList(model_details);
+          const defaultBaseModel = chatModelList.find(
+            (model: chatModelDetail) => model.isBaseModel
+          );
+          if (defaultBaseModel) {
+            setChatModel(defaultBaseModel.modelKey);
+          }
         }
       }
     };
@@ -20,7 +27,7 @@ const ChatModelDropdown: React.FC = () => {
     return () => {
       window.removeEventListener("message", messageHandler);
     };
-  }, [setChatModelList]);
+  }, [setChatModelList, chatModelList, setChatModel]);
 
   return (
     <>
