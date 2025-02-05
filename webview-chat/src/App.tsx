@@ -94,10 +94,10 @@ const App: React.FC = () => {
       label: 'Chat',
       content: <Chat />,
     },
-    {
-      label: 'Coworker',
-      content: <Coworker />,
-    },
+    // {
+    //   label: 'Coworker',
+    //   content: <Coworker />,
+    // },
     {
       label: 'About',
       content: <About vscode={vscodeApi} />,
