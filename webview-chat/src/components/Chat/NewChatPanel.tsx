@@ -1,21 +1,18 @@
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
-import { useVscode } from '../../context/VscodeContext';
 import { useChatContext } from '../../context/ChatContext';
 import { Brain, CodeXml, Plug2, BotMessageSquare, MessageSquare } from "lucide-react";
 
 const NewChatPanel: React.FC = () => {
-  const vscode = useVscode();
+  // const vscode = useVscode();
   const { chatSessionList, setChatSession } = useChatContext();
 
-  // Toggle Webview action handler
-  const handleToggleWebview = () => {
-    vscode.postMessage({
-      command: 'toggle_webview',
-      message: 'Toggling the webview.',
-    });
-  };
+  // // Toggle Webview action handler
+  // const handleToggleWebview = () => {
+  //   vscode.postMessage({
+  //     command: 'toggle_webview',
+  //     message: 'Toggling the webview.',
+  //   });
+  // };
 
   const handleChatClick = (session: any) => {
     setChatSession(session);
@@ -23,8 +20,11 @@ const NewChatPanel: React.FC = () => {
 
   return (
     <div
-      className="w-full font-roboto h-full flex flex-col justify-start items-center"
-      style={{ paddingTop: '40px' }}
+      className="w-full font-roboto h-full flex flex-col justify-start items-center overflow-y-auto px-4"
+      style={{ paddingTop: '40px', 
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'var(--vscode-scrollbarSlider-background) transparent',
+       }}
     >
       <h1 className="text-lg font-roboto-bold mb-4">Welcome to Neo Copilot</h1>
       <div
@@ -32,7 +32,7 @@ const NewChatPanel: React.FC = () => {
         style={{
           maxWidth: '600px',
           minWidth: '300px',
-          height: '100%',
+          // height: '100%',
         }}
       >
         {/* AI-Inline Edit */}
@@ -119,20 +119,18 @@ const NewChatPanel: React.FC = () => {
 
       {chatSessionList.length > 0 && (
         <div
-          className="p-4 mt-4 border rounded-md overflow-y-auto"
+          className="p-4 mt-4 border rounded-md"
           style={{
             maxWidth: '600px',
             minWidth: '300px',
-            maxHeight: '130px',
+            maxHeight: '150px',
             width: '100%',
-            scrollbarWidth: 'thin',
-            scrollbarColor: 'var(--vscode-scrollbarSlider-background) transparent',
             borderColor: 'var(--vscode-editorGroup-border)',
           }}
         >
           <h2 className="text-sm font-roboto-bold mb-2">Previous Chats</h2>
           <ul className="list-none p-0">
-            {chatSessionList.slice(0, 3).map((session, index) => (
+            {chatSessionList.slice(0, 7).map((session, index) => (
               <li
                 key={index}
                 className="mb-2 flex items-center p-2 rounded cursor-pointer"

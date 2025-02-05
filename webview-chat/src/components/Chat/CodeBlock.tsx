@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useVscode } from '../../context/VscodeContext';
 import { VscNewFile, VscAdd, VscClose } from "react-icons/vsc"
-import CodeButton from '../Common/CodeButton';
 import CodeButtonWithText from '../Common/CodeButtonWithText';
-import CodeButtonNormal from '../Common/CodeButtonNormal';
-import { VSCodeButton } from '@vscode/webview-ui-toolkit/react';
-// import CodeButtonWithName from '../Common/CodeButtonWithName';
 import { useChatContext } from '../../context/ChatContext';
 import LanguageIcon from '../Common/LanguageIcon';
 
@@ -290,7 +286,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
             </span>
           )}
           {state === 'newFileRequiredType1' && (
-            <div className="absolute right-1 mr-1">
+            <div className="absolute right-1 mr-2 mb-1">
               <CodeButtonWithText
                 onClick={() => setShowNewFileDropdownType1(!showNewFileDropdownType1)}
                 ariaLabel="Smart Insert to Editor"
@@ -371,7 +367,7 @@ const CodeBlock: React.FC<CodeBlockProps> = ({
             </div>
           )}
           {state === 'newFileRequiredType2' && (
-            <div className="absolute right-1 mr-1">
+            <div className="absolute right-1 mr-2 mb-1">
               <CodeButtonWithText
                 onClick={() => setShowNewFileDropdownType2(!showNewFileDropdownType2)}
                 ariaLabel="Smart Insert to Editor"

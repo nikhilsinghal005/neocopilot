@@ -28,7 +28,15 @@ const ChatContainer: React.FC<ChatContainerProps> = ({
     <div className="chat-page flex flex-col flex-grow w-full h-full">
       {/* Conditional rendering for NewChatPanel */}
       {!hasMessages ? (
+        <div
+        className="messages-container fixed left-0 right-0 overflow-y-auto bg-vscode-editor-background text-vscode-editor-foreground pb-4 pt-2"
+        style={{
+          top: '50px',
+          bottom: `calc(var(--input-container-height, 150px) + 10px)`, // Adjusted to match the dynamic height of input container
+        }}
+      >
         <NewChatPanel />
+      </div>
       ) : (
         <>
           {/* Messages Container */}
