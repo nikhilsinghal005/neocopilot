@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import CoworkerContainer from '../components/Coworker/CoworkerContainer'; // Updated to match Coworker naming
 import { useCoworkerListener } from '../hooks/useCoworkerListener';
-import { MessageStore, MessageOutput } from '../types/Message';
+import { MessageStore } from '../types/Message';
 import { v4 as uuidv4 } from 'uuid';
 import { useCoworkerContext } from '../context/CoworkerContext';
 import { useVscode } from '../context/VscodeContext';

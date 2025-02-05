@@ -7,7 +7,6 @@ import { AuthManager } from './authManager';
 import { VscodeEventsModule } from '../codeCompletion/vscodeEventsModule';
 import { SocketModule } from '../socketModule';
 import { initializeAppFunctions } from '../initializeAppFunctions';
-import { AiChatPanel } from '../chatProvider/aiChatPanel';
 
 export interface UserProfile {
     email: string;

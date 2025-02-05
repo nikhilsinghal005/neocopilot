@@ -93,9 +93,7 @@ const handleCancelClick = () => {
       ) : (
         <VSCodeButton
           onClick={() => {
-            if (input.trim() === '') {
-              // setWarningMessage('Cannot send an empty message.');
-              setTimeout(() => setWarningMessage(''), 2000);
+            if (input.trim() === "") {
               return;
             }
             setUploadImage([]);
@@ -112,7 +110,7 @@ const handleCancelClick = () => {
           }}
           appearance="icon"
           aria-label="Send Message"
-          disabled={isTyping}
+          disabled={isTyping || input.trim() === ""}
           className="rounded-md text-green-500"
         >
           <span><Send size={14}/></span>

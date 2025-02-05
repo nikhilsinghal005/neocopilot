@@ -9,7 +9,7 @@ import {
 import ContextWrapper from './ContextWrapper';
 import ChatControls from './ChatControls';
 import { useVscode } from '../../context/VscodeContext';
-// import {handlePaste} from '../../hooks/InputBarUtils';
+import {handlePaste} from '../../hooks/InputBarUtils';
 
 interface InputBarProps {
   input: string;
@@ -51,16 +51,13 @@ const InputBar: React.FC<InputBarProps> = ({
   });
 
   // Dynamically resize textarea
-  const handleResize = useCallback(() => {
+ const handleResize = useCallback(() => {
     const textarea = document.querySelector('.input-textarea') as HTMLTextAreaElement;
     if (textarea) {
       textarea.style.height = 'auto';
       const newHeight = Math.min(Math.max(textarea.scrollHeight, 50), 140);
       textarea.style.height = `${newHeight}px`;
-      document.documentElement.style.setProperty(
-        '--input-container-height',
-        `${newHeight + 40}px`
-      );
+      document.documentElement.style.setProperty('--input-container-height', `${newHeight + 40}px`);
     }
   }, []);
 
@@ -100,12 +97,12 @@ return (
               setInput(e.target.value);
               handleResize();
             }}
-            // onPaste={(e) => handlePaste(e, setUploadImage,coworkerSession.coworkerId,vscode,uploadImage)}
+            onPaste={(e) => handlePaste(e, setUploadImage,coworkerSession.coworkerId,vscode,uploadImage)}
             className="flex-grow bg-transparent outline-none px-2 py-1 resize-none input-textarea text-xxs rounded-md"
             placeholder="Type your message..."
             style={{
               color: 'var(--vscode-editor-foreground)',
-              minHeight: '40px',
+              minHeight: '50px',
               backgroundColor: 'transparent',
               outline: 'none',
             }}

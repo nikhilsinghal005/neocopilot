@@ -1,5 +1,4 @@
 import React from 'react';
-import { getIcon } from 'seti-file-icons';
 import { themeIcons } from 'seti-file-icons';
 import DOMPurify from 'dompurify';
 
