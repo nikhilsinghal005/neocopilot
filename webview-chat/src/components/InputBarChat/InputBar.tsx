@@ -98,7 +98,7 @@ const InputBar: React.FC<InputBarProps> = ({
                 setInput(e.target.value);
                 handleResize();
               }}
-              onPaste={(e) => handlePaste(e, setUploadImage,chatSession.chatId,vscode,uploadImage)}
+              onPaste={(e) => handlePaste(e, setUploadImage,chatSession.chatId,vscode,uploadImage,setInput)}
               className="flex-grow bg-transparent outline-none px-2 py-1 resize-none input-textarea text-xxs rounded-md"
               placeholder="Type your message..."
               style={{

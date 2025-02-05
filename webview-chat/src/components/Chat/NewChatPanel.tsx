@@ -123,8 +123,10 @@ const NewChatPanel: React.FC = () => {
           style={{
             maxWidth: '600px',
             minWidth: '300px',
-            maxHeight: '150px',
+            maxHeight: '350px',
             width: '100%',
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'var(--vscode-scrollbarSlider-background) transparent',
             borderColor: 'var(--vscode-editorGroup-border)',
           }}
         >

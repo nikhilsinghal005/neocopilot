@@ -315,7 +315,8 @@ export const handlePaste = (
   setUploadImage: (images: UploadedImage[]) => void,
   chatId: string,
   vscode: any,
-  uploadImage: UploadedImage[]
+  uploadImage: UploadedImage[],
+  setText?: (text: string) => void
 ) => {
   e.preventDefault(); // Prevent default paste behavior
   
@@ -382,8 +383,8 @@ export const handlePaste = (
     reader.readAsDataURL(blob);
   } else {
     const textData = e.clipboardData?.getData('text');
-    if (textData) {
-      return
+    if (textData && setText) {
+      setText(textData);
     }
   }
 };
