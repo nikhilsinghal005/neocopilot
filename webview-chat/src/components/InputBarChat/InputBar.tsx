@@ -11,6 +11,7 @@ import ChatModelDropdown from './ChatModelDropdown';
 import ChatControls from './ChatControls';
 import { useVscode } from '../../context/VscodeContext';
 import {handlePaste} from '../../hooks/InputBarUtils';
+import HighlightedTextarea from '../Common/HighlightText';
 
 interface InputBarProps {
   input: string;
@@ -92,7 +93,7 @@ const InputBar: React.FC<InputBarProps> = ({
           {/* Textarea */}
           <div className="top-section flex items-center gap-2 text-xxs">
           <style>{placeholderStyle}</style>
-            <textarea
+            <HighlightedTextarea
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
@@ -112,7 +113,6 @@ const InputBar: React.FC<InputBarProps> = ({
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   if (input.trim() === '') {
-                    // setWarningMessage('Cannot send an empty message.');
                     setTimeout(() => setWarningMessage(''), 2000);
                     return;
                   }
@@ -135,6 +135,7 @@ const InputBar: React.FC<InputBarProps> = ({
           {/* Bottom Section */}
           <div
             className="bottom-section flex justify-between items-center gap-2 mt-0 p-0"
+            style={{ position: 'relative', zIndex: 10 }}
           >
             {/* Chat Model Dropdown */}
             <ChatModelDropdown />
