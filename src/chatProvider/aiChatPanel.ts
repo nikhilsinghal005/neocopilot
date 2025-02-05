@@ -65,10 +65,10 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     viewType: string
   ): AiChatPanel {
     if (!AiChatPanel.primaryInstance) {
-      console.log('Creating new AiChatPanel instance');
+      // console.log('Creating new AiChatPanel instance');
       AiChatPanel.primaryInstance = new AiChatPanel(extensionUri, context, authManager, viewType);
     } else {
-      console.log('Reusing existing AiChatPanel instance');
+      // console.log('Reusing existing AiChatPanel instance');
     }
     return AiChatPanel.primaryInstance;
   }
@@ -81,12 +81,12 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   ) {
     // Manage visibility and active panels list based on webview's visibility
     if (webviewView.visible) {
-      console.log('Webview is visible');
+      // console.log('Webview is visible');
       this.activePanels.push(webviewView);
     }
 
     webviewView.onDidChangeVisibility(() => {
-      console.log('Webview visibility changed');
+      // console.log('Webview visibility changed');
       // Manage visibility and active panels list based on webview's visibility
       if (webviewView.visible) {
         if (!this.activePanels.includes(webviewView)) {
@@ -120,13 +120,13 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     };
 
     // Set the HTML content for the webview
-    console.log('Setting webview HTML');
+    // console.log('Setting webview HTML');
     await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
     webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
     // Add a listener for messages from the webview (e.g., user actions like sending messages)
     if (!this.webviewListeners.has(webviewView)) {
-      console.log('Adding webview listener');
+      // console.log('Adding webview listener');
       this.webviewListeners.add(webviewView);
       this.aiChatMessageHandler.initializeWebviewListener(webviewView)
       this.aiCoworkerMessageHandler.initializeWebviewListener(webviewView)
@@ -155,7 +155,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           // Toggles sidebar visibility or location
           case 'toggleSidebar':
             await this.panelManager.togglePanelLocationChange();
-            console.log("Toggled sidebar");
+            // console.log("Toggled sidebar");
             break;
 
           // Handles code snippet insertion into terminal or editor
@@ -183,13 +183,13 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
           // Checks if the user is logged in and initializes necessary services
           case 'ready':
-            console.log('Checking if user is logged in in the ready part');
+            // console.log('Checking if user is logged in in the ready part');
             const isLoggedIn = await this._authManager.verifyAccessToken();
-            console.log("Currently user is logged in")
+            // console.log("Currently user is logged in")
             this.sendAuthStatus(isLoggedIn);
 
             if (isLoggedIn) {
-              console.log('Initializing sockets');
+              // console.log('Initializing sockets');
               this.socketModule = SocketModule.getInstance();
               this.aiChatMessageHandler.initializeSockets();
               this.aiCoworkerMessageHandler.initializeSockets();
@@ -276,9 +276,9 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
   // Send authentication status to the webview
   public async sendAuthStatus(isLoggedIn: boolean): Promise<void> {
-    console.log("Sending auth status");
+    // console.log("Sending auth status");
     // Current auth Status
-    console.log("Auth status: " + isLoggedIn);
+    // console.log("Auth status: " + isLoggedIn);
     await this._context.workspaceState.update('isLoggedIn', isLoggedIn);
     this.aiChatContextHandler.getCurrentFileName(vscode.window.activeTextEditor, this._context);
 

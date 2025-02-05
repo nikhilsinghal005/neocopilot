@@ -96,7 +96,7 @@ export class SuggestionManager {
     try {
       // Validate input text and editor presence
       if (isNullOrEmptyOrWhitespace(this.vscodeEventsModule.currentText) || !editor) {
-        //console.log("Input text is short or editor is undefined.");
+        //// console.log("Input text is short or editor is undefined.");
         this.reinitialize();
         return;
       }

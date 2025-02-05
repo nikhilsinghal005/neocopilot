@@ -56,14 +56,14 @@ const App: React.FC = () => {
   useEffect(() => {
     // console.log('Sending initial "ready" command.');
     vscodeApi.postMessage({ command: 'ready' });
-    console.log('App mounted.')
+    // console.log('App mounted.')
 
     const handleMessage = (event: MessageEvent) => {
-      console.log('Message received from VSCode:', event.data);
+      // console.log('Message received from VSCode:', event.data);
       // console.log('Message received from VSCode:', event.data);
       const message = event.data;
       if (message.command === 'authStatus') {
-        console.log('Received authStatus:', message.isLoggedIn);
+        // console.log('Received authStatus:', message.isLoggedIn);
         setIsLoggedIn(message.isLoggedIn);
 
         if (message.isLoggedIn) {
