@@ -62,6 +62,12 @@ const SelectedContextTags: React.FC = () => {
                 style={{ marginRight: '2px', fontSize: '8px' }}
               ></span>
             )}
+            {context.isAttachedInText && (
+              <span
+                style={{ marginRight: '2px', fontSize: '8px' }}
+                className="ml-1"
+              >@</span>
+            )}
             <span className="flex items-center">
               <LanguageIcon fileName={context.fileName || ''} iconSize={16} />
               <span style={{fontSize:"10px"}}>{context.fileName}</span>

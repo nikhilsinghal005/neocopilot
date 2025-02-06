@@ -218,6 +218,50 @@ export const handleListItemClickFunction = (
       isSelected: item.isSelected,
       isAttachedInContextList: true,
       isManuallyAddedByUser: true,
+      isAttachedInText: false
+    };
+
+    setAttachedContext([...attachedContext, newContext]);
+  } else {
+    // Notify user about the limit
+    vscode.postMessage({
+      command: 'showInfoPopup',
+      data: {
+        title: 'Context Information',
+        message: 'You can only attach up to 3 files at a time.',
+      },
+    });
+  }
+};
+
+// Handle clicking on a list item from @ function to attach a file
+export const handleAttachItemClickFunction = (
+  item: EditorOpenFileList,
+  setSelectedItem: (item: string | null) => void,
+  setShowList: (show: boolean) => void,
+  attachedContext: CurrentFileContext[],
+  openEditorFilesList: EditorOpenFileList[],
+  setOpenEditorFilesList: (files: EditorOpenFileList[]) => void,
+  setAttachedContext: (contexts: CurrentFileContext[]) => void,
+  vscode: any
+) => {
+  setSelectedItem(item.fileName);
+  setShowList(false);
+
+  if (attachedContext.length < 3) { // Allow up to 3 files
+    const updatedOpenFilesList = openEditorFilesList.filter((file) => file.filePath !== item.filePath);
+    setOpenEditorFilesList(updatedOpenFilesList);
+
+    const newContext: CurrentFileContext = {
+      fileName: item.fileName,
+      filePath: item.filePath,
+      languageId: item.languageId,
+      isActive: item.isActive,
+      isOpened: item.isOpened,
+      isSelected: item.isSelected,
+      isAttachedInContextList: true,
+      isManuallyAddedByUser: false,
+      isAttachedInText: true,
     };
 
     setAttachedContext([...attachedContext, newContext]);

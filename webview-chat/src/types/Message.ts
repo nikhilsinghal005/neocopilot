@@ -13,6 +13,7 @@ export type CurrentFileContext = {
   isSelected: boolean;
   isAttachedInContextList: boolean;
   isManuallyAddedByUser: boolean;
+  isAttachedInText: boolean;
 };
 
 export type UploadedImage = {
