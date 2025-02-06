@@ -4,7 +4,7 @@ import React, { useState, useEffect} from 'react';
 
 const TypingIndicator: React.FC = () => {
   // Setting a default value for input
-  const [input, setInput] = useState("processing");
+  const [input, setInput] = useState("Processing");
   const vscode = useVscode();
 
   useEffect(() => {
@@ -32,7 +32,7 @@ const TypingIndicator: React.FC = () => {
           color: 'var(--vscode-editor-foreground)',
         }}
       >
-          <span>{input}</span>
+          <span className="mr-1">{input}</span>
           <div className="flex space-x-1">
             <span
               className="w-1 h-1 rounded-full animate-pulse"
