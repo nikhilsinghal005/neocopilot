@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useChatContext } from '../../context/ChatContext';
 import AttachFileListDropdown from '../InputBarChat/AttachFileList';
 import FunctionListDropdown from '../InputBarChat/OutlineFile';
-import { FunctionOutline } from '../../types/Message';
+import { FunctionOutline, CurrentFileContext } from '../../types/Message';
 
 interface HighlightedTextareaProps {
   value: string;
@@ -214,27 +214,32 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
   // Handle function selection from the function list dropdown.
   // This updates the textarea content and the attached context.
   const handleFunctionSelect = (selectedFunction: FunctionOutline) => {
-    const cursorPosition = textareaRef.current?.selectionStart || 0;
-    const textBeforeCaret = value.slice(0, cursorPosition);
-    const lastAtSymbol = textBeforeCaret.lastIndexOf('@');
-    const newValue = `${textBeforeCaret.slice(0, lastAtSymbol)}@${selectedFunction.name} ${value.slice(cursorPosition)}`;
-    const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
-    onChange(event);
+    console.log("Select is running")
+    // const cursorPosition = textareaRef.current?.selectionStart || 0;
+    // const textBeforeCaret = value.slice(0, cursorPosition);
+    // const lastAtSymbol = textBeforeCaret.lastIndexOf('@');
+    // const newValue = `${textBeforeCaret.slice(0, lastAtSymbol)}@${selectedFunction.name} ${value.slice(cursorPosition)}`;
+    // const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
+    // onChange(event);
 
     // Create a new attached context entry.
-    const newContext = {
-      fileName: 'CurrentFile.js', // Replace with dynamic value if available
-      filePath: '/path/to/CurrentFile.js', // Replace with dynamic value if available
-      languageId: 'javascript',         // Replace with dynamic value if available
-      isActive: true,
-      isOpened: true,
-      isSelected: false,
-      isAttachedInContextList: false,
-      isManuallyAddedByUser: true,
-      isAttachedInText: true,
-      FunctionAttached: selectedFunction,
-    };
-    setAttachedContext([...attachedContext, newContext]);
+    const newContext: CurrentFileContext = {
+      "fileName": "test1.js",
+      "filePath": "test1.js",
+      "isActive": true,
+      "isOpened": true,
+      "isSelected": true,
+      "isAttachedInContextList": true,
+      "isManuallyAddedByUser": true,
+      "isAttachedInText": false,
+      "languageId": "python"
+  };
+
+    console.log("Updated COntext before", attachedContext)
+    setAttachedContext(prevContext => [...prevContext, newContext]);
+
+    // setAttachedContext([...attachedContext, newContext]);
+    console.log("Updated COntext", attachedContext)
     setShowFunctionList(false);
     setShowDropdown(false);
   };

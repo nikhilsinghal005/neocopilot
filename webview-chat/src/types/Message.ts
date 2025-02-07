@@ -23,7 +23,7 @@ export type CurrentFileContext = {
   isSelected: boolean;
   isAttachedInContextList: boolean;
   isManuallyAddedByUser: boolean;
-  isAttachedInText: boolean;
+  isAttachedInText?: boolean;
   FunctionAttached?: FunctionOutline;
 };
 
