@@ -1,6 +1,6 @@
 // src/components/Chat/TypingIndicator.tsx
 import { useVscode } from '../../context/VscodeContext';
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 
 const TypingIndicator: React.FC = () => {
   // Setting a default value for input
@@ -10,8 +10,7 @@ const TypingIndicator: React.FC = () => {
   useEffect(() => {
     const handleIncomingMessage = (event: MessageEvent) => {
       if (event.data.command === 'chat_response_state_info') {
-        console.log('Received chat message from VS Code:', event.data);
-        setInput(event.data.inputState || ''); // Update input with incoming data or fallback to empty string
+        setInput(event.data.data.inputState || '');
       }
     };
 
@@ -25,34 +24,36 @@ const TypingIndicator: React.FC = () => {
   return (
     <div className="message flex justify-start mb-4 ml-3">
       <span
-        className="rounded-xs px-1 flex items-center h-6 text-xxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+        className="rounded-xs px-1 flex items-center h-6 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
         style={{
           backgroundColor: 'var(--vscode-editor-background)',
           borderColor: 'var(--vscode-editorGroup-border)',
           color: 'var(--vscode-editor-foreground)',
         }}
       >
-          <span className="mr-1">{input}</span>
-          <div className="flex space-x-1">
-            <span
-              className="w-1 h-1 rounded-full animate-pulse"
-              style={{
-                backgroundColor: 'var(--vscode-editor-foreground)',
-              }}
-            ></span>
-            <span
-              className="w-1 h-1 rounded-full animate-pulse delay-[200ms]"
-              style={{
-                backgroundColor: 'var(--vscode-editor-foreground)',
-              }}
-            ></span>
-            <span
-              className="w-1 h-1 rounded-full animate-pulse delay-[400ms]"
-              style={{
-                backgroundColor: 'var(--vscode-editor-foreground)',
-              }}
-            ></span>
-          </div>
+      <span className="mr-1">{input}</span>
+        {/* Processing spinner icon */}
+        <svg
+          className="animate-spin mr-1 h-3 w-3"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ color: 'var(--vscode-editor-foreground)' }}
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
       </span>
     </div>
   );
