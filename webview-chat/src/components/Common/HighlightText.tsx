@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useChatContext } from '../../context/ChatContext';
 import AttachFileListDropdown from '../InputBarChat/AttachFileList';
+import FunctionListDropdown from '../InputBarChat/OutlineFile';
+import { FunctionOutline } from '../../types/Message';
 
 interface HighlightedTextareaProps {
   value: string;
@@ -31,52 +33,62 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showFileList, setShowFileList] = useState(false);
+  const [showFunctionList, setShowFunctionList] = useState(false);
+
   const options: DropdownOption[] = [
     { label: 'Files', value: 'files' },
     { label: 'Functions', value: 'function' }
   ];
 
-  //Highlighting the text with @
+  // Highlight text with @ mentions
   const highlightText = (text: string) => {
-  const segments = text.split(/(@{1,2}\S*)/g);
-  return segments.map((segment) => {
-    if (segment.startsWith('@') && !segment.startsWith('@@')) {
-      return `<span style="background-color: var(--vscode-textLink-foreground); opacity: 0.2; border-radius: 2px;">${segment}</span>`;
-    }
-    return segment;
-  }).join('');
-};
+    const segments = text.split(/(@{1,2}\S*)/g);
+    return segments
+      .map((segment) => {
+        if (segment.startsWith('@') && !segment.startsWith('@@')) {
+          return `<span style="background-color: var(--vscode-textLink-foreground); opacity: 0.2; border-radius: 2px;">${segment}</span>`;
+        }
+        return segment;
+      })
+      .join('');
+  };
 
-  const {attachedContext,setAttachedContext,} = useChatContext();
+  const { attachedContext, setAttachedContext } = useChatContext();
 
-  //To get the position of the @ to show dropdown above it
-  const getCaretCoordinates = () => {
+  // Calculate dropdown position based on caret location
+  const updateDropdownPosition = () => {
+    if (!textareaRef.current || !containerRef.current) return;
     const textarea = textareaRef.current;
-    if (!textarea) return { top: 0, left: 0 };
     const { selectionStart } = textarea;
     const textBeforeCaret = textarea.value.substring(0, selectionStart);
     const temp = document.createElement('div');
     temp.style.cssText = window.getComputedStyle(textarea).cssText;
     temp.style.height = 'auto';
     temp.style.position = 'absolute';
-    temp.style.visibility = 'hidden';
     temp.style.whiteSpace = 'pre-wrap';
     temp.textContent = textBeforeCaret;
     document.body.appendChild(temp);
-    const { offsetLeft, offsetTop } = textarea;
-    const caretPos = {
-      top: offsetTop + temp.clientHeight,
-      left: offsetLeft + temp.clientWidth
-    };
+    const dropdownWidth = 256;
+    const dropdownHeight = 200;
+    const textareaRect = textarea.getBoundingClientRect();
+    const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
+    let left = temp.clientWidth % textareaRect.width;
+    let top = Math.floor(temp.clientWidth / textareaRect.width) * lineHeight;
+    if (left + dropdownWidth > textareaRect.width) {
+      left = textareaRect.width - dropdownWidth;
+    }
+    left = Math.max(0, left);
+    top = Math.max(0, top - dropdownHeight - 5);
     document.body.removeChild(temp);
-    return caretPos;
+    setDropdownPosition({ top, left });
   };
 
-  //handling cases for @@ and @
+  // Determine whether to show the dropdown based on the text and caret position
   const shouldShowDropdown = (text: string, position: number) => {
     if (position <= 0 || position > text.length) return false;
     const lastChar = text[position - 1];
@@ -88,7 +100,21 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
     return lastChar === '@' && (prevChar === ' ' || prevChar === null);
   };
 
-  //removing context when backspaced
+  useEffect(() => {
+    if (overlayRef.current) {
+      overlayRef.current.innerHTML = highlightText(value);
+    }
+    const shouldShow = shouldShowDropdown(value, textareaRef.current?.selectionStart || 0);
+    if (shouldShow && textareaRef.current) {
+      updateDropdownPosition();
+      setShowDropdown(true);
+      setSelectedIndex(0);
+    } else if (!shouldShow && !showFileList && !showFunctionList) {
+      setShowDropdown(false);
+    }
+  }, [value]);
+
+  // Remove context entries if their mention is removed from the text
   useEffect(() => {
     const updatedContext = attachedContext.filter((context: any) => {
       if (context.isAttachedInText && context.fileName) {
@@ -101,8 +127,8 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
     }
   }, [value, attachedContext, setAttachedContext]);
 
-  //Handling different key events
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  // Handle key events for both the textarea and dropdown navigation
+  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const cursorPosition = textareaRef.current?.selectionStart || 0;
     const textBeforeCursor = value.slice(0, cursorPosition);
     const words = textBeforeCursor.split(/\s/);
@@ -112,14 +138,12 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
       const textBeforeMention = value.slice(0, cursorPosition - currentWord.length);
       const textAfterCursor = value.slice(cursorPosition);
       const newValue = textBeforeMention + textAfterCursor;
-      const event = {
-        target: { value: newValue }
-      } as React.ChangeEvent<HTMLTextAreaElement>;
+      const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
       onChange(event);
       return;
     }
 
-    if (!showDropdown && !showFileList) {
+    if (!showDropdown && !showFileList && !showFunctionList) {
       onKeyDown(e);
       return;
     }
@@ -127,19 +151,19 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        if (!showFileList) {
+        if (!showFileList && !showFunctionList) {
           setSelectedIndex(prev => (prev + 1) % options.length);
         }
         break;
       case 'ArrowUp':
         e.preventDefault();
-        if (!showFileList) {
+        if (!showFileList && !showFunctionList) {
           setSelectedIndex(prev => (prev - 1 + options.length) % options.length);
         }
         break;
       case 'Enter':
         e.preventDefault();
-        if (!showFileList) {
+        if (!showFileList && !showFunctionList) {
           handleOptionSelect(options[selectedIndex]);
         }
         break;
@@ -147,47 +171,75 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
         e.preventDefault();
         setShowDropdown(false);
         setShowFileList(false);
+        setShowFunctionList(false);
         break;
       default:
         onKeyDown(e);
     }
   };
 
-  //Handling the selection of the dropdown
+  // Handle selection of a dropdown option (files or functions)
   const handleOptionSelect = (option: DropdownOption) => {
     if (option.value === 'files') {
       setShowFileList(true);
       return;
     }
-
+    if (option.value === 'function') {
+      setShowFunctionList(true);
+      return;
+    }
     const textBeforeCaret = value.slice(0, textareaRef.current?.selectionStart);
     const textAfterCaret = value.slice(textareaRef.current?.selectionStart);
     const newValue = `${textBeforeCaret}${option.label} ${textAfterCaret}`;
     
-    const event = {
-      target: { value: newValue }
-    } as React.ChangeEvent<HTMLTextAreaElement>;
-    
+    const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
     onChange(event);
     setShowDropdown(false);
     setShowFileList(false);
+    setShowFunctionList(false);
   };
 
-  //Handling the file selection from the file list
+  // Handle file selection from the file list dropdown
   const handleFileSelect = (file: any) => {
     const textBeforeCaret = value.slice(0, textareaRef.current?.selectionStart);
     const textAfterCaret = value.slice(textareaRef.current?.selectionStart);
     const lastAtSymbol = textBeforeCaret.lastIndexOf('@');
     const newValue = `${textBeforeCaret.slice(0, lastAtSymbol)}@${file.fileName} ${textAfterCaret}`;
-    const event = {
-      target: { value: newValue }
-    } as React.ChangeEvent<HTMLTextAreaElement>;
+    const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
     onChange(event);
     setShowDropdown(false);
     setShowFileList(false);
   };
 
-  //Syncing the scroll of the overlay and the textarea
+  // Handle function selection from the function list dropdown.
+  // This updates the textarea content and the attached context.
+  const handleFunctionSelect = (selectedFunction: FunctionOutline) => {
+    const cursorPosition = textareaRef.current?.selectionStart || 0;
+    const textBeforeCaret = value.slice(0, cursorPosition);
+    const lastAtSymbol = textBeforeCaret.lastIndexOf('@');
+    const newValue = `${textBeforeCaret.slice(0, lastAtSymbol)}@${selectedFunction.name} ${value.slice(cursorPosition)}`;
+    const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
+    onChange(event);
+
+    // Create a new attached context entry.
+    const newContext = {
+      fileName: 'CurrentFile.js', // Replace with dynamic value if available
+      filePath: '/path/to/CurrentFile.js', // Replace with dynamic value if available
+      languageId: 'javascript',         // Replace with dynamic value if available
+      isActive: true,
+      isOpened: true,
+      isSelected: false,
+      isAttachedInContextList: false,
+      isManuallyAddedByUser: true,
+      isAttachedInText: true,
+      FunctionAttached: selectedFunction,
+    };
+    setAttachedContext([...attachedContext, newContext]);
+    setShowFunctionList(false);
+    setShowDropdown(false);
+  };
+
+  // Sync the scroll position between the overlay and the textarea.
   const syncScroll = () => {
     if (overlayRef.current && textareaRef.current) {
       overlayRef.current.scrollTop = textareaRef.current.scrollTop;
@@ -195,23 +247,8 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (overlayRef.current && textareaRef.current) {
-      overlayRef.current.innerHTML = highlightText(value);
-    }
-    const shouldShow = shouldShowDropdown(value, textareaRef.current?.selectionStart || 0);
-    if (shouldShow) {
-      const coords = getCaretCoordinates();
-      setDropdownPosition(coords);
-      setShowDropdown(true);
-      setSelectedIndex(0);
-    } else if (!shouldShow && !showFileList) {
-      setShowDropdown(false);
-    }
-  }, [value]);
-
   return (
-    <div className="relative w-full" style={{ zIndex: 1 }}>
+    <div className="relative w-full" style={{ zIndex: 1 }} ref={containerRef}>
       <div
         ref={overlayRef}
         className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none whitespace-pre-wrap break-words px-2 py-1"
@@ -239,14 +276,14 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
           width: '100%',
         }}
         rows={rows}
-        onKeyDown={handleKeyDown}
+        onKeyDown={handleTextareaKeyDown}
       />
-      {(showDropdown || showFileList) && (
+      {(showDropdown || showFileList || showFunctionList) && (
         <div
           ref={dropdownRef}
           className="absolute z-50 shadow-lg rounded-md border w-64"
           style={{
-            bottom: `${textareaRef.current?.offsetHeight || 0 + 10}px`,
+            bottom: `${(textareaRef.current?.offsetHeight || 0) + 10}px`,
             left: dropdownPosition.left,
             backgroundColor: 'var(--vscode-editor-background)',
             borderColor: 'var(--vscode-editorGroup-border)',
@@ -256,12 +293,17 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
         >
           {showFileList ? (
             <AttachFileListDropdown 
-            onFileSelect={(file) => {
-              handleFileSelect(file);
-              setShowFileList(false);
-            }}
-            handleKeyDown={(e) => handleKeyDown(e as React.KeyboardEvent<HTMLTextAreaElement>)}
-          />
+              onFileSelect={(file) => {
+                handleFileSelect(file);
+                setShowFileList(false);
+              }}
+              handleKeyDown={(e) => handleTextareaKeyDown(e as React.KeyboardEvent<HTMLTextAreaElement>)}
+            />
+          ) : showFunctionList ? (
+            <FunctionListDropdown
+              onFunctionSelect={handleFunctionSelect}
+              handleKeyDown={(e) => handleTextareaKeyDown(e as React.KeyboardEvent<HTMLTextAreaElement>)}
+            />
           ) : (
             options.map((option, index) => (
               <div

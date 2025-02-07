@@ -1,6 +1,6 @@
 // InputBarUtils.ts
 import { useEffect } from 'react';
-import { EditorOpenFileList, CurrentFileContext, UploadedImage } from '../types/Message';
+import { EditorOpenFileList, CurrentFileContext, UploadedImage,FunctionOutline } from '../types/Message';
 
 // Interface for the custom hook's props
 interface UseHandleIncomingMessagesProps {
@@ -275,7 +275,6 @@ export const handleAttachItemClickFunction = (
       },
     });
   }
-
 };
 
 export const handleImageUpload = (
@@ -342,6 +341,30 @@ export const handleImageUpload = (
     }
   });
 }
+
+export const handleGetOutline = (vscode: any): Promise<FunctionOutline[]> => {
+  return new Promise((resolve, reject) => {
+    // Handler function for the response
+    const handleOutlineResponse = (event: MessageEvent) => {
+      if (event.data.command === 'editor_functions_response') {
+        window.removeEventListener('message', handleOutlineResponse);
+        resolve(event.data.functions);
+      }
+      if (event.data.command === 'editor_functions_error') {
+        window.removeEventListener('message', handleOutlineResponse);
+        reject(new Error(event.data.error));
+      }
+    };
+    window.addEventListener('message', handleOutlineResponse);
+    vscode.postMessage({
+      command: 'get_outline_details'
+    });
+    setTimeout(() => {
+      window.removeEventListener('message', handleOutlineResponse);
+      reject(new Error('Timeout waiting for outline details'));
+    }, 5000);
+  });
+};
 
 //handle remove image
 export const handleRemoveImage = (

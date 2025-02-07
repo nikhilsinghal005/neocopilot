@@ -243,6 +243,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               }
             });
             break;
+
             case 'copy_paste_image':
               try {
                 const pastedImages = message.images;
@@ -259,6 +260,52 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               }
               break;
 
+              case 'get_outline_details': {
+                try {
+                  const editor = vscode.window.activeTextEditor;
+                  const document = editor?.document;
+                  vscode.commands
+                    .executeCommand("vscode.executeDocumentSymbolProvider", document?.uri)
+                    .then((value) => {
+                      const symbols = value as vscode.DocumentSymbol[] | undefined;
+                      if (!symbols) {
+                        this.activePanels[0].webview.postMessage({
+                          command: 'editor_functions_response',
+                          functions: []
+                        });
+                        return;
+                      }
+                      const functions = symbols
+                        .filter(symbol => 
+                          symbol.kind === vscode.SymbolKind.Function || 
+                          symbol.kind === vscode.SymbolKind.Method ||
+                          symbol.kind === vscode.SymbolKind.Constructor ||
+                          (symbol.kind === vscode.SymbolKind.Variable && symbol.detail?.includes('function'))
+                        )
+                        .map(symbol => ({
+                          name: symbol.name,
+                          range: {
+                            startLine: symbol.range.start.line,
+                            endLine: symbol.range.end.line
+                          },
+                          type: vscode.SymbolKind[symbol.kind].toLowerCase()
+                        }));
+                        
+                      this.activePanels[0].webview.postMessage({
+                        command: 'editor_functions_response',
+                        functions
+                      });
+              
+                    });
+                } catch (error) {
+                  console.error('Error in get_outline_details handler:', error);
+                  this.activePanels[0].webview.postMessage({
+                    command: 'editor_functions_error',
+                    error: 'Unexpected error occurred while getting outline details'
+                  });
+                }
+                break;
+              }  
         }
       });
     }

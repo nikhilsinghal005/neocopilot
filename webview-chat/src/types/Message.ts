@@ -4,6 +4,16 @@ export type ChatData = {
   messages: MessageStore[];
 };
 
+
+export type FunctionOutline = {
+  name: string;
+  range: {
+    startLine: number;
+    endLine: number;
+  };
+  type: string;
+}
+
 export type CurrentFileContext = {
   fileName: string;
   filePath: string;
@@ -14,6 +24,7 @@ export type CurrentFileContext = {
   isAttachedInContextList: boolean;
   isManuallyAddedByUser: boolean;
   isAttachedInText: boolean;
+  FunctionAttached?: FunctionOutline;
 };
 
 export type UploadedImage = {
