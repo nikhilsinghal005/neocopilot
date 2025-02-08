@@ -31,72 +31,75 @@ const SelectedContextTags: React.FC = () => {
 
   return (
     <>
-      {attachedContext.map((context: any, index: number) =>
-        context.fileName && context.filePath ? (
-          <span
-            key={index}
-            className="rounded-xs px-1 flex items-center justify-center h-5 text-xxs max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
-            style={{
-              backgroundColor: 'var(--vscode-diffEditor-unchangedRegionBackground)',
-              color: 'var(--vscode-button-foreground)',
-              position: 'relative',
-            }}
-          >
-            {context.isSelected && (
-              <span
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  backgroundColor: 'green',
-                  borderRadius: '50%',
-                  display: 'inline-block',
-                  marginRight: '2px',
-                  marginLeft: '3px',
-                }}
-                className="ml-1"
-              ></span>
-            )}
-            {context.isManuallyAddedByUser && (
-              <span
-                className="codicon codicon-bookmark ml-1"
-                style={{ marginRight: '2px', fontSize: '8px' }}
-              ></span>
-            )}
-            {context.isAttachedInText && (
-              <span
-                style={{ marginRight: '2px', fontSize: '8px' }}
-                className="ml-1"
-              >@</span>
-            )}
-            {context.FunctionAttached && (
-              <span
-                style={{ marginRight: '2px', fontSize: '8px' }}
-                className="ml-1"
-              >@</span>
-            )}
-            <span className="flex items-center">
-              <LanguageIcon fileName={context.fileName || ''} iconSize={16} />
-              <span style={{fontSize:"10px"}}>{context.fileName}</span>
+      {attachedContext.map((context: CurrentFileContext, index: number) => (
+        <span
+          key={index}
+          className="rounded-xs px-1 flex items-center justify-center h-5 text-xxs max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+          style={{
+            backgroundColor: 'var(--vscode-diffEditor-unchangedRegionBackground)',
+            color: 'var(--vscode-button-foreground)',
+            position: 'relative',
+          }}
+        >
+          {context.isSelected && (
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                backgroundColor: 'green',
+                borderRadius: '50%',
+                display: 'inline-block',
+                marginRight: '2px',
+                marginLeft: '3px',
+              }}
+              className="ml-1"
+            ></span>
+          )}
+          {context.isManuallyAddedByUser && (
+            <span
+              className="codicon codicon-bookmark ml-1"
+              style={{ marginRight: '2px', fontSize: '8px' }}
+            ></span>
+          )}
+          {context.isAttachedInText && (
+            <span
+              style={{ marginRight: '2px', fontSize: '8px' }}
+              className="ml-1"
+            >@</span>
+          )}
+          <span className="flex items-center">
+            <LanguageIcon fileName={context.fileName || ''} iconSize={16} />
+            <span style={{ fontSize: "10px" }}>
+              {context.FunctionAttached ? (
+                <>
+                  {context.fileName} (Line {context.FunctionAttached.range.startLine} – Line {context.FunctionAttached.range.endLine})
+                </>
+              ) : (
+                context.fileName
+              )}
+
             </span>
-            <VSCodeButton
-              appearance="icon"
-              aria-label="Remove Context"
-              className="mt-1 mr-1 rounded-md h-3 w-3 hover:bg-transparent"
-              onClick={() =>
-                handleRemoveTagFunction(
-                  context.filePath,
-                  attachedContext,
-                  setAttachedContext,
-                  openEditorFilesList,
-                  setOpenEditorFilesList
-                )
-              }
-            >
-              <span className="mr-1"><X size={12}/></span>
-            </VSCodeButton>
+
           </span>
-        ) : null
-      )}
+
+          <VSCodeButton
+            appearance="icon"
+            aria-label="Remove Context"
+            className="mt-1 mr-1 rounded-md h-3 w-3 hover:bg-transparent"
+            onClick={() =>
+              handleRemoveTagFunction(
+                context.filePath,
+                attachedContext,
+                setAttachedContext,
+                openEditorFilesList,
+                setOpenEditorFilesList
+              )
+            }
+          >
+            <span className="mr-1"><X size={12} /></span>
+          </VSCodeButton>
+        </span>
+      ))}
     </>
   );
 };

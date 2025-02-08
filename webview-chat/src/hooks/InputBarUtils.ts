@@ -277,6 +277,68 @@ export const handleAttachItemClickFunction = (
   }
 };
 
+//Handling attach function
+export const handleFunctionSelect = (
+  selectedFunction: FunctionOutline,
+  item: EditorOpenFileList,
+  textareaRef: React.RefObject<HTMLTextAreaElement>,
+  value: string,
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void,
+  attachedContext: CurrentFileContext[],
+  setAttachedContext: React.Dispatch<React.SetStateAction<CurrentFileContext[]>>,
+  setShowFunctionList: (show: boolean) => void,
+  setShowDropdown: (show: boolean) => void,
+  vscode: any
+) => {
+  console.log('Selected function:', selectedFunction);
+  const cursorPosition = textareaRef.current?.selectionStart || 0;
+  const textBeforeCaret = value.slice(0, cursorPosition);
+  const lastAtSymbol = textBeforeCaret.lastIndexOf('@');
+  const newValue = `${textBeforeCaret.slice(0, lastAtSymbol)}@${selectedFunction.name} ${value.slice(cursorPosition)}`;
+  const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
+  onChange(event);
+
+  if (attachedContext.length < 3) {
+    const newContext: CurrentFileContext = {
+      fileName: item.fileName,
+      filePath: item.filePath,
+      languageId: item.languageId,
+      isActive: true,
+      isOpened: true,
+      isSelected: true,
+      isAttachedInContextList: true,
+      isManuallyAddedByUser: false,
+      isAttachedInText: true,
+      FunctionAttached: selectedFunction,
+    };
+
+    setAttachedContext((prevContext: CurrentFileContext[]) => {
+      const functionExists = prevContext.some(
+        context => context.FunctionAttached?.name === selectedFunction.name
+      );
+      
+      if (functionExists) {
+        return prevContext;
+      }
+      
+      const newContexts = [...prevContext, newContext];
+      return newContexts;
+    });
+    console.log('Attached context:', newContext);
+  } else {
+    vscode.postMessage({
+      command: 'showInfoPopup',
+      data: {
+        title: 'Context Information',
+        message: 'You can only attach up to 3 items at a time.',
+      },
+    });
+  }
+
+  setShowFunctionList(false);
+  setShowDropdown(false);
+};
+
 export const handleImageUpload = (
   vscode: any,
   uploadImages: UploadedImage[],

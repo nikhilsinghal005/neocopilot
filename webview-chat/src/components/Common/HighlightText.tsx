@@ -3,6 +3,7 @@ import { useChatContext } from '../../context/ChatContext';
 import AttachFileListDropdown from '../InputBarChat/AttachFileList';
 import FunctionListDropdown from '../InputBarChat/OutlineFile';
 import { FunctionOutline, CurrentFileContext } from '../../types/Message';
+import { useVscode } from '../../context/VscodeContext';
 
 interface HighlightedTextareaProps {
   value: string;
@@ -20,7 +21,7 @@ interface DropdownOption {
   value: string;
 }
 
-const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({ 
+const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
   value, 
   onChange, 
   onPaste, 
@@ -39,6 +40,7 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showFileList, setShowFileList] = useState(false);
   const [showFunctionList, setShowFunctionList] = useState(false);
+  const vscode = useVscode();
 
   const options: DropdownOption[] = [
     { label: 'Files', value: 'files' },
@@ -116,12 +118,18 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
 
   // Remove context entries if their mention is removed from the text
   useEffect(() => {
-    const updatedContext = attachedContext.filter((context: any) => {
-      if (context.isAttachedInText && context.fileName) {
-        return value.includes(`@${context.fileName}`);
+    const updatedContext = attachedContext.filter((context: CurrentFileContext) => {
+      if (context.isAttachedInText) {
+        if (context.fileName) {
+          return value.includes(`@${context.fileName}`);
+        }
+        if (context.FunctionAttached) {
+          return value.includes(`@${context.FunctionAttached.name}`);
+        }
       }
       return true;
     });
+
     if (updatedContext.length !== attachedContext.length) {
       setAttachedContext(updatedContext);
     }
@@ -133,50 +141,69 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
     const textBeforeCursor = value.slice(0, cursorPosition);
     const words = textBeforeCursor.split(/\s/);
     const currentWord = words[words.length - 1];
-    if (e.key === 'Backspace' && currentWord.startsWith('@') && currentWord.length > 1) {
-      e.preventDefault();
-      const textBeforeMention = value.slice(0, cursorPosition - currentWord.length);
-      const textAfterCursor = value.slice(cursorPosition);
-      const newValue = textBeforeMention + textAfterCursor;
-      const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
-      onChange(event);
-      return;
-    }
-
-    if (!showDropdown && !showFileList && !showFunctionList) {
-      onKeyDown(e);
-      return;
-    }
-
     switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        if (!showFileList && !showFunctionList) {
+      case 'Backspace': {
+        // Handle backspace at @ to close all dropdowns
+        if (currentWord === '@') {
+          setShowDropdown(false);
+          setShowFileList(false);
+          setShowFunctionList(false);
+          return;
+        }
+        if (currentWord.startsWith('@') && currentWord.length > 1) {
+          e.preventDefault();
+          const textBeforeMention = value.slice(0, cursorPosition - currentWord.length);
+          const textAfterCursor = value.slice(cursorPosition);
+          const newValue = textBeforeMention + textAfterCursor;
+          const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
+          onChange(event);
+          return;
+        }
+        break;
+      }
+
+      // Handle navigation in main dropdown
+      case 'ArrowDown': {
+        if (showDropdown && !showFileList && !showFunctionList) {
+          e.preventDefault();
           setSelectedIndex(prev => (prev + 1) % options.length);
         }
         break;
-      case 'ArrowUp':
-        e.preventDefault();
-        if (!showFileList && !showFunctionList) {
+      }
+
+      case 'ArrowUp': {
+        if (showDropdown && !showFileList && !showFunctionList) {
+          e.preventDefault();
           setSelectedIndex(prev => (prev - 1 + options.length) % options.length);
         }
         break;
-      case 'Enter':
-        e.preventDefault();
-        if (!showFileList && !showFunctionList) {
+      }
+
+      case 'Enter': {
+        if (showDropdown && !showFileList && !showFunctionList) {
+          e.preventDefault();
           handleOptionSelect(options[selectedIndex]);
         }
         break;
-      case 'Escape':
-        e.preventDefault();
-        setShowDropdown(false);
-        setShowFileList(false);
-        setShowFunctionList(false);
+      }
+
+      case 'Escape': {
+        if (showDropdown || showFileList || showFunctionList) {
+          e.preventDefault();
+          setShowDropdown(false);
+          setShowFileList(false);
+          setShowFunctionList(false);
+        }
         break;
-      default:
-        onKeyDown(e);
+      }
+    }
+
+    // Pass the event to child components when they're active
+    if (showFileList || showFunctionList) {
+      onKeyDown(e);
     }
   };
+
 
   // Handle selection of a dropdown option (files or functions)
   const handleOptionSelect = (option: DropdownOption) => {
@@ -211,44 +238,27 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
     setShowFileList(false);
   };
 
-  // Handle function selection from the function list dropdown.
-  // This updates the textarea content and the attached context.
-  const handleFunctionSelect = (selectedFunction: FunctionOutline) => {
-    console.log("Select is running")
-    // const cursorPosition = textareaRef.current?.selectionStart || 0;
-    // const textBeforeCaret = value.slice(0, cursorPosition);
-    // const lastAtSymbol = textBeforeCaret.lastIndexOf('@');
-    // const newValue = `${textBeforeCaret.slice(0, lastAtSymbol)}@${selectedFunction.name} ${value.slice(cursorPosition)}`;
-    // const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
-    // onChange(event);
-
-    // Create a new attached context entry.
-    const newContext: CurrentFileContext = {
-      "fileName": "test1.js",
-      "filePath": "test1.js",
-      "isActive": true,
-      "isOpened": true,
-      "isSelected": true,
-      "isAttachedInContextList": true,
-      "isManuallyAddedByUser": true,
-      "isAttachedInText": false,
-      "languageId": "python"
-  };
-
-    console.log("Updated COntext before", attachedContext)
-    setAttachedContext(prevContext => [...prevContext, newContext]);
-
-    // setAttachedContext([...attachedContext, newContext]);
-    console.log("Updated COntext", attachedContext)
-    setShowFunctionList(false);
-    setShowDropdown(false);
-  };
-
   // Sync the scroll position between the overlay and the textarea.
   const syncScroll = () => {
     if (overlayRef.current && textareaRef.current) {
       overlayRef.current.scrollTop = textareaRef.current.scrollTop;
       overlayRef.current.scrollLeft = textareaRef.current.scrollLeft;
+    }
+  };
+
+  const handleFunctionListSelection = (
+    selectedFunction: FunctionOutline,
+  ) => {
+    if (textareaRef.current) {
+      const textBeforeCaret = value.slice(0, textareaRef.current.selectionStart);
+      const textAfterCaret = value.slice(textareaRef.current.selectionStart);
+      const lastAtSymbol = textBeforeCaret.lastIndexOf('@');
+      const newValue = `${textBeforeCaret.slice(0, lastAtSymbol)}@${selectedFunction.name} ${textAfterCaret}`;
+
+      const event = { target: { value: newValue } } as React.ChangeEvent<HTMLTextAreaElement>;
+      onChange(event);
+      setShowDropdown(false);
+      setShowFunctionList(false);
     }
   };
 
@@ -297,7 +307,7 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
           }}
         >
           {showFileList ? (
-            <AttachFileListDropdown 
+            <AttachFileListDropdown
               onFileSelect={(file) => {
                 handleFileSelect(file);
                 setShowFileList(false);
@@ -306,9 +316,19 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
             />
           ) : showFunctionList ? (
             <FunctionListDropdown
-              onFunctionSelect={handleFunctionSelect}
-              handleKeyDown={(e) => handleTextareaKeyDown(e as React.KeyboardEvent<HTMLTextAreaElement>)}
-            />
+            textareaRef={textareaRef}
+            value={value}
+            onChange={onChange}
+            handleKeyDown={(e) => handleTextareaKeyDown(e as React.KeyboardEvent<HTMLTextAreaElement>)}
+            onClose={() => {
+              setShowFunctionList(false);
+              setShowDropdown(false);
+            }}
+            onFunctionSelect={(func) => {
+              handleFunctionListSelection(func);
+              setShowFunctionList(false);
+            }}
+          />
           ) : (
             options.map((option, index) => (
               <div
@@ -316,8 +336,8 @@ const HighlightedTextarea: React.FC<HighlightedTextareaProps> = ({
                 className="p-1 cursor-pointer rounded-xs overflow-hidden text-ellipsis whitespace-nowrap border-b"
                 onClick={() => handleOptionSelect(option)}
                 style={{
-                  backgroundColor: selectedIndex === index ? 
-                    'var(--vscode-list-activeSelectionBackground)' : 
+                  backgroundColor: selectedIndex === index ?
+                    'var(--vscode-list-activeSelectionBackground)' :
                     'var(--vscode-editor-background)',
                   color: 'var(--vscode-editor-foreground)',
                   borderColor: 'var(--vscode-editorGroup-border)',

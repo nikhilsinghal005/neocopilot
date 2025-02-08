@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useChatContext } from '../../context/ChatContext';
 import LanguageIcon from '../Common/LanguageIcon';
 import { handleAttachItemClickFunction } from '../../hooks/InputBarUtils';
 import { useVscode } from '../../context/VscodeContext';
 
 interface AttachFileListDropdownProps {
-    onFileSelect?: (file: any) => void;
-    handleKeyDown?: (e: React.KeyboardEvent<HTMLDivElement | HTMLTextAreaElement>) => void;
-  }
-  
-const AttachFileListDropdown: React.FC<AttachFileListDropdownProps> = ({ onFileSelect, handleKeyDown }) => {
+  onFileSelect?: (file: any) => void;
+  handleKeyDown?: (e: React.KeyboardEvent<HTMLDivElement | HTMLTextAreaElement>) => void;
+}
+
+const AttachFileListDropdown: React.FC<AttachFileListDropdownProps> = ({ 
+  onFileSelect, 
+  handleKeyDown 
+}) => {
   const {
     openEditorFilesList,
     attachedContext,
@@ -18,7 +21,9 @@ const AttachFileListDropdown: React.FC<AttachFileListDropdownProps> = ({ onFileS
   } = useChatContext();
   const vscode = useVscode();
 
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const filteredFiles = openEditorFilesList.filter((file: any) =>
     file.filePath.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -37,7 +42,36 @@ const AttachFileListDropdown: React.FC<AttachFileListDropdownProps> = ({ onFileS
     if (onFileSelect) {
       onFileSelect(file);
     }
-    console.log(attachedContext);
+  };
+
+  const handleInternalKeyDown = (e: React.KeyboardEvent) => {
+    switch (e.key) {
+      case 'ArrowDown': {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev + 1) % filteredFiles.length);
+        break;
+      }
+      case 'ArrowUp': {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev - 1 + filteredFiles.length) % filteredFiles.length);
+        break;
+      }
+      case 'Enter': {
+        e.preventDefault();
+        if (filteredFiles[selectedIndex]) {
+          handleListItemClick(filteredFiles[selectedIndex]);
+        }
+        break;
+      }
+      case 'Escape': {
+        e.preventDefault();
+        handleKeyDown?.(e);
+        break;
+      }
+      default: {
+        handleKeyDown?.(e);
+      }
+    }
   };
 
   if (openEditorFilesList.length === 0) {
@@ -52,32 +86,24 @@ const AttachFileListDropdown: React.FC<AttachFileListDropdownProps> = ({ onFileS
   }
 
   return (
-    <div className="flex flex-col">
+    <div 
+      className="flex flex-col"
+      onKeyDown={handleInternalKeyDown}
+    >
       <div className="flex-1 overflow-auto">
-        {filteredFiles.map((file: any) => (
+        {filteredFiles.map((file: any, index) => (
           <div
             key={file.filePath}
             onClick={() => handleListItemClick(file)}
-            onKeyDown={handleKeyDown}
             className="p-1 cursor-pointer rounded-xs overflow-hidden text-ellipsis whitespace-nowrap flex items-center gap-2 border-b"
             style={{
-              backgroundColor: 'var(--vscode-editor-background)',
+              backgroundColor: selectedIndex === index ? 
+                'var(--vscode-list-activeSelectionBackground)' : 
+                'var(--vscode-editor-background)',
               color: 'var(--vscode-editor-foreground)',
-              transition: 'background-color 0.2s ease-in-out',
               borderColor: 'var(--vscode-editorGroup-border)',
             }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor =
-                'var(--vscode-button-background)';
-              (e.currentTarget as HTMLElement).style.color =
-                'var(--vscode-button-foreground)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor =
-                'var(--vscode-editor-background)';
-              (e.currentTarget as HTMLElement).style.color =
-                'var(--vscode-editor-foreground)';
-            }}
+            onMouseEnter={() => setSelectedIndex(index)}
             title={file.filePath}
           >
             <LanguageIcon fileName={file.fileName || ''} iconSize={20} />
