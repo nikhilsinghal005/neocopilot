@@ -114,7 +114,7 @@
     "compile": "tsc -p ./",
     "build": "node esbuild.js",
     "watch": "node esbuild.js --watch",
-    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "prepare": "husky install",
     "test": "echo \"No tests specified\""
   },
