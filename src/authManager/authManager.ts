@@ -83,9 +83,9 @@ public async verifyAccessToken(maxRetries: number = 5): Promise<boolean> {
       const response = await fetch(FULL_VERIFICATION_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       });
 
       if (!response.ok) {
@@ -113,9 +113,9 @@ public async verifyAccessToken(maxRetries: number = 5): Promise<boolean> {
       const response = await fetch(FULL_USER_PROFILE_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-        },
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
         credentials: 'include',
       });
 
@@ -142,7 +142,7 @@ public async verifyAccessToken(maxRetries: number = 5): Promise<boolean> {
   // Clear the access and refresh tokens
   public async clearTokens(): Promise<void> {
     // console.log('Neo Copilot: Clearing tokens')
-    console.info("%cNeo Copilot: User logged out", 'color: green;')
+    console.info("%cNeo Copilot: User logged out", 'color: green;');
     await this.context.secrets.store('accessToken', '');
     await this.context.secrets.store('refreshToken', '');
   }
