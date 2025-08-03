@@ -9,7 +9,6 @@ import { CodeInsertionManager } from '../codeInsertions/CodeInsertionManager';
 import { getExactNewlineCharacter } from '../utilities/basicUtilities';
 import { showTextNotification } from '../utilities/statusBarNotifications/showTextNotification';
 import { AiChatMessageHandler } from './aiChatMessageHandler';
-import { AiCoworkerMessageHandler } from './aiCoworkerMessageHandler';
 import { AiChatSmartInsertHandler } from './aiChatSmartInsertHandler';
 import { AiChatContextHandler } from './aiChatContextHandler';
 import { AiChatModelDetails } from './aiChatModelDetails';
@@ -35,7 +34,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   public codeInsertionManager: CodeInsertionManager;
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
   private aiChatMessageHandler: AiChatMessageHandler;
-  private aiCoworkerMessageHandler: AiCoworkerMessageHandler;
   private aiChatSmartInsertHandler: AiChatSmartInsertHandler;
   public aiChatContextHandler: AiChatContextHandler;
   private aiChatModelDetails: AiChatModelDetails;
@@ -51,7 +49,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     this.panelManager = new PanelManager(this._context);
     this.codeInsertionManager = CodeInsertionManager.getInstance(this._context);
     this.aiChatMessageHandler = new AiChatMessageHandler(this, this._authManager, this._context);
-    this.aiCoworkerMessageHandler = new AiCoworkerMessageHandler(this, this._authManager, this._context);
     this.aiChatSmartInsertHandler = new AiChatSmartInsertHandler(this, this._authManager, this._context);
     this.aiChatContextHandler = new AiChatContextHandler(this, this._authManager, this._context);
     this.aiChatModelDetails = new AiChatModelDetails(this, this._authManager, this._context);
@@ -128,9 +125,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     if (!this.webviewListeners.has(webviewView)) {
       console.log('Adding webview listener');
       this.webviewListeners.add(webviewView);
-      this.aiChatMessageHandler.initializeWebviewListener(webviewView)
-      this.aiCoworkerMessageHandler.initializeWebviewListener(webviewView)
-      this.aiChatSmartInsertHandler.initializeWebviewListener(webviewView)
+      this.aiChatMessageHandler.initializeWebviewListener(webviewView);
+      this.aiChatSmartInsertHandler.initializeWebviewListener(webviewView);
 
       webviewView.webview.onDidReceiveMessage(async (message: any) => {
         switch (message.command) {
@@ -185,14 +181,13 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
           case 'ready':
             console.log('Checking if user is logged in in the ready part');
             const isLoggedIn = await this._authManager.verifyAccessToken();
-            console.log("Currently user is logged in")
+            console.log("Currently user is logged in");
             this.sendAuthStatus(isLoggedIn);
 
             if (isLoggedIn) {
               console.log('Initializing sockets');
               this.socketModule = SocketModule.getInstance();
               this.aiChatMessageHandler.initializeSockets();
-              this.aiCoworkerMessageHandler.initializeSockets();
               this.aiChatSmartInsertHandler.initializeSockets();
               this.aiChatModelDetails.initializeSockets();
             }
