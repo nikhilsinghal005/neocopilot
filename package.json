@@ -164,6 +164,6 @@
     "weather-js": "^2.0.0"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx}": "eslint --fix"
+    "*.{ts,tsx}": "eslint --fix"
   }
 }
