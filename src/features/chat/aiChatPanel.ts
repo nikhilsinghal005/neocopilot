@@ -1,14 +1,12 @@
 // webview-chat/src/aiChatPanel.ts
 import * as vscode from 'vscode';
 import { AuthManager } from '../../core/auth/authManager';
-import { v4 as uuidv4 } from 'uuid';
 import { getNonce } from '../../shared/utils/chatUtilities';
 import { CodeInsertionManager } from '../inline-edit/codeInsertions/CodeInsertionManager';
-import { getExactNewlineCharacter } from '../../shared/utils/basicUtilities';
-import { showTextNotification } from '../../core/notifications/statusBarNotifications/showTextNotification';
 import { AiChatContextHandler } from './aiChatContextHandler';
 import * as path from 'path';
 import * as fs from 'fs';
+import { Logger } from '../../core/logging/Logger';
 
 interface UploadedImage {
   fileName: string;
@@ -17,15 +15,16 @@ interface UploadedImage {
   fileContent: string;
   isActive: boolean;
   isManuallyAddedByUser: boolean;
-};
+}
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
+  private logger = Logger.getInstance();
 
   public static readonly primaryViewType = 'aiChatPanelPrimary';
   private static primaryInstance: AiChatPanel;
   public activePanels: vscode.WebviewView[] = [];
   private _view: vscode.WebviewView | undefined;
-  private _messageQueue: any[] = [];
+  private _messageQueue: { command: string;[key: string]: unknown }[] = [];
   // SocketModule is removed, no socket communication in chat panel.
   public codeInsertionManager: CodeInsertionManager;
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
@@ -52,10 +51,12 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     viewType: string
   ): AiChatPanel {
     if (!AiChatPanel.primaryInstance) {
-      console.log('Creating new AiChatPanel instance');
+      const logger = Logger.getInstance();
+      logger.info('Creating new AiChatPanel instance');
       AiChatPanel.primaryInstance = new AiChatPanel(extensionUri, context, authManager, viewType);
     } else {
-      console.log('Reusing existing AiChatPanel instance');
+      const logger = Logger.getInstance();
+      logger.info('Reusing existing AiChatPanel instance');
     }
     return AiChatPanel.primaryInstance;
   }
@@ -69,12 +70,12 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     // Manage visibility and active panels list based on webview's visibility
     this._view = webviewView;
     if (webviewView.visible) {
-      console.log('Webview is visible');
+      this.logger.info('Webview is visible');
       this.activePanels.push(webviewView);
     }
 
     webviewView.onDidChangeVisibility(() => {
-      console.log('Webview visibility changed');
+      this.logger.debug('Webview visibility changed');
       // Manage visibility and active panels list based on webview's visibility
       if (webviewView.visible) {
         if (!this.activePanels.includes(webviewView)) {
@@ -109,15 +110,15 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     };
 
     // Set the HTML content for the webview
-    console.log('Setting webview HTML');
+    this.logger.info('Setting webview HTML');
     webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
     // Add a listener for messages from the webview (e.g., user actions like sending messages)
     if (!this.webviewListeners.has(webviewView)) {
-      console.log('Adding webview listener');
+      this.logger.debug('Adding webview listener');
       this.webviewListeners.add(webviewView);
 
-      webviewView.webview.onDidReceiveMessage(async (message: any) => {
+      webviewView.webview.onDidReceiveMessage(async (message: { command: string;[key: string]: unknown }) => {
         switch (message.command) {
 
 
@@ -126,8 +127,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
             // aiChatModelDetails removed
             break;
 
-          case 'upload_image':
-            const chatId = message.chatId;
+          case 'upload_image': {
+            const _chatId = message.chatId;
             vscode.window.showOpenDialog({
               canSelectMany: true,
               canSelectFiles: true,
@@ -167,20 +168,25 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
               }
             });
             break;
-            case 'copy_paste_image':
-              try {
-                const pastedImages = message.images;
-                if (pastedImages && pastedImages.length > 0) {
-                  // Store images in the chat session
-                  const uploadedImages = pastedImages.map((image: UploadedImage) => ({
-                    ...image,
-                  }));
-                }
-              } catch (error: any) {
-                console.error('Error handling pasted image:', error);
-                vscode.window.showErrorMessage(`Error processing pasted image: ${error.message}`);
+          }
+          case 'copy_paste_image':
+            try {
+              const pastedImages = message.images;
+              if (Array.isArray(pastedImages) && pastedImages.length > 0) {
+                // Store images in the chat session
+                const _uploadedImages = pastedImages.map((image: UploadedImage) => ({
+                  ...image,
+                }));
               }
-              break;
+            } catch (error: unknown) {
+              this.logger.error('Error handling pasted image:', error);
+              if (error instanceof Error) {
+                vscode.window.showErrorMessage(`Error processing pasted image: ${error.message}`);
+              } else {
+                vscode.window.showErrorMessage('An unknown error occurred while processing a pasted image.');
+              }
+            }
+            break;
 
         }
       });
@@ -197,70 +203,13 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   // Socket-based model retrieval disabled.
 
 
-
-  // Send authentication status to the webview
-  public async sendAuthStatus(isLoggedIn: boolean): Promise<void> {
-    console.log("Sending auth status");
-    // Current auth Status
-    console.log("Auth status: " + isLoggedIn);
-    await this._context.workspaceState.update('isLoggedIn', isLoggedIn);
-    this.aiChatContextHandler.getCurrentFileName(vscode.window.activeTextEditor, this._context);
-
-    // Notify all active panels about the auth status
-    if (this.activePanels.length > 0) {
-      this.activePanels.forEach(panel => {
-        panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
+  public sendAuthStatus(isAuthenticated: boolean) {
+    this.activePanels.forEach(panel => {
+      panel.webview.postMessage({
+        command: 'authStatus',
+        isAuthenticated: isAuthenticated,
       });
-    } else {
-      let attempts = 0;
-      const maxAttempts = 5;
-      const interval = 1000;
-      while (attempts < maxAttempts && this.activePanels.length === 0) {
-        await new Promise(resolve => setTimeout(resolve, interval));
-        attempts++;
-      }
-      if (this.activePanels.length > 0) {
-        this.activePanels.forEach(panel => {
-          panel.webview.postMessage({ command: 'authStatus', isLoggedIn });
-        });
-      }
-    }
-  }
-
-  // Inserts messages into the chat interface (handles file paths and code formatting)
-  public async insertMessagesToChat(
-    inputFile: string,
-    inputText: string,
-    selectedText: string,
-    documentLanguage: string
-  ): Promise<void> {
-    await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
-    await new Promise(resolve => setTimeout(resolve, 100));
-    const relativePath = vscode.workspace.asRelativePath(inputFile);
-    inputFile = path.basename(relativePath);
-
-    const output = {
-      command: 'insert_messages',
-      fileName: inputFile,
-      relativePath: relativePath,
-      inputText: inputText,
-      completeCode: selectedText,
-    };
-
-    inputText = `\`\`\`${documentLanguage} ?file_name=${relativePath}
-${inputText}
-\`\`\``;
-
-    await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
-    this._postMessage(output);
-  }
-
-  private _postMessage(message: any) {
-    if (this._view) {
-      this._view.webview.postMessage(message);
-    } else {
-      this._messageQueue.push(message);
-    }
+    });
   }
 
   // Returns the HTML content for the webview, including scripts and styles
