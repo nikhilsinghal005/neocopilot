@@ -8,7 +8,7 @@
     "vscode": "^1.70.0"
   },
   "homepage": "https://www.neocopilot.io",
-  "icon": "media/icon.png",
+  "icon": "assets/icon.png",
   "categories": [
     "Programming Languages",
     "Machine Learning",
@@ -52,7 +52,7 @@
         {
           "id": "codebuddy",
           "title": "NeoChat",
-          "icon": "media/icon.svg"
+          "icon": "assets/icon.svg"
         }
       ]
     },
@@ -62,6 +62,7 @@
           "type": "webview",
           "id": "aiChatPanelPrimary",
           "name": "Neo Chat Panel",
+          "icon": "assets/icon.svg",
           "retention": true
         }
       ]
