@@ -24,6 +24,8 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   public static readonly primaryViewType = 'aiChatPanelPrimary';
   private static primaryInstance: AiChatPanel;
   public activePanels: vscode.WebviewView[] = [];
+  private _view: vscode.WebviewView | undefined;
+  private _messageQueue: any[] = [];
   // SocketModule is removed, no socket communication in chat panel.
   public codeInsertionManager: CodeInsertionManager;
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
@@ -65,6 +67,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken
   ) {
     // Manage visibility and active panels list based on webview's visibility
+    this._view = webviewView;
     if (webviewView.visible) {
       console.log('Webview is visible');
       this.activePanels.push(webviewView);
@@ -89,6 +92,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     webviewView.onDidDispose(() => {
       this.activePanels = this.activePanels.filter(panel => panel !== webviewView);
+      this._view = undefined;
 
       // Save state on disposal
       this._context.workspaceState.update('webviewPanelState', {
@@ -106,7 +110,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
     // Set the HTML content for the webview
     console.log('Setting webview HTML');
-    await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay
     webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
     // Add a listener for messages from the webview (e.g., user actions like sending messages)
@@ -117,40 +120,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       webviewView.webview.onDidReceiveMessage(async (message: any) => {
         switch (message.command) {
 
-          // Handles login action (opens external URL)
-          case 'login':
-            vscode.env.openExternal(vscode.Uri.parse(message.url));
-            this.aiChatContextHandler.getCurrentFileName(
-              vscode.window.activeTextEditor,
-              this._context
-            );
-            break;
-
-          // Handles "Contact Us" action (opens email client)
-          case 'contact_us':
-            vscode.commands.executeCommand(
-              'vscode.open',
-              vscode.Uri.parse('mailto:support@neocopilot.com')
-            );
-            break;
-
-          // Handles code snippet insertion into terminal or editor
-          case 'insertCodeSnippet':
-            const nextLineCharacter = getExactNewlineCharacter();
-            if (message.data.location === 'terminal') {
-              this.codeInsertionManager.insertTextIntoTerminal(message.data.code);
-            } else if (message.data.location === 'editor') {
-              this.codeInsertionManager.insertTextUsingSnippetAtCursorWithoutDecoration(
-                message.data.code + (nextLineCharacter ?? ''),
-                uuidv4()
-              );
-            }
-            break;
-
-          // Shows a simple notification message in the status bar
-          case 'showInfoPopup':
-            showTextNotification(message.data.message, 3);
-            break;
 
           // Checks if the user is logged in and initializes necessary services
           case 'ready':
@@ -216,6 +185,13 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         }
       });
     }
+
+    while (this._messageQueue.length > 0) {
+      const message = this._messageQueue.shift();
+      if (message) {
+        webviewView.webview.postMessage(message);
+      }
+    }
   }
 
   // Socket-based model retrieval disabled.
@@ -275,11 +251,15 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 ${inputText}
 \`\`\``;
 
-    if (this.activePanels.length > 0) {
-      this.activePanels[0].webview.postMessage(output);
+    await vscode.commands.executeCommand('aiChatPanelPrimary.focus');
+    this._postMessage(output);
+  }
+
+  private _postMessage(message: any) {
+    if (this._view) {
+      this._view.webview.postMessage(message);
     } else {
-      await new Promise(resolve => setTimeout(resolve, 4000));
-      this.activePanels[0].webview.postMessage(output);
+      this._messageQueue.push(message);
     }
   }
 
