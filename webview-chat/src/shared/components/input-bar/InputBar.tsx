@@ -1,16 +1,17 @@
 // InputBar.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useChatContext } from '../../features/chat/state/chatTypes';
+import { useChatContext } from '../../../features/chat/state/chatTypes';
+
 import {
   useHandleIncomingMessages,
   sanitizeInput,
   handleSendClick,
-} from '../../features/chat/hooks/InputBarUtils';
-import ContextWrapper from '../../shared/components/input-bar/ContextWrapper';
-import ChatModelDropdown from '../../shared/components/input-bar/ChatModelDropdown';
-import ChatControls from '../../shared/components/input-bar/ChatControls';
-import { useVscode } from '../../integration/vscode/api';
-import {handlePaste} from '../../features/chat/hooks/InputBarUtils';
+} from '../../../features/chat/hooks/InputBarUtils';
+import ContextWrapper from './ContextWrapper';
+import ChatModelDropdown from './ChatModelDropdown';
+import ChatControls from './ChatControls';
+import { useVscode } from '../../../integration/vscode/api';
+import {handlePaste} from '../../../features/chat/hooks/InputBarUtils';
 
 interface InputBarProps {
   input: string;
@@ -32,6 +33,7 @@ const InputBar: React.FC<InputBarProps> = ({
   const {
     attachedContext,
     setAttachedContext,
+    openEditorFilesList,
     setOpenEditorFilesList,
     setIsTyping,
     setIsInterrupted,
@@ -45,7 +47,9 @@ const InputBar: React.FC<InputBarProps> = ({
     setInput,
     attachedContext,
     setAttachedContext,
-    _setOpenEditorFilesList: setOpenEditorFilesList,
+    openEditorFilesList,
+    setOpenEditorFilesList,
+    vscode
   });
 
   // Dynamically resize textarea

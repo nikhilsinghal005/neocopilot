@@ -24,7 +24,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   private static primaryInstance: AiChatPanel;
   public activePanels: vscode.WebviewView[] = [];
   private _view: vscode.WebviewView | undefined;
-  private _messageQueue: { command: string;[key: string]: unknown }[] = [];
   // SocketModule is removed, no socket communication in chat panel.
   public codeInsertionManager: CodeInsertionManager;
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
@@ -120,13 +119,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
       webviewView.webview.onDidReceiveMessage(async (message: { command: string;[key: string]: unknown }) => {
         switch (message.command) {
-
-
-          // Checks if the user is logged in and initializes necessary services
-          case 'ready':
-            // aiChatModelDetails removed
-            break;
-
           case 'upload_image': {
             const _chatId = message.chatId;
             vscode.window.showOpenDialog({
@@ -192,12 +184,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       });
     }
 
-    while (this._messageQueue.length > 0) {
-      const message = this._messageQueue.shift();
-      if (message) {
-        webviewView.webview.postMessage(message);
-      }
-    }
   }
 
   public async sendMessageToChat(

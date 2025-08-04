@@ -14,6 +14,6 @@
     "noEmit": true // Ensure no .js files are created
 
   },
-  "include": ["src", "vite.config.ts", "src/types/custom-modules.d.ts"],
+  "include": ["src", "vite.config.ts", "src/shared/types/custom-modules.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

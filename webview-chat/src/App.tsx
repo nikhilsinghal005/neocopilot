@@ -1,26 +1,16 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Chat from './pages/Chat';
-import { ChatProvider } from './context/ChatContext';
-import { VscodeProvider } from './context/VscodeContext';
+import { ChatProvider } from './features/chat/state/ChatContext';
+import { VscodeProvider } from './integration/vscode/VscodeContext';
+import { VscodeApi } from './integration/vscode/api';
 
-declare const acquireVsCodeApi: () => {
-  postMessage: (msg: any) => void;
-  getState: () => any;
-  setState: (state: any) => void;
-};
+// Declare the function that acquires the API.
+declare const acquireVsCodeApi: () => VscodeApi;
 
-const vscodeApi = acquireVsCodeApi() as {
-  postMessage: (msg: any) => void;
-  getState: () => any;
-  setState: (state: any) => void;
-};
+// Get the VS Code API instance. It's a singleton, so it should be called only once.
+const vscodeApi = acquireVsCodeApi();
 
-const App: React.FC = () => {
-  useEffect(() => {
-    vscodeApi.postMessage({ command: 'ready' });
-    console.log('App mounted.');
-  }, []);
-
+const app: React.FC = () => {
   return (
     <VscodeProvider vscode={vscodeApi}>
       <ChatProvider>
@@ -32,4 +22,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default app;
