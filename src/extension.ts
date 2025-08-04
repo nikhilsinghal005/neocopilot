@@ -20,7 +20,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     authManager,
     AiChatPanel.primaryViewType
   );
-  await primaryViewProvider.sendAuthStatus(false); // Login is not required
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
