@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { showTextNotification } from '../../utilities/statusBarNotifications/showTextNotification';
-import { showErrorNotification } from '../../utilities/statusBarNotifications/showErrorNotification';
+import { showTextNotification } from '../../notifications/statusBarNotifications/showTextNotification';
+import { showErrorNotification } from '../../notifications/statusBarNotifications/showErrorNotification';
 
 
 export async function createFile(relativePath: string): Promise<boolean> {
@@ -28,14 +28,14 @@ export async function createFile(relativePath: string): Promise<boolean> {
         showTextNotification(`File created successfully at ${relativePath}`, 2);
         return true;
 
-    } catch (error: any) {
-        if (error.code === 'EEXIST') {
+    } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'EEXIST') {
             showErrorNotification(`File already exists at ${relativePath}`, 2);
+        } else if (error && typeof error === 'object' && 'message' in error && typeof (error as { message?: string }).message === 'string') {
+            showErrorNotification(`Error creating file: ${(error as { message: string }).message}`, 2);
         } else {
-            showErrorNotification(`Error creating file: ${error.message}`, 2);
-            // console.error("Error creating file:", error); // Log for debugging
+            showErrorNotification(`Error creating file: Unknown error`, 2);
         }
         return false;
     }
 }
-

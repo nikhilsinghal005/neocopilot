@@ -11,7 +11,7 @@ export function showTextNotification(message: string, timeInSeconds?: number) {
       title: message,
       cancellable: false,
     },
-    async (progress) => {
+    async (_progress) => {
       return new Promise<void>((resolve) => {
         setTimeout(() => {
           resolve(); // Resolve the promise after the specified duration

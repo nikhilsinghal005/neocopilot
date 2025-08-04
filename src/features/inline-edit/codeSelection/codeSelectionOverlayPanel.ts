@@ -22,7 +22,7 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
     public provideHover(
         document: vscode.TextDocument,
         position: vscode.Position,
-        token: vscode.CancellationToken
+        _token: vscode.CancellationToken
     ): vscode.ProviderResult<vscode.Hover> {
         const editor = vscode.window.activeTextEditor;
 
@@ -41,7 +41,7 @@ export class FloatingHoverProvider implements vscode.HoverProvider {
         }
 
         return new Promise<vscode.Hover | undefined>((resolve) => {
-            const config = vscode.workspace.getConfiguration('editor.hover');
+            const _config = vscode.workspace.getConfiguration('editor.hover');
             this.debounceTimeout = setTimeout(() => {
                 this.selectionContext.lastHoverPosition = position;
 

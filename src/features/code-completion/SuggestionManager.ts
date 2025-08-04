@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { SocketModule } from '../../core/socket/socketModule';
 import { getTextBeforeCursor, getTextAfterCursor } from "../../core/workspace/codeCompletionUtils/editorCodeUtils";
-import { isNullOrEmptyOrWhitespace, getDeletedText, searchSuggestion } from "../../core/workspace/codeCompletionUtils/completionUtils";
+import { isNullOrEmptyOrWhitespace, getDeletedText } from "../../core/workspace/codeCompletionUtils/completionUtils";
 import { v4 as uuidv4 } from 'uuid';
 import { DeletionHandler } from './handleActions/deleteActionHandler';
 import { UpdateHandler } from './handleActions/updateActionHandler';

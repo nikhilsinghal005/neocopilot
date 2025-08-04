@@ -1,8 +1,7 @@
 // src/deletion/DeletionHandler.ts
 
-import * as vscode from 'vscode';
 import { SuggestionManager } from '../SuggestionManager';
-import { modifySuggestion, handleAddedSpecialCharacters } from "../../../core/workspace/codeCompletionUtils/completionUtils";
+import { modifySuggestion } from "../../../core/workspace/codeCompletionUtils/completionUtils";
 import { CompletionProviderModule } from '../completionProviderModule';
 import { CompletionSocketManager } from '../completionSocketManager';
 
@@ -90,12 +89,12 @@ export class DeletionHandler {
    * Validate the context of the deletion to ensure it's relevant.
    */
   private isDeletionContextValid(deletedText: string): boolean {
-    const { mainSuggestion, tempSuggestion, textBeforeCursor } = this.suggestionManager;
+    const { mainSuggestion, tempSuggestion, textBeforeCursor: _textBeforeCursor } = this.suggestionManager;
     const previousFullText = this.completionSocketManager.previousText + mainSuggestion;
     const tempSuggestionLength = tempSuggestion.length;
     const deletedTextLength = deletedText.length;
     const expectedTextBeforeCursor = previousFullText.slice(0, -tempSuggestionLength - deletedTextLength);
-    const currentTextWithDeleted = textBeforeCursor;
+    const currentTextWithDeleted = _textBeforeCursor;
 
     return expectedTextBeforeCursor === currentTextWithDeleted;
   }
@@ -123,7 +122,7 @@ export class DeletionHandler {
    * Handle regular deletions by modifying the current suggestion.
    */
   private handleRegularDeletion(positionChange: number): boolean {
-    const { mainSuggestion, tempSuggestion, textBeforeCursor } = this.suggestionManager;
+    const { mainSuggestion, tempSuggestion, textBeforeCursor: _textBeforeCursor } = this.suggestionManager;
     const modifiedSuggestion = modifySuggestion(mainSuggestion, tempSuggestion, positionChange);
 
 

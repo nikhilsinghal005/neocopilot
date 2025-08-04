@@ -37,7 +37,7 @@ export class SelectionContext {
         return SelectionContext.instance;
     }
 
-    public createFixedHover(expandedRange: vscode.Range, selectedText: string): vscode.Hover | undefined {
+    public createFixedHover(expandedRange: vscode.Range, _selectedText: string): vscode.Hover | undefined {
         const markdownContent = new vscode.MarkdownString();
 
         // Add command buttons

@@ -1,20 +1,14 @@
 // Import statements remain the same
 import * as vscode from 'vscode';
-import { io, Socket, ManagerOptions, SocketOptions } from 'socket.io-client';
-import { SOCKET_API_BASE_URL } from './config';
-import { StatusBarManager } from './StatusBarManager';
-import { versionConfig } from './versionConfig';
+import { io, Socket } from 'socket.io-client';
+import { SOCKET_API_BASE_URL } from '../config/config';
+import { StatusBarManager } from '../notifications/StatusBarManager';
+import { versionConfig } from '../config/versionConfig';
 import { v4 as uuidv4 } from 'uuid';
-import { AuthManager } from './authManager/authManager';
-import { CodeInsertionManager } from './codeInsertions/CodeInsertionManager';
+import { AuthManager } from '../auth/authManager';
+import { CodeInsertionManager } from '../../features/inline-edit/codeInsertions/CodeInsertionManager';
 
-interface CustomSocketOptions extends Partial<ManagerOptions & SocketOptions> {}
 
-interface UserProfile {
-  email: string;
-  name: string;
-  pictureUrl: string;
-}
 
 export class SocketModule {
   private static instance: SocketModule | null = null;
@@ -71,7 +65,7 @@ export class SocketModule {
   }
 
   private registerSocketEventHandlers(context: vscode.ExtensionContext, authManager: AuthManager) {
-    if (!this.socket) return;
+    if (!this.socket) {return;}
 
     // Handle successful connection
     this.socket.on('connect', () => {
@@ -99,7 +93,7 @@ export class SocketModule {
     });
 
     // Handle disconnection
-    this.socket.on('disconnect', (reason: string) => {
+    this.socket.on('disconnect', (_reason: string) => {
       if (this.pingInterval) {
         clearInterval(this.pingInterval);
       }
@@ -157,19 +151,19 @@ export class SocketModule {
     });
 
     // Handle app version updates
-    this.socket.on('update_app_version', (data: any) => {
+    this.socket.on('update_app_version', (data: { extensionId: string; latestVersion: string; message: string }) => {
       if (this.isUpdatePopupShown) {
         return;
       } else {
-        const extensionId = data.extension_id;
-        const newRequiredVersion = data.latest_version;
+        const extensionId = data.extensionId;
+        const newRequiredVersion = data.latestVersion;
         this.promptUpdate(extensionId, newRequiredVersion, data.message);
         this.isUpdatePopupShown = true;
       }
     });
   }
 
-  public chatCompletionMessage(completion_type: string, completion_comment: string, completion_size: number) {
+  public chatCompletionMessage(completionType: string, completionComment: string, completionSize: number) {
     if (this.rateLimitExceeded) {
       return;
     }
@@ -177,15 +171,15 @@ export class SocketModule {
     if (this.socket) {
       this.socket.emit('completion_accepted', {
         uuid: this.currentSuggestionId,
-        completion_type,
-        completion_comment,
-        completion_size,
+        completionType,
+        completionComment,
+        completionSize,
         userEmail: this.email,
       });
     }
   }
 
-  public customInformationMessage(information_type: string, information_comment: string) {
+  public customInformationMessage(informationType: string, informationComment: string) {
     if (this.rateLimitExceeded) {
       return;
     }
@@ -193,8 +187,8 @@ export class SocketModule {
     if (this.socket) {
       this.socket.emit('custom_information', {
         uuid: uuidv4(),
-        information_type,
-        information_comment,
+        informationType,
+        informationComment,
         userEmail: this.email,
       });
     }
@@ -236,8 +230,9 @@ function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+
 // Helper function to create the socket connection
-async function createSocketConnection(appVersion: string, email: string, userId: string, authManager: any): Promise<Socket> {
+async function createSocketConnection(appVersion: string, email: string, userId: string, authManager: AuthManager): Promise<Socket> {
   const options = {
     query: {
       appVersion: appVersion,
@@ -253,7 +248,7 @@ async function createSocketConnection(appVersion: string, email: string, userId:
     // reconnectionDelayMax: 10000,
     // timeout: 10000,
     extraHeaders: {
-      Authorization: `Bearer ${await authManager.getAccessToken()}`,
+      'Authorization': `Bearer ${await authManager.getAccessToken()}`, // eslint-disable-line @typescript-eslint/naming-convention
     },
   };
 

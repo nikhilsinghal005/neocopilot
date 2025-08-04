@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-export function GetLineSeparator(): string {
+export function getLineSeparator(): string {
 
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
