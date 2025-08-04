@@ -221,7 +221,7 @@ export class CodeSelectionCommandHandler {
     if (this.socketModule.socket?.listeners('recieve_editor_code_refactor').length === 0) {
 
       // Add a listener for 'recieve_editor_code_refactor' event
-      this.socketModule.socket?.on('recieve_editor_code_refactor', (data: { response: string, isLineComplete: boolean, isError: boolean, isRateLimit: boolean, id: string, rateLimitResponse: string }) => {
+      this.socketModule.socket?.on('recieve_editor_code_refactor', (data: { response: string, isLineComplete: boolean, isError: boolean, isRateLimit: boolean, id: string, rateLimitResponse: string, isComplete: boolean }) => {
         // Accumulate the incoming text
         this.updatedtext += data.response;
 
@@ -412,7 +412,7 @@ export class CodeSelectionCommandHandler {
     // Get the language of the document
     const documentLanguage = editor.document.languageId;
 
-    await this.aiChatpanel.insertMessagesToChat( // eslint-disable-line @typescript-eslint/no-explicit-any
+    await this.aiChatpanel.sendMessageToChat( // eslint-disable-line @typescript-eslint/no-explicit-any
       this.currentFileName,
       selectedText,
       this.completeText,
