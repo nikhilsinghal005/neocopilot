@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { showErrorNotification } from '../../utilities/statusBarNotifications/showErrorNotification';
+import { showErrorNotification } from '../../../core/notifications/statusBarNotifications/showErrorNotification';
 
 export async function openAndHighlightFile(relativePath: string): Promise<boolean> {
     try {
@@ -35,7 +35,7 @@ export async function openAndHighlightFile(relativePath: string): Promise<boolea
 
         // vscode.window.showInformationMessage(`Opened and highlighted: ${relativePath}`);
         return true;
-    } catch (error) {
+    } catch (_error) {
         return false;
     }
 }

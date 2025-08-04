@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import { LOGIN_REDIRECT_URL } from './config';
-import { showLoginNotification } from './utilities/statusBarNotifications/showLoginNotification';
-import { VscodeEventsModule } from './codeCompletion/vscodeEventsModule';
+import { showLoginNotification } from './statusBarNotifications/showLoginNotification';
+import { VscodeEventsModule } from '../../features/code-completion/vscodeEventsModule';
 
 export class StatusBarManager {
     private static statusBar: vscode.StatusBarItem | undefined = undefined;

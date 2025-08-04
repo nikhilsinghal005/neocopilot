@@ -15,7 +15,7 @@ export class CodeInsertionCodeLensProvider implements vscode.CodeLensProvider {
 
   public provideCodeLenses(
     document: vscode.TextDocument,
-    token: vscode.CancellationToken
+    _token: vscode.CancellationToken
   ): vscode.CodeLens[] {
     // Ensure we are working with the correct editor and document
     if (this.currentEditor && document.uri.toString() !== this.currentEditor.document.uri.toString()) {

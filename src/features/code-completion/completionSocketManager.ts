@@ -11,7 +11,7 @@ import {
   searchSuggestion,
 } from "../../core/workspace/codeCompletionUtils/completionUtils";
 import { getTextBeforeCursor } from "../../core/workspace/codeCompletionUtils/editorCodeUtils";
-import { GetLineSeparator } from '../../core/workspace/editorUtils/getLineSeparator';
+import { getLineSeparator } from '../../core/workspace/editorUtils/getLineSeparator';
 import { showCustomNotification } from '../../core/notifications/statusBarNotifications/showCustomNotification';
 
 /**
@@ -22,6 +22,14 @@ interface PredictionReceived {
   uniqueId: string;
   messageList: string[];
 }
+
+interface RateLimitInfo {
+  isRateLimit: boolean;
+  rateLimitResponse: string;
+  rateLimitTime: number;
+}
+
+type PredictionData = PredictionReceived & Partial<RateLimitInfo>;
 
 export class CompletionSocketManager {
   // Singleton instance
@@ -40,7 +48,7 @@ export class CompletionSocketManager {
   public previousText: string = "";
   private rateLimitTime: number = 0;
   private isRateLimitExceeded: boolean = false;
-  private rateLimitDebounceTimeout: any = null; // Store timeout for debounce logic
+  private rateLimitDebounceTimeout: NodeJS.Timeout | null = null; // Store timeout for debounce logic
 
   
   // Private properties
@@ -81,7 +89,7 @@ export class CompletionSocketManager {
    */
   public attachSocketListeners(): void {
     if (this.socketModule.socket?.listeners('receive_message').length === 0) {
-      this.socketModule.socket.on('receive_message', (data: any) => {
+      this.socketModule.socket.on('receive_message', (data: PredictionReceived) => {
         try {
           this.predictionRequestInProgress = false;
           StatusBarManager.updateMessage(`$(check) Neo Copilot`);
@@ -193,34 +201,34 @@ export class CompletionSocketManager {
    * Handle prediction data received from the socket.
    * @param predictionReceived Data received from the socket.
    */
-  private predictionHandleFunction(predictionReceived: any): void {
-    // Check for rate limti hit
-    if (predictionReceived.isRateLimit){
-        showCustomNotification(predictionReceived.rateLimitResponse);
-        this.rateLimitTime = predictionReceived.rateLimitTime;
-        this.isRateLimitExceeded = predictionReceived.isRateLimit;
-        this.reinitializeSocket();
+  private predictionHandleFunction(predictionReceived: PredictionData): void {
+    // Check for rate limit hit
+    if (predictionReceived.isRateLimit) {
+      showCustomNotification(predictionReceived.rateLimitResponse!);
+      this.rateLimitTime = predictionReceived.rateLimitTime!;
+      this.isRateLimitExceeded = predictionReceived.isRateLimit;
+      this.reinitializeSocket();
 
-        // Log a warning with the remaining rate limit time
-        console.warn(`Code completion rate limit hit. Limited for ${this.rateLimitTime} seconds.`);
+      // Log a warning with the remaining rate limit time
+      console.warn(`Code completion rate limit hit. Limited for ${this.rateLimitTime} seconds.`);
 
-        // Cap the timeout to a maximum value (e.g., 1 day)
-        const maxTimeout = 24 * 60 * 60; // 1 day in seconds
-        const timeout = Math.min(this.rateLimitTime, maxTimeout);
+      // Cap the timeout to a maximum value (e.g., 1 day)
+      const maxTimeout = 24 * 60 * 60; // 1 day in seconds
+      const timeout = Math.min(this.rateLimitTime, maxTimeout);
 
-        // Set a timer for when the rate limit expires
-        setTimeout(() => {
-          this.isRateLimitExceeded = false;
-          this.rateLimitTime = 0;
-        }, timeout * 1000);
+      // Set a timer for when the rate limit expires
+      setTimeout(() => {
+        this.isRateLimitExceeded = false;
+        this.rateLimitTime = 0;
+      }, timeout * 1000);
 
-        return;
+      return;
     }
 
     const prediction: PredictionReceived = {
-      message: predictionReceived.message,
-      messageList: predictionReceived.messageList,
-      uniqueId: predictionReceived.uniqueId
+      message: predictionReceived.message!,
+      messageList: predictionReceived.messageList!,
+      uniqueId: predictionReceived.uniqueId!
     };
 
     // Check if the prediction Exisits
@@ -275,9 +283,9 @@ export class CompletionSocketManager {
    * @returns The extracted suggestion.
    */
   private extractSuggestion(message: string): string {
-    const suggestionLines = message.split(GetLineSeparator());
+    const suggestionLines = message.split(getLineSeparator());
     if (suggestionLines[0].trim() === "" && suggestionLines.length > 1) {
-      return suggestionLines[0] + GetLineSeparator() + suggestionLines[1];
+      return suggestionLines[0] + getLineSeparator() + suggestionLines[1];
     }
     return suggestionLines[0];
   }

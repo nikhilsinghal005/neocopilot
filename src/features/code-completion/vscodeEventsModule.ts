@@ -52,7 +52,7 @@ export class VscodeEventsModule {
    * @param event Text document change event.
    * @param context Extension context.
    */
-  public async handleTextChange(event: vscode.TextDocumentChangeEvent, context: vscode.ExtensionContext): Promise<void> {
+  public async handleTextChange(event: vscode.TextDocumentChangeEvent, _context: vscode.ExtensionContext): Promise<void> {
     if (this.isDisabled15Minutes) {
       return;
     }
@@ -95,14 +95,14 @@ export class VscodeEventsModule {
    * @param editor Active text editor.
    * @param context Extension context.
    */
-  public getCurrentFileName(editor: vscode.TextEditor | undefined, context: vscode.ExtensionContext): void {
+  public getCurrentFileName(editor: vscode.TextEditor | undefined, _context: vscode.ExtensionContext): void {
     try {
       if (this.debounceTimeout) {
         clearTimeout(this.debounceTimeout);
       }
 
       this.debounceTimeout = setTimeout(() => {
-        this.currentSelectedFileName = path.basename(handleActiveEditor(editor, context));
+        this.currentSelectedFileName = path.basename(handleActiveEditor(editor, _context));
 
         if (notSupportedFiles(this.currentSelectedFileName)) {
           StatusBarManager.updateMessage(`$(error) Neo Copilot`);

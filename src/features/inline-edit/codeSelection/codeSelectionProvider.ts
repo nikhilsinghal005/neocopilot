@@ -62,7 +62,7 @@ export class CodeSelectionProvider implements vscode.CodeLensProvider {
    * Handles text document changes.
    * If the selection is active, debounce the refresh to update CodeLens accordingly.
    */
-  private handleDocumentChange = (event: vscode.TextDocumentChangeEvent) => {
+  private handleDocumentChange = (_event: vscode.TextDocumentChangeEvent) => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
       return;
@@ -108,7 +108,7 @@ export class CodeSelectionProvider implements vscode.CodeLensProvider {
    */
   public provideCodeLenses(
     document: vscode.TextDocument,
-    token: vscode.CancellationToken
+    _token: vscode.CancellationToken
   ): vscode.ProviderResult<vscode.CodeLens[]> {
     const codeLenses: vscode.CodeLens[] = [];
 
@@ -168,7 +168,7 @@ export class CodeSelectionProvider implements vscode.CodeLensProvider {
    */
   public resolveCodeLens(
     codeLens: vscode.CodeLens,
-    token: vscode.CancellationToken
+    _token: vscode.CancellationToken
   ): vscode.ProviderResult<vscode.CodeLens> {
     return codeLens;
   }

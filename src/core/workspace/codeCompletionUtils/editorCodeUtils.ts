@@ -24,7 +24,7 @@ export function getTextBeforeCursor(editor: vscode.TextEditor | undefined): stri
 export function getCompleteEditorText(editor: vscode.TextEditor | undefined): string {
   // Function to get complete editor text
   if (editor) {
-    return editor.document.getText();;
+    return editor.document.getText();
   }    
    return ''
 }

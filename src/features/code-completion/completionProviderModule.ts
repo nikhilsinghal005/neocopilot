@@ -57,8 +57,8 @@ export class CompletionProviderModule implements vscode.InlineCompletionItemProv
     public async provideInlineCompletionItems(
         document: vscode.TextDocument,
         position: vscode.Position,
-        context: vscode.InlineCompletionContext,
-        token: vscode.CancellationToken
+        _context: vscode.InlineCompletionContext,
+        _token: vscode.CancellationToken
     ): Promise<vscode.InlineCompletionItem[] | vscode.InlineCompletionList | undefined> {
         if (this.suggestion) {
             const range = new vscode.Range(position, position);

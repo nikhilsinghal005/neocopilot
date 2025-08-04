@@ -40,7 +40,7 @@ export function modifySuggestion(mainString: string, tempString: string, sliceLe
     // This is done to avoid showing suggestions that are already typed by the user.
     // The sliceLength parameter is used to limit the length of the modified suggestion.
     // This is done to avoid showing suggestions that are too long.
-    if (mainString.endsWith(tempString) && mainString!=tempString) {
+    if (mainString.endsWith(tempString) && mainString !== tempString) {
         const endIndex = mainString.length - tempString.length;
         const modifiedMainSuggestion = mainString.slice(0, endIndex);
         if (sliceLength > 0 && sliceLength <= modifiedMainSuggestion.length) {
@@ -85,8 +85,8 @@ function getMatchingCloseChar(openChar: string): string {
 
 function findLastMatchingParenthesis(code: string, startIndex: number): number {
     const stack: number[] = [];
-    const openToClose: Record<string, string> = { '(': ')', '{': '}', '[': ']', "'": "'", '"': '"' };
-    const closeToOpen: Record<string, string> = { ')': '(', '}': '{', ']': '[', "'": "'", '"': '"' };
+    const openToClose: Record<string, string> = { '(': ')', '{': '}', '[': ']', "'": "'", '"': '"' }; // eslint-disable-line @typescript-eslint/naming-convention
+    const closeToOpen: Record<string, string> = { ')': '(', '}': '{', ']': '[', "'": "'", '"': '"' }; // eslint-disable-line @typescript-eslint/naming-convention
 
     const startChar = code[startIndex];
     if (!(startChar in openToClose || startChar in closeToOpen)) {
@@ -192,7 +192,7 @@ export function removeSubstringFromEnd(str: string, subStr: string): string {
 }
 
 export function searchSuggestion(mainListSuggestion: string[], predictionText: string, currentText: string, updatedtext: string): [string, string] { 
-    for (let item of mainListSuggestion) {
+    for (const item of mainListSuggestion) {
         if ((predictionText + item).startsWith(currentText + updatedtext)) {
             if ((predictionText + item) !== (currentText + updatedtext)){
                 return [item, (predictionText + item).slice((currentText + updatedtext).length)];
@@ -208,7 +208,7 @@ export function findFirstMatch(mainListSuggestion: string[], mainSuggestion: str
       mainListSuggestion = mainListSuggestion.filter(item => item !== mainSuggestion);
     }
     
-    for (let item of mainListSuggestion) {
+    for (const item of mainListSuggestion) {
       if (item.startsWith(subStr)) {
         return item;
       }

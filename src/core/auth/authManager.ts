@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import { FULL_VERIFICATION_URL, FULL_TOKEN_REFRESH_URL, FULL_USER_PROFILE_URL } from '../config/config';
-import { showErrorNotification } from '../notifications/statusBarNotifications/showErrorNotification';
+import { FULL_VERIFICATION_URL, FULL_USER_PROFILE_URL } from '../config/config';
 
 export interface UserProfile {
   email: string;
@@ -68,12 +67,12 @@ export class AuthManager {
   }
 
 // Verify the access token by calling the API
-public async verifyAccessToken(maxRetries: number = 5): Promise<boolean> {
+public async verifyAccessToken(_maxRetries: number = 5): Promise<boolean> {
     return true;
   }
 
   // Refresh the access token by calling the backend API
-    public async refreshAccessToken(retryCount: number = 100000): Promise<string | null> {
+    public async refreshAccessToken(_retryCount: number = 100000): Promise<string | null> {
       return "mock-access-token";
     }
 
@@ -83,8 +82,8 @@ public async verifyAccessToken(maxRetries: number = 5): Promise<boolean> {
       const response = await fetch(FULL_VERIFICATION_URL, {
         method: 'POST',
         headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json', // eslint-disable-line @typescript-eslint/naming-convention
+        'Authorization': `Bearer ${token}`, // eslint-disable-line @typescript-eslint/naming-convention
       },
       });
 
@@ -95,7 +94,7 @@ public async verifyAccessToken(maxRetries: number = 5): Promise<boolean> {
 
       const data = await response.json();
       return data.isValid || false;
-    } catch (error) {
+    } catch (_error) {
       console.error('Neo Copilot: User verification failed');
       return false;
     }
@@ -113,8 +112,8 @@ public async verifyAccessToken(maxRetries: number = 5): Promise<boolean> {
       const response = await fetch(FULL_USER_PROFILE_URL, {
         method: 'POST',
         headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json', // eslint-disable-line @typescript-eslint/naming-convention
+        'Authorization': `Bearer ${accessToken}`, // eslint-disable-line @typescript-eslint/naming-convention
       },
         credentials: 'include',
       });
@@ -133,7 +132,7 @@ public async verifyAccessToken(maxRetries: number = 5): Promise<boolean> {
         // vscode.window.showErrorMessage(`Failed to fetch profile: ${response.statusText}`);
         return null;
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Neo Copilot: Error fetching user info');
       return null;
     }
@@ -158,11 +157,3 @@ public async verifyAccessToken(maxRetries: number = 5): Promise<boolean> {
   }
 }
 
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-function isTemporaryError(error: any): boolean {
-  if (error && (error.message.includes('NetworkError') || error.message.includes('timeout') || error.message.includes('ECONNRESET'))) {
-    return true;
-  }
-  return false;
-}

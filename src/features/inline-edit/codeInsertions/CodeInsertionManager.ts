@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import { CodeInsertionCodeLensProvider } from './CodeInsertionCodeLensProvider';
 import { insertSnippetAtCursorFunction} from './handleInsertionTypes/inserSnippetAtCursor';
 import {insertTextIntoTerminalFunction} from './handleInsertionTypes/insertCommandTerminal';
-import { showTextNotification } from '../../../core/notifications/statusBarNotifications/showTextNotification';
 import { showErrorNotification } from '../../../core/notifications/statusBarNotifications/showErrorNotification';
 
 
@@ -68,8 +67,8 @@ export class CodeInsertionManager {
     // Register Commands
     this.registerCommands(context);
     vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (vscode.window.activeTextEditor && this.currentEditor) {
-        if (vscode.window.activeTextEditor.document.uri.toString() === this.currentEditor.document.uri.toString()) {
+      if (editor && this.currentEditor) {
+        if (editor.document.uri.toString() === this.currentEditor.document.uri.toString()) {
           this.reinitializeDecorationsAndCodeLenses();
         }
       }
@@ -151,7 +150,7 @@ public async reinitializeDecorationsAndCodeLenses(): Promise<void> {
     return CodeInsertionManager.instance; // Return the existing instance
   }
 
-  public getInsertionsForDocument(uri: vscode.Uri): Insertion[] {
+  public getInsertionsForDocument(_uri: vscode.Uri): Insertion[] {
     return Array.from(this.insertions.values()).filter(
       (insertion) => insertion.range.start.line >= 0
     );
@@ -186,8 +185,8 @@ public async reinitializeDecorationsAndCodeLenses(): Promise<void> {
         editBuilder.delete(fullLineRange);
       });
     })
-    .then((success) => {
-      if (success) {
+    .then((_success) => {
+      if (_success) {
         // Dispose of decorations
         insertion.decorationType.dispose();
         if (insertion.deletedDecorationType) {
@@ -240,8 +239,8 @@ public rejectInsertion(id: string): void {
         editBuilder.delete(fullLineRange);
       });
     })
-    .then((success) => {
-      if (success) {
+    .then((_success) => {
+      if (_success) {
         // Dispose of all decorations
         if (insertion.decorationType) {
           insertion.decorationType.dispose();
@@ -356,7 +355,7 @@ public rejectInsertion(id: string): void {
       if (isComplete) {
         let updatedIndex = 0;
         if (this.oldLinesList.length > 0) {
-          for (const newLine of this.oldLinesList) {
+          for (const _newLine of this.oldLinesList) {
             const startPos = new vscode.Position(this.oldStartLine + updatedIndex, 0);
             const endPos = new vscode.Position(this.oldStartLine + updatedIndex, 1000);
             const lineRange = new vscode.Range(startPos, endPos);
@@ -406,7 +405,7 @@ public rejectInsertion(id: string): void {
       let updatedIndex = 0;
 
       // Index of newLine in oldText
-      const index = this.oldLinesList.indexOf(newLine); 
+      const index = this.oldLinesList.indexOf(newLine);
       // console.log("***************", JSON.stringify(index))
 
       if (index === -1) {
@@ -419,7 +418,7 @@ public rejectInsertion(id: string): void {
         // Inserting newLine into Editor
         const edit = new vscode.WorkspaceEdit();
         edit.insert(editor.document.uri, startPos, newLine + nextLineCharacter);
-        const success = await vscode.workspace.applyEdit(edit);
+        const _success = await vscode.workspace.applyEdit(edit);
         // Applying Decorations
         this.decorationsToApply.inserted.push(lineRange);
 
@@ -433,17 +432,17 @@ public rejectInsertion(id: string): void {
         const slicedLines = this.oldLinesList.slice(0, index + 1);
         // console.log("***************", JSON.stringify(this.oldLinesList))
 
-        for (let tempLine in slicedLines) {
+        for (const _tempLine in slicedLines) {
           const startPos = new vscode.Position(this.oldStartLine + updatedIndex, 0);
           const endPos = new vscode.Position(this.oldStartLine + updatedIndex, 1000);
           const lineRange = new vscode.Range(startPos, endPos);
           editor.setDecorations(this.movingDecorationType, [lineRange]);
 
-          if (slicedLines[tempLine] === newLine){
+          if (slicedLines[_tempLine] === newLine){
             this.decorationsToApply.same.push(lineRange);
           } else {
             this.decorationsToApply.deleted.push(lineRange);
-          }  
+          }
           updatedIndex += 1;
           // console.log("***************", JSON.stringify(lineRange), JSON.stringify(tempLine))
         }
@@ -459,5 +458,5 @@ public rejectInsertion(id: string): void {
       editor.setDecorations(this.deletedDecorationType, this.decorationsToApply.deleted);
       editor.setDecorations(this.sameDecorationType, this.decorationsToApply.same);
     }
-  } 
+  }
 }

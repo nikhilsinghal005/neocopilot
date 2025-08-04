@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { AiChatPanel } from '../../chat/aiChatPanel';
 import { CodeSelectionCommand } from './selectionContext';
 import { SelectionContext } from './selectionContext';
-import { showTextNotification } from '../../../core/notifications/statusBarNotifications/showTextNotification';
 import { showErrorNotification } from '../../../core/notifications/statusBarNotifications/showErrorNotification';
 import { showCustomNotification } from '../../../core/notifications/statusBarNotifications/showCustomNotification';
 
@@ -95,7 +94,7 @@ export class CodeSelectionCommandHandler {
       this.expandSelectionToLine();
       selection = editor.selection;
       this.codeInsertionManager.selectionContext = selection;
-      const selectedText = editor.document.getText(selection).trim();
+      const _selectedText = editor.document.getText(selection).trim();
       this.selectionContext.clearHoverCache();
       this.selectionContext.clearHover(editor);
       vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
@@ -222,7 +221,7 @@ export class CodeSelectionCommandHandler {
     if (this.socketModule.socket?.listeners('recieve_editor_code_refactor').length === 0) {
 
       // Add a listener for 'recieve_editor_code_refactor' event
-      this.socketModule.socket?.on('recieve_editor_code_refactor', (data: any) => {
+      this.socketModule.socket?.on('recieve_editor_code_refactor', (data: { response: string, isLineComplete: boolean, isError: boolean, isRateLimit: boolean, id: string, rateLimitResponse: string, isComplete: boolean }) => {
         // Accumulate the incoming text
         this.updatedtext += data.response;
 
@@ -244,7 +243,7 @@ export class CodeSelectionCommandHandler {
         }
 
         // Check if the data is complete
-        if (data.isComplete) {
+        if (data.isComplete) { // eslint-disable-line @typescript-eslint/no-explicit-any
           // Stop the animation and remove the decoration
           this.stopAnimation();
 
@@ -413,7 +412,7 @@ export class CodeSelectionCommandHandler {
     // Get the language of the document
     const documentLanguage = editor.document.languageId;
 
-    await this.aiChatpanel.insertMessagesToChat(
+    await this.aiChatpanel.sendMessageToChat( // eslint-disable-line @typescript-eslint/no-explicit-any
       this.currentFileName,
       selectedText,
       this.completeText,
