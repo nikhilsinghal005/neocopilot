@@ -2,18 +2,12 @@
 import React from 'react';
 import { useChatContext } from '../../../features/chat/state/chatTypes';
 import LanguageIcon from '../common/LanguageIcon';
-import { handleListItemClickFunction } from '../../../features/chat/hooks/InputBarUtils';
-import { useVscode } from '../../../integration/vscode/api';
 import { EditorOpenFileList } from '../../../shared/types/Message';
 
 const FileListDropdown: React.FC = () => {
   const {
     openEditorFilesList,
-    attachedContext,
-    setAttachedContext,
-    setOpenEditorFilesList,
   } = useChatContext();
-  const vscode = useVscode();
 
   const [searchQuery, setSearchQuery] = React.useState('');
   const filteredFiles = openEditorFilesList.filter((file: EditorOpenFileList) =>
@@ -24,18 +18,7 @@ const FileListDropdown: React.FC = () => {
   const handleListItemClick = (file: EditorOpenFileList) => {
     // `any` used here as a fallback if you aren't using a typed object.
     // Otherwise, if you know the shape of `file`, you can still define an interface or inline type
-    handleListItemClickFunction(
-      file,
-      // If you used to store "selectedItem" in state, that can stay in a parent or context
-      // For simplicity, removing it here:
-      () => {}, // dummy setter for selectedItem
-      () => {}, // dummy setter for showList
-      attachedContext,
-      openEditorFilesList,
-      setOpenEditorFilesList,
-      setAttachedContext,
-      vscode
-    );
+    console.log(file);
   };
 
   if (openEditorFilesList.length === 0) {

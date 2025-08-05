@@ -1,33 +1,37 @@
 // ChatModelDropdown.tsx
-import React from "react";
-import { VSCodeDropdown, VSCodeOption } from "@vscode/webview-ui-toolkit/react";
-import { useChatContext } from '../../../features/chat/state/chatTypes';
+import React, { useEffect } from "react";
+import {
+  VSCodeDropdown,
+  VSCodeOption,
+} from "@vscode/webview-ui-toolkit/react";
+import { useChatContext } from "../../../features/chat/state/chatTypes";
 import { chatModelDetail } from "../../types/AppDetails";
 
 const ChatModelDropdown: React.FC = () => {
   const { chatModel, setChatModel, chatModelList, setChatModelList, isTyping } =
     useChatContext();
 
-  React.useEffect(() => {
-    const messageHandler = (event: MessageEvent) => {
-      if (event.data && event.data.command === "update_chat_details") {
-        const { model_details } = event.data;
-        if (model_details) {
-          setChatModelList(model_details);
-          const defaultBaseModel = chatModelList.find(
-            (model: chatModelDetail) => model.isBaseModel
-          );
-          if (defaultBaseModel) {
-            setChatModel(defaultBaseModel.modelKey);
-          }
-        }
-      }
-    };
-    window.addEventListener("message", messageHandler);
-    return () => {
-      window.removeEventListener("message", messageHandler);
-    };
-  }, [setChatModelList, chatModelList, setChatModel]);
+  useEffect(() => {
+    const staticModels: chatModelDetail[] = [
+      {
+        modelKey: "agent",
+        modelName: "Agent",
+        modelDescription: "Agent model",
+        modelType: "agent",
+        modelUsageCountLeft: 0,
+        isBaseModel: true,
+      },
+      {
+        modelKey: "ask",
+        modelName: "Ask",
+        modelDescription: "Ask model",
+        modelType: "ask",
+        modelUsageCountLeft: 0,
+      },
+    ];
+    setChatModelList(staticModels);
+    setChatModel("agent");
+  }, [setChatModelList, setChatModel]);
 
   return (
     <>

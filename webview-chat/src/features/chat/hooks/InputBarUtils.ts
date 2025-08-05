@@ -1,20 +1,16 @@
 // InputBarUtils.ts
 import { useEffect } from 'react';
-import { EditorOpenFileList, CurrentFileContext, UploadedImage } from '../../../shared/types/Message';
+import { EditorOpenFileList, UploadedImage } from '../../../shared/types/Message';
 
 // Interface for the custom hook's props
 interface UseHandleIncomingMessagesProps {
   setInput: (input: string) => void;
-  attachedContext: CurrentFileContext[];
-  setAttachedContext: (contexts: CurrentFileContext[]) => void;
   _setOpenEditorFilesList: (files: EditorOpenFileList[]) => void;
 }
 
 // Custom hook to handle incoming messages from VS Code
 export const useHandleIncomingMessages = ({
   setInput,
-  attachedContext,
-  setAttachedContext,
   _setOpenEditorFilesList,
 }: UseHandleIncomingMessagesProps) => {
   // Handle 'insert_messages' command
@@ -33,73 +29,13 @@ export const useHandleIncomingMessages = ({
     };
   }, [setInput]);
 
-  // Handle 'editor_changed_context_update_event' command
-  useEffect(() => {
-    const handleEditorChangedContext = (event: MessageEvent) => {
-      if (event.data.command === 'editor_changed_context_update_event') {
-        const { action, currentSelectedFileName, currentSelectedFileRelativePath, languageId } = event.data;
-
-        if (action === 'user_opened_in_editor') {
-          // Filter contexts manually added by the user
-          const updatedContext = attachedContext.filter((context) => context.isManuallyAddedByUser);
-
-          // Check if the file is already attached
-          const isFileAlreadyAttached = attachedContext.some(
-            (context) =>
-              context.fileName === currentSelectedFileName &&
-              context.filePath === currentSelectedFileRelativePath
-          );
-
-          if (isFileAlreadyAttached) {
-            // Update selection status
-            setAttachedContext(
-              attachedContext.map((context) =>
-                context.fileName === currentSelectedFileName &&
-                context.filePath === currentSelectedFileRelativePath
-                  ? { ...context, isSelected: true }
-                  : { ...context, isSelected: false }
-              )
-            );
-          } else {
-            // Add new context
-            const newContext: CurrentFileContext = {
-              fileName: currentSelectedFileName,
-              filePath: currentSelectedFileRelativePath,
-              languageId: languageId,
-              isActive: true,
-              isOpened: true,
-              isSelected: true,
-              isManuallyAddedByUser: false,
-              isAttachedInContextList: true,
-            };
-            setAttachedContext([newContext, ...updatedContext]);
-          }
-        } else if (action === 'user_opened_unsupported_file_in_editor') {
-          // Deselect all contexts
-          const updatedContext = attachedContext.filter((context) => context.isManuallyAddedByUser);
-          setAttachedContext(updatedContext.map((context) => ({ ...context, isSelected: false })));
-        } else if (action === 'remove_all_selected') {
-          // Remove all contexts
-          setAttachedContext([]);
-        }
-      }
-    };
-
-    window.addEventListener('message', handleEditorChangedContext);
-
-    return () => {
-      window.removeEventListener('message', handleEditorChangedContext);
-    };
-  }, [attachedContext, setAttachedContext]);
 
   // Handle 'editor_open_files_list_update_event' command
   useEffect(() => {
     const handleOpenFilesListUpdate = (event: MessageEvent) => {
       if (event.data.command === 'editor_open_files_list_update_event') {
         console.log('List of Files Received:', event.data);
-        const updatedOpenFilesList = event.data.openFiles.filter(
-          (file: EditorOpenFileList) => !attachedContext.some((context) => context.filePath === file.filePath)
-        );
+        const updatedOpenFilesList = event.data.openFiles;
         _setOpenEditorFilesList(updatedOpenFilesList);
       }
     };
@@ -109,7 +45,7 @@ export const useHandleIncomingMessages = ({
     return () => {
       window.removeEventListener('message', handleOpenFilesListUpdate);
     };
-  }, [attachedContext, _setOpenEditorFilesList]);
+  }, [_setOpenEditorFilesList]);
 };
 
 // Sanitize input to prevent XSS attacks
@@ -162,73 +98,7 @@ export const handleCodeInsertClickFunction = (vscode: { postMessage: (message: {
 };
 
 // Handle removing a tag/context
-export const handleRemoveTagFunction = (
-  filePath: string,
-  attachedContext: CurrentFileContext[],
-  setAttachedContext: (contexts: CurrentFileContext[]) => void,
-  openEditorFilesList: EditorOpenFileList[],
-  setOpenEditorFilesList: (files: EditorOpenFileList[]) => void
-) => {
-  const removedFile = attachedContext.find((context) => context.filePath === filePath);
-  if (removedFile) {
-    setOpenEditorFilesList([
-      ...openEditorFilesList,
-      {
-        fileName: removedFile.fileName,
-        filePath: removedFile.filePath,
-        languageId: removedFile.languageId,
-        isActive: removedFile.isActive,
-        isOpened: removedFile.isOpened,
-        isSelected: removedFile.isSelected,
-      },
-    ]);
-  }
-  const updatedAttachedContext = attachedContext.filter((context) => context.filePath !== filePath);
-  setAttachedContext(updatedAttachedContext);
-};
 
-// Handle clicking on a list item to attach a file
-export const handleListItemClickFunction = (
-  item: EditorOpenFileList,
-  setSelectedItem: (item: string | null) => void,
-  setShowList: (show: boolean) => void,
-  attachedContext: CurrentFileContext[],
-  openEditorFilesList: EditorOpenFileList[],
-  setOpenEditorFilesList: (files: EditorOpenFileList[]) => void,
-  setAttachedContext: (contexts: CurrentFileContext[]) => void,
-  vscode: { postMessage: (message: { command: string, data: { title: string, message: string } }) => void }
-) => {
-  setSelectedItem(item.fileName);
-  setShowList(false);
-
-  if (attachedContext.length < 3) { // Allow up to 3 files
-    const updatedOpenFilesList = openEditorFilesList.filter((file) => file.filePath !== item.filePath);
-    setOpenEditorFilesList(updatedOpenFilesList);
-
-    const newContext: CurrentFileContext = {
-      fileName: item.fileName,
-      filePath: item.filePath,
-      languageId: item.languageId,
-      isActive: item.isActive,
-      isOpened: item.isOpened,
-      isSelected: item.isSelected,
-      isAttachedInContextList: true,
-      isManuallyAddedByUser: true,
-    };
-
-    setAttachedContext([...attachedContext, newContext]);
-  } else {
-    // Notify user about the limit
-    vscode.postMessage({
-      command: 'showInfoPopup',
-      data: {
-        title: 'Context Information',
-        message: 'You can only attach up to 3 files at a time.',
-      },
-    });
-  }
-
-};
 
 export const handleImageUpload = (
   vscode: { postMessage: (message: { command: string, data?: { title: string, message: string }, message?: string, chatId?: string }) => void },

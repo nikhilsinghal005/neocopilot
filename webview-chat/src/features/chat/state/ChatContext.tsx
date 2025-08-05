@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ChatSession, MessageStore, CurrentFileContext, EditorOpenFileList, ChatSessionList, UploadedImage } from '../../../shared/types/Message';
+import { ChatSession, MessageStore, EditorOpenFileList, ChatSessionList, UploadedImage } from '../../../shared/types/Message';
 import { chatModelDetail } from '../../../shared/types/AppDetails';
 import { ChatContext, createNewChatSession } from './chatTypes';
 
@@ -21,8 +21,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [chatModel, setChatModel] = useState<string>('');
   const [previousChatModel, setPreviousChatModel] = useState<string>('neo-7');
-  const [attachedContext, setAttachedContext] = useState<CurrentFileContext[]>([]);
-  const [previousAttachedContext, setPreviousAttachedContext] = useState<CurrentFileContext[]>([]);
   const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
   const [isInterrupted, setIsInterrupted] = useState<boolean>(false);
   const [chatModelList, setChatModelList] = useState<chatModelDetail[]>([]);
@@ -78,8 +76,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(
         chatModel,
         setChatModel,
 
-        attachedContext,
-        setAttachedContext,
         openEditorFilesList,
         setOpenEditorFilesList,
         clearChatSession,
@@ -101,8 +97,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(
         setPreviousInput,
         previousChatModel,
         setPreviousChatModel,
-        previousAttachedContext,
-        setPreviousAttachedContext,
         previousUploadImage,
         setPreviousUploadImage,
 

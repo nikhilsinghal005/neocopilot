@@ -5,14 +5,12 @@ import '../../../shared/styles/themes/prism-tomorrow.css';
 import '../../../shared/styles/custom-overrides.css';
 import remarkGfm from 'remark-gfm';
 import CodeBlock from './CodeBlock';
-import { CurrentFileContext, UploadedImage } from '../../../shared/types/Message';
-import LanguageIcon from '../../../shared/components/common/LanguageIcon';
+import { UploadedImage } from '../../../shared/types/Message';
 import { Image } from "lucide-react"
 
 interface MessageRendererProps {
   text: string;
   type: string;
-  attachedContext: CurrentFileContext[]
   uploadedImage: UploadedImage[];
 }
 
@@ -25,7 +23,7 @@ interface CodeProps extends HTMLProps<HTMLElement> {
   node?: Element;
 }
 
-const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedContext, uploadedImage = [] }) => {
+const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, uploadedImage = [] }) => {
   // Define custom components for rendering specific markdown elements
 
   const getFileName = (relativePath: string): string => {
@@ -130,36 +128,14 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
 
   // Render tags for attached context
   const renderAttachedContext = () => {
-    const hasAttachedContext = attachedContext && attachedContext.length > 0;
     const hasUploadedImages = uploadedImage && uploadedImage.length > 0;
-    if (!hasAttachedContext && !hasUploadedImages) {
+    if (!hasUploadedImages) {
       return null;
     }
 
     return (
       <div>
         <h4 className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">References</h4>
-        {hasAttachedContext && (
-          <div className="flex items-center gap-1">
-            <span className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">Code:</span>
-            <ul className="flex flex-wrap gap-1">
-              {attachedContext.map((context, index) => (
-                <span
-                  key={index}
-                  className="rounded-xs pr-1 flex items-center h-5 text-xxxs border max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
-                  style={{
-                    backgroundColor: 'var(--vscode-editor-background)',
-                    borderColor: 'var(--vscode-editorGroup-border)',
-                    color: 'var(--vscode-editor-foreground)',
-                  }}
-                >
-                  <LanguageIcon fileName={context.fileName || ""} iconSize={16} />
-                  {context.fileName}
-                </span>
-              ))}
-            </ul>
-          </div>
-        )}
         {hasUploadedImages && (
           <div className="flex items-center gap-1 mt-1">
             <span className="text-xxxs font-semibold text-vscode-editor-foreground mb-0">Files:</span>
@@ -186,12 +162,8 @@ const MessageRenderer: React.FC<MessageRendererProps> = ({ text, type, attachedC
   };
   
   if (type === 'user') {
-    let bottomMargin: string = "";
-    if (attachedContext.length > 0){
-      bottomMargin = 'mb-2';
-    }    
     return (
-      <div className={`prose max-w-full text-xs leading-6 space-y-1 ${bottomMargin}`}>
+      <div className={`prose max-w-full text-xs leading-6 space-y-1 mb-2`}>
         <ReactMarkdown
           children={text}
           remarkPlugins={[remarkGfm]}

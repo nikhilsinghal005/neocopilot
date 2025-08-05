@@ -26,15 +26,10 @@ const InputBar: React.FC<InputBarProps> = ({
   setInput,
   handleSendMessage,
   isTyping,
-  isEditing,
 }) => {
   const [warningMessage, setWarningMessage] = useState('');
   const vscode = useVscode();
   const {
-    attachedContext,
-    setAttachedContext,
-    openEditorFilesList,
-    setOpenEditorFilesList,
     setIsTyping,
     setIsInterrupted,
     setUploadImage,
@@ -45,11 +40,7 @@ const InputBar: React.FC<InputBarProps> = ({
   // Handle incoming messages using the custom hook
   useHandleIncomingMessages({
     setInput,
-    attachedContext,
-    setAttachedContext,
-    openEditorFilesList,
-    setOpenEditorFilesList,
-    vscode
+    _setOpenEditorFilesList: () => {},
   });
 
   // Dynamically resize textarea
@@ -89,7 +80,7 @@ const InputBar: React.FC<InputBarProps> = ({
             color: 'var(--vscode-editor-foreground)',
           }}
         >
-          <ContextWrapper isTyping={isTyping} isEditing={isEditing} />
+          <ContextWrapper />
           {/* Textarea */}
           <div className="top-section flex items-center gap-2 text-xxs">
           <style>{placeholderStyle}</style>

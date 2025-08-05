@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from 'react';
-import { ChatSession, MessageStore, CurrentFileContext, EditorOpenFileList, ChatSessionList, UploadedImage } from '../../../shared/types/Message';
+import { ChatSession, MessageStore, EditorOpenFileList, ChatSessionList, UploadedImage } from '../../../shared/types/Message';
 import { chatModelDetail } from '../../../shared/types/AppDetails';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -12,8 +12,6 @@ export interface ChatContextProps {
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
   chatModel: string;
   setChatModel: React.Dispatch<React.SetStateAction<string>>;
-  attachedContext: CurrentFileContext[],
-  setAttachedContext: React.Dispatch<React.SetStateAction<CurrentFileContext[]>>;
   openEditorFilesList: EditorOpenFileList[];
   setOpenEditorFilesList: React.Dispatch<React.SetStateAction<EditorOpenFileList[]>>;
   clearChatSession: () => void;
@@ -34,8 +32,6 @@ export interface ChatContextProps {
   setPreviousInput: React.Dispatch<React.SetStateAction<string>>;
   previousChatModel: string;
   setPreviousChatModel: React.Dispatch<React.SetStateAction<string>>;
-  previousAttachedContext: CurrentFileContext[];
-  setPreviousAttachedContext: React.Dispatch<React.SetStateAction<CurrentFileContext[]>>;
   previousUploadImage: UploadedImage[];
   setPreviousUploadImage: React.Dispatch<React.SetStateAction<UploadedImage[]>>;
 }

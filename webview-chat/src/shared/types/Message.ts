@@ -4,16 +4,6 @@ export type ChatData = {
   messages: MessageStore[];
 };
 
-export type CurrentFileContext = {
-  fileName: string;
-  filePath: string;
-  languageId: string;
-  isActive: boolean;
-  isOpened: boolean;
-  isSelected: boolean;
-  isAttachedInContextList: boolean;
-  isManuallyAddedByUser: boolean;
-};
 
 export type UploadedImage = {
   fileName: string;
@@ -51,7 +41,6 @@ export type MessageOutput = {
   text: string;
   isComplete?: boolean; // Indicates if the message is fully received
   modelSelected: string; // Indicates the model used to generate the response
-  attachedContext: CurrentFileContext[];  // List of file paths attached to the message
   useInternet: boolean;
   isProblemsSelected: boolean;
   isTerminalSelected: boolean;
@@ -68,7 +57,6 @@ export type MessageStore = {
   uploadedImages?: UploadedImage[];     // List of image paths associated with the message
   isComplete?: boolean; // Indicates if the message is fully received
   modelSelected?: string; // Indicates the model used to generate the response
-  attachedContext?: CurrentFileContext[];  // List of file paths attached to the message
   useInternet?: boolean;
   isProblemsSelected?: boolean;
   isTerminalSelected?: boolean;
