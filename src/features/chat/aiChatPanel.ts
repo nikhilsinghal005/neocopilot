@@ -212,11 +212,19 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       });
     });
   }
+ 
+  public newChat() {
+    this.activePanels.forEach(panel => {
+      panel.webview.postMessage({
+        command: 'newChat',
+      });
+    });
+  }
 
-  // Returns the HTML content for the webview, including scripts and styles
-  private getHtmlForWebview(webview: vscode.Webview): string {
-    const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'out', 'webview-ui', 'assets', 'index.js')
+   // Returns the HTML content for the webview, including scripts and styles
+   private getHtmlForWebview(webview: vscode.Webview): string {
+     const scriptUri = webview.asWebviewUri(
+       vscode.Uri.joinPath(this._extensionUri, 'out', 'webview-ui', 'assets', 'index.js')
     );
 
     const styleUri = webview.asWebviewUri(

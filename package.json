@@ -84,10 +84,20 @@
         "command": "neocopilot.showSettings",
         "title": "Settings",
         "icon": "$(gear)"
+      },
+      {
+        "command": "neocopilot.newChat",
+        "title": "New Chat",
+        "icon": "$(add)"
       }
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "neocopilot.newChat",
+          "when": "view == aiChatPanelPrimary",
+          "group": "navigation"
+        },
         {
           "command": "neocopilot.showSettings",
           "when": "view == aiChatPanelPrimary",
