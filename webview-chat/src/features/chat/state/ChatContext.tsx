@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChatSession, MessageStore, EditorOpenFileList, ChatSessionList, UploadedImage } from '../../../shared/types/Message';
 import { ChatContext, createNewChatSession } from './chatTypes';
+import { AgentDetail } from '../../../shared/types/AppDetails';
+import { HelpCircle } from 'lucide-react';
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(({ children }) => {
   const [chatSession, setChatSession] = useState<ChatSession>(() => {
@@ -18,8 +20,18 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [agentType, setAgentType] = useState<string>('ask');
-  const [previousAgentType, setPreviousAgentType] = useState<string>('ask');
+  const [agentType, setAgentType] = useState<AgentDetail>({
+    agentId: 'ask',
+    agentName: 'Ask',
+    agentDescription: 'Your general-purpose assistant for a wide range of tasks.',
+    icon: <HelpCircle size={16} />,
+  });
+  const [previousAgentType, setPreviousAgentType] = useState<AgentDetail>({
+    agentId: 'ask',
+    agentName: 'Ask',
+    agentDescription: 'Your general-purpose assistant for a wide range of tasks.',
+    icon: <HelpCircle size={16} />,
+  });
   const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
   const [isInterrupted, setIsInterrupted] = useState<boolean>(false);
   const [chatSessionList, setChatSessionList] = useState<ChatSessionList>([]);

@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from 'react';
 import { ChatSession, MessageStore, EditorOpenFileList, ChatSessionList, UploadedImage } from '../../../shared/types/Message';
 import { v4 as uuidv4 } from 'uuid';
+import { AgentDetail } from '../../../shared/types/AppDetails';
 
 export interface ChatContextProps {
   chatSession: ChatSession;
@@ -9,8 +10,8 @@ export interface ChatContextProps {
   setIsTyping: React.Dispatch<React.SetStateAction<boolean>>;
   isEditing: boolean;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
-  agentType: string;
-  setAgentType: React.Dispatch<React.SetStateAction<string>>;
+  agentType: AgentDetail;
+  setAgentType: React.Dispatch<React.SetStateAction<AgentDetail>>;
   openEditorFilesList: EditorOpenFileList[];
   setOpenEditorFilesList: React.Dispatch<React.SetStateAction<EditorOpenFileList[]>>;
   clearChatSession: () => void;
@@ -27,8 +28,8 @@ export interface ChatContextProps {
   // Previous State Input
   previousInput: string;
   setPreviousInput: React.Dispatch<React.SetStateAction<string>>;
-  previousAgentType: string;
-  setPreviousAgentType: React.Dispatch<React.SetStateAction<string>>;
+  previousAgentType: AgentDetail;
+  setPreviousAgentType: React.Dispatch<React.SetStateAction<AgentDetail>>;
   previousUploadImage: UploadedImage[];
   setPreviousUploadImage: React.Dispatch<React.SetStateAction<UploadedImage[]>>;
 }

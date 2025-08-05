@@ -1,3 +1,5 @@
+import { AgentDetail } from "./AppDetails";
+
 export type ChatData = {
   chatId: string;
   timestamp: string;
@@ -56,7 +58,7 @@ export type MessageStore = {
   attachedFiles?: object[];  // List of file paths attached to the message
   uploadedImages?: UploadedImage[];     // List of image paths associated with the message
   isComplete?: boolean; // Indicates if the message is fully received
-  modelSelected?: string; // Indicates the model used to generate the response
+  modelSelected?: AgentDetail; // Indicates the model used to generate the response
   useInternet?: boolean;
   isProblemsSelected?: boolean;
   isTerminalSelected?: boolean;

@@ -1,11 +1,8 @@
-export type chatModelDetail = {
-  modelKey : string;
-  modelName : string;
-  modelDescription : string;
-  modelType : string;
-  modelUsageCountLeft: number;
-  modelVersion?: string;
-  modelUsageCountTotal?: number;
-  modelBasedOn?: string;
-  isBaseModel?: boolean;
+import React from 'react';
+
+export type AgentDetail = {
+  agentId: string;
+  agentName: string;
+  agentDescription: string;
+  icon: React.ReactNode;
 };

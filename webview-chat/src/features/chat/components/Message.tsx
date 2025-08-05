@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useChatContext } from '../../../features/chat/state/chatTypes';
 import CodeButtonWithText from '../../../shared/components/common/CodeButtonWithText';
 import { MessageStore, UploadedImage } from '../../../shared/types/Message';
+import { AgentDetail } from '../../../shared/types/AppDetails';
 import { useVscode } from '../../../integration/vscode/api';
 import MessageRenderer from './MessageRenderer';
 import AgentTypeSelectDropdown from '../../../shared/components/common/AgentTypeSelectDropdown';
@@ -38,7 +39,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   // Separate state to track which message is being edited
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
-  const handleRefresh = (messageId: string, model: string) => {
+  const handleRefresh = (messageId: string, agent: AgentDetail) => {
     const messageIndex = chatSession.messages.findIndex(msg => msg.id === messageId);
     if (messageIndex === -1) {
       console.error("Message to refresh not found.");
@@ -47,7 +48,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     // Remove messages from the found message onwards
     chatSession.messages = chatSession.messages.slice(0, messageIndex + 1);
     const lastMessage = chatSession.messages[chatSession.messages.length - 1];
-    lastMessage.modelSelected = model;
+    lastMessage.modelSelected = agent;
     setChatSession({ ...chatSession });
     setIsTyping(true);
     vscode.postMessage({
@@ -76,7 +77,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     // Setting Up new input Box and replce the old one
     setIsEditing(true); // Now a boolean
     setEditingMessageId(messageId); // Track the specific message ID
-    setAgentType(message.modelSelected || "");
+    setAgentType(message.modelSelected || { agentId: 'ask', agentName: 'Ask', agentDescription: '', icon: <></> });
     setUploadImage(message.uploadedImages ?? ([] as UploadedImage[]));
     setInput(message.text);
      // Set the attached context of the message
