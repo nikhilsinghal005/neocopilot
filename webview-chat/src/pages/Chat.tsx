@@ -6,10 +6,11 @@ import { MessageStore, ChatSession } from '../shared/types/Message';
 import { v4 as uuidv4 } from 'uuid';
 import { useChatContext } from '../features/chat/state/chatTypes';
 import { useVscode } from '../integration/vscode/api';
+import Settings from './Settings';
 
 const Chat: React.FC = () => {
   const vscode = useVscode();
-  const { chatSession, setChatSession, isTyping, setIsTyping, agentType, input, setInput, uploadImage } = useChatContext();
+  const { chatSession, setChatSession, isTyping, setIsTyping, agentType, input, setInput, uploadImage, currentView } = useChatContext();
 
   useEffect(() => {
     // Restore the saved chat session from VSCode state
@@ -68,6 +69,10 @@ const Chat: React.FC = () => {
     setInput('');
     setIsTyping(true);
   };
+
+  if (currentView === 'settings') {
+    return <Settings />;
+  }
 
   return (
     <div>

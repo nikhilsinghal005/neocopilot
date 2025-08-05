@@ -3,6 +3,8 @@ import { ChatSession, MessageStore, EditorOpenFileList, ChatSessionList, Uploade
 import { v4 as uuidv4 } from 'uuid';
 import { AgentDetail } from '../../../shared/types/AppDetails';
 
+type ViewType = 'chat' | 'settings';
+
 export interface ChatContextProps {
   chatSession: ChatSession;
   setChatSession: React.Dispatch<React.SetStateAction<ChatSession>>;
@@ -32,6 +34,9 @@ export interface ChatContextProps {
   setPreviousAgentType: React.Dispatch<React.SetStateAction<AgentDetail>>;
   previousUploadImage: UploadedImage[];
   setPreviousUploadImage: React.Dispatch<React.SetStateAction<UploadedImage[]>>;
+  
+  currentView: ViewType;
+  setCurrentView: React.Dispatch<React.SetStateAction<ViewType>>;
 }
 
 export const createNewChatSession = (): ChatSession => ({

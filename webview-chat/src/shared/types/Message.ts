@@ -24,7 +24,7 @@ export type MessageInput = {
   messageType: 'system';
   response: string;
   isComplete?: boolean; // Indicates if the message is fully received
-  modelSelected: string; // Indicates the model used to generate the response
+  modelSelected: AgentDetail; // Indicates the model used to generate the response
 };
 
 export type EditorOpenFileList = {

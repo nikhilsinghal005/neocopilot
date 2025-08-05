@@ -194,7 +194,25 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       });
     });
   }
+
+  public sendSettingToChat(setting: string, value: unknown) {
+    this.activePanels.forEach(panel => {
+      panel.webview.postMessage({
+        command: 'settingChanged',
+        setting: setting,
+        value: value,
+      });
+    });
+  }
  
+  public showSettings() {
+    this.activePanels.forEach(panel => {
+      panel.webview.postMessage({
+        command: 'showSettings',
+      });
+    });
+  }
+
   public newChat() {
     this.activePanels.forEach(panel => {
       panel.webview.postMessage({

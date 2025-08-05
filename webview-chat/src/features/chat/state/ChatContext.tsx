@@ -1,8 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { ChatSession, MessageStore, EditorOpenFileList, ChatSessionList, UploadedImage } from '../../../shared/types/Message';
 import { ChatContext, createNewChatSession } from './chatTypes';
 import { AgentDetail } from '../../../shared/types/AppDetails';
 import { HelpCircle } from 'lucide-react';
+
+type ViewType = 'chat' | 'settings';
+
+export const useChatContext = () => {
+  const context = useContext(ChatContext);
+  if (context === undefined) {
+    throw new Error('useChatContext must be used within a ChatProvider');
+  }
+  return context;
+};
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(({ children }) => {
   const [chatSession, setChatSession] = useState<ChatSession>(() => {
@@ -17,7 +27,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(
     return createNewChatSession();
   });
   
-
+  const [currentView, setCurrentView] = useState<ViewType>('chat');
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [agentType, setAgentType] = useState<AgentDetail>({
@@ -105,7 +115,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(
         setPreviousAgentType,
         previousUploadImage,
         setPreviousUploadImage,
-
+        currentView,
+        setCurrentView,
       }}
     >
       {children}

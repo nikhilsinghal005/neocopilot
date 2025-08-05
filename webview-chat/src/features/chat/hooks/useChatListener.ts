@@ -4,7 +4,7 @@ import { MessageStore, MessageInput, ChatSession } from '../../../shared/types/M
 import { v4 as uuidv4 } from 'uuid';
 
 export const useChatListener = () => {
-  const { chatSession, setChatSession, isTyping, setIsTyping, isInterrupted } = useChatContext();
+  const { chatSession, setChatSession, isTyping, setIsTyping, isInterrupted, setCurrentView } = useChatContext();
   const accumulatedResponseRef = useRef<string>('');
   const messageInProgressRef = useRef<MessageStore | null>(null);
   const interruptedMessageIdsRef = useRef<Set<string>>(new Set());
@@ -20,6 +20,8 @@ export const useChatListener = () => {
     const handleIncomingMessage = (event: MessageEvent) => {
       if (event.data.command === 'receive_chat_message') {
         processMessage(event.data);
+      } else if (event.data.command === 'showSettings') {
+        setCurrentView('settings');
       }
     };
 
