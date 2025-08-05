@@ -79,8 +79,22 @@
       {
         "command": "extension.neoChatInsert",
         "title": "Neo Chat Insert"
+      },
+      {
+        "command": "neocopilot.showSettings",
+        "title": "Settings",
+        "icon": "$(gear)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "neocopilot.showSettings",
+          "when": "view == aiChatPanelPrimary",
+          "group": "navigation"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "extension.neoEdit",
