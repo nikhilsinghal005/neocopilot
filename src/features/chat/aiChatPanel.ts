@@ -186,24 +186,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
   }
 
-  public async sendMessageToChat(
-    fileName: string,
-    selectedText: string,
-    completeText: string,
-    documentLanguage: string
-  ) {
-    this.activePanels.forEach(panel => {
-      panel.webview.postMessage({
-        command: 'insertMessagesToChat',
-        fileName: fileName,
-        selectedText: selectedText,
-        completeText: completeText,
-        documentLanguage: documentLanguage,
-      });
-    });
-  }
-
-
   public sendAuthStatus(isAuthenticated: boolean) {
     this.activePanels.forEach(panel => {
       panel.webview.postMessage({

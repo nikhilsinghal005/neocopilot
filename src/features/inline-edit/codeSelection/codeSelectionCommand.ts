@@ -405,19 +405,19 @@ export class CodeSelectionCommandHandler {
     this.currentSelectionContext = selection;
 
     // Get selected text
-    const selectedText = editor.document.getText(selection);
+    // const selectedText = editor.document.getText(selection);
     this.completeText = editor.document.getText();
     this.currentFileName = editor.document.fileName;
 
     // Get the language of the document
-    const documentLanguage = editor.document.languageId;
+    // const documentLanguage = editor.document.languageId;
 
-    await this.aiChatpanel.sendMessageToChat( // eslint-disable-line @typescript-eslint/no-explicit-any
-      this.currentFileName,
-      selectedText,
-      this.completeText,
-      documentLanguage
-    );
+    // await this.aiChatpanel.sendMessageToChat( // eslint-disable-line @typescript-eslint/no-explicit-any
+    //   this.currentFileName,
+    //   selectedText,
+    //   this.completeText,
+    //   documentLanguage
+    // );
 
     console.log("File Name----------------", this.currentFileName);
 
