@@ -10,6 +10,7 @@ import {
   handleImageUpload
 } from '../../../features/chat/hooks/InputBarUtils';
 import { useVscode } from '../../../integration/vscode/api';
+import AgentTypeDropdown from './AgentTypeDropdown';
 
 interface ChatControlsProps {
   input: string;
@@ -28,94 +29,97 @@ const ChatControls: React.FC<ChatControlsProps> = ({
   isTyping,
 }) => {
   const {setIsTyping, setIsInterrupted, isEditing, setIsEditing,
-    setAttachedContext,
-    previousChatModel,
-    setChatModel,
+    previousAgentType,
+    setAgentType,
     previousInput,
     chatSession,
-    previousAttachedContext, uploadImage, setUploadImage, previousUploadImage} = useChatContext();
+    uploadImage, setUploadImage, previousUploadImage} = useChatContext();
   const vscode = useVscode();
 
 const handleCancelClick = () => {
   setIsEditing(false);
   setIsTyping(false);
   setInput(previousInput);
-  setChatModel(previousChatModel);
-  setAttachedContext(previousAttachedContext);
+  setAgentType(previousAgentType);
   setUploadImage(previousUploadImage);
 }
 
 
   return (
-    <div className="button-group flex items-center gap-2" style={{ marginRight: '4px' }}>
-      {isEditing && (
+    <div className="flex justify-between items-center w-full">
+      <div className="w-32">
+        <AgentTypeDropdown />
+      </div>
+      <div className="button-group flex items-center gap-2" style={{ marginRight: '4px' }}>
+        {isEditing && (
+          <VSCodeButton
+            onClick={() => handleCancelClick()}
+            appearance="icon"
+            aria-label="Stop"
+            className="rounded-md text-yellow-500"
+          >
+            <span><XCircle size={14}/></span>
+          </VSCodeButton>
+        )
+        }
+        
         <VSCodeButton
-          onClick={() => handleCancelClick()}
+          onClick={() => handleImageUpload(
+            vscode,
+            uploadImage,
+            setUploadImage,
+            chatSession.chatId,
+          )}
           appearance="icon"
-          aria-label="Stop"
-          className="rounded-md text-yellow-500"
-        >
-          <span><XCircle size={14}/></span>
-        </VSCodeButton>
-      )
-      }
-      
-      <VSCodeButton
-        onClick={() => handleImageUpload(
-          vscode,
-          uploadImage,       
-          setUploadImage,    
-          chatSession.chatId,
-        )}
-        appearance="icon"
-        aria-label="Attach Image"
-        disabled={isTyping}
-        className="rounded-md"
-        style={{
-          color: 'var(--vscode-button-foreground)',
-        }}
-      >
-        <span><Paperclip size={14}/></span>
-      </VSCodeButton>
-
-
-
-
-      {isTyping ? (
-        <VSCodeButton
-          onClick={() => handleStopClickFunction(setIsTyping, setIsInterrupted)}
-          appearance="icon"
-          aria-label="Stop"
-          className="rounded-md text-red-500"
-        >
-          <span><CircleStop size={14}/></span>
-        </VSCodeButton>
-      ) : (
-        <VSCodeButton
-          onClick={() => {
-            if (input.trim() === "") {
-              return;
-            }
-            setUploadImage([]);
-            handleSendClick(
-              isTyping,
-              setWarningMessage,
-              setIsInterrupted,
-              sanitizeInput,
-              input,
-              setInput,
-              handleSendMessage,
-              setIsTyping
-            );
+          aria-label="Attach Image"
+          disabled={isTyping}
+          className="rounded-md"
+          style={{
+            color: 'var(--vscode-button-foreground)',
           }}
-          appearance="icon"
-          aria-label="Send Message"
-          disabled={isTyping || input.trim() === ""}
-          className="rounded-md text-green-500"
         >
-          <span><Send size={14}/></span>
+          <span><Paperclip size={14}/></span>
         </VSCodeButton>
-      )}
+
+
+
+
+        {isTyping ? (
+          <VSCodeButton
+            onClick={() => handleStopClickFunction(setIsTyping, setIsInterrupted)}
+            appearance="icon"
+            aria-label="Stop"
+            className="rounded-md text-red-500"
+          >
+            <span><CircleStop size={14}/></span>
+          </VSCodeButton>
+        ) : (
+          <VSCodeButton
+            onClick={() => {
+              if (input.trim() === "") {
+                return;
+              }
+              setUploadImage([]);
+              handleSendClick(
+                isTyping,
+                setWarningMessage,
+                setIsInterrupted,
+                sanitizeInput,
+                input,
+                setInput,
+                handleSendMessage,
+                setIsTyping
+              );
+            }}
+            appearance="icon"
+            aria-label="Send Message"
+            disabled={isTyping || input.trim() === ""}
+            className="rounded-md text-green-500"
+          >
+            <span><Send size={14}/></span>
+          </VSCodeButton>
+        )}
+      </div>
     </div>
   );
 };

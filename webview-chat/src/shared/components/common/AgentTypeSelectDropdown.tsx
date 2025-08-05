@@ -1,18 +1,17 @@
 import React from 'react';
-import { useChatContext } from '../../../features/chat/state/chatTypes';
 import { MessageStore } from '../../types/Message';
 import { VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 
-interface ModelSelectDropdownProps {
+interface AgentTypeSelectDropdownProps {
   message: MessageStore;
-  handleRefresh: (messageId: string, model: string) => void;
+  handleRefresh: (messageId: string, agentType: string) => void;
 }
 
-const ModelSelectDropdown: React.FC<ModelSelectDropdownProps> = ({
+const AgentTypeSelectDropdown: React.FC<AgentTypeSelectDropdownProps> = ({
   message,
   handleRefresh,
 }) => {
-  const { chatModelList } = useChatContext();
+  const agentTypes = ['ask', 'agent'];
 
   return (
     <>
@@ -55,17 +54,17 @@ const ModelSelectDropdown: React.FC<ModelSelectDropdownProps> = ({
           handleRefresh(message.id, (e.target as HTMLSelectElement).value);
         }}
       >
-        {chatModelList.map((chatModel) => (
+        {agentTypes.map((type) => (
           <VSCodeOption
             style={{
               background: 'transparent',
               border: 'none',
               fontSize: '11px',
             }}
-            key={chatModel.modelKey}
-            value={chatModel.modelKey}
+            key={type}
+            value={type}
           >
-            {chatModel.modelName}
+            {type.charAt(0).toUpperCase() + type.slice(1)}
           </VSCodeOption>
         ))}
       </VSCodeDropdown>
@@ -73,4 +72,4 @@ const ModelSelectDropdown: React.FC<ModelSelectDropdownProps> = ({
   );
 };
 
-export default ModelSelectDropdown;
+export default AgentTypeSelectDropdown;

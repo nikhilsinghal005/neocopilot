@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChatSession, MessageStore, EditorOpenFileList, ChatSessionList, UploadedImage } from '../../../shared/types/Message';
-import { chatModelDetail } from '../../../shared/types/AppDetails';
 import { ChatContext, createNewChatSession } from './chatTypes';
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(({ children }) => {
@@ -19,11 +18,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(
 
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [chatModel, setChatModel] = useState<string>('');
-  const [previousChatModel, setPreviousChatModel] = useState<string>('neo-7');
+  const [agentType, setAgentType] = useState<string>('ask');
+  const [previousAgentType, setPreviousAgentType] = useState<string>('ask');
   const [openEditorFilesList, setOpenEditorFilesList] = useState<EditorOpenFileList[]>([]);
   const [isInterrupted, setIsInterrupted] = useState<boolean>(false);
-  const [chatModelList, setChatModelList] = useState<chatModelDetail[]>([]);
   const [chatSessionList, setChatSessionList] = useState<ChatSessionList>([]);
   const [input, setInput] = useState<string>(''); // Add input state here
   const [previousInput, setPreviousInput] = useState<string>(''); // Add input state here
@@ -73,17 +71,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(
         setChatSession,
         isTyping,
         setIsTyping,
-        chatModel,
-        setChatModel,
-
+        agentType,
+        setAgentType,
         openEditorFilesList,
         setOpenEditorFilesList,
         clearChatSession,
         addMessage,
         isInterrupted,
         setIsInterrupted,
-        chatModelList,
-        setChatModelList,
         chatSessionList,
         setChatSessionList,
         input,
@@ -92,11 +87,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = React.memo(
         setIsEditing,
         uploadImage,
         setUploadImage,
-
         previousInput,
         setPreviousInput,
-        previousChatModel,
-        setPreviousChatModel,
+        previousAgentType,
+        setPreviousAgentType,
         previousUploadImage,
         setPreviousUploadImage,
 

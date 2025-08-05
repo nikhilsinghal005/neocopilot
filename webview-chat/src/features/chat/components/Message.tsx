@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useChatContext } from '../../../features/chat/state/chatTypes';
 import CodeButtonWithText from '../../../shared/components/common/CodeButtonWithText';
 import { MessageStore, UploadedImage } from '../../../shared/types/Message';
 import { useVscode } from '../../../integration/vscode/api';
 import MessageRenderer from './MessageRenderer';
-import ModelSelectDropdown from '../../../shared/components/common/ModelSelectDropdown';
+import AgentTypeSelectDropdown from '../../../shared/components/common/AgentTypeSelectDropdown';
 import InputBar from '../../../shared/components/input-bar/InputBar';
 
 interface MessageProps {
@@ -17,13 +17,12 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     setChatSession,
     setIsTyping,
     isTyping,
-    setChatModelList,
     setIsEditing,
     isEditing,
-    previousChatModel,
-    chatModel,
-    setChatModel,
-    setPreviousChatModel,
+    previousAgentType,
+    agentType,
+    setAgentType,
+    setPreviousAgentType,
     previousInput,
     setPreviousInput,
     input,
@@ -71,13 +70,13 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
 
     // Store the current input values
     setPreviousInput(input);
-    setPreviousChatModel(chatModel);
+    setPreviousAgentType(agentType);
     setPreviousUploadImage(uploadImage);
 
     // Setting Up new input Box and replce the old one
     setIsEditing(true); // Now a boolean
     setEditingMessageId(messageId); // Track the specific message ID
-    setChatModel(message.modelSelected || "");
+    setAgentType(message.modelSelected || "");
     setUploadImage(message.uploadedImages ?? ([] as UploadedImage[]));
     setInput(message.text);
      // Set the attached context of the message
@@ -93,7 +92,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     updatedMessages[messageIndex] = {
         ...updatedMessages[messageIndex],
         text: input,
-        modelSelected: chatModel
+        modelSelected: agentType
     };
     chatSession.messages = updatedMessages;
     setChatSession({ ...chatSession });
@@ -105,24 +104,10 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     });
     // Reset inputs
     setInput(previousInput);
-    setChatModel(previousChatModel);
+    setAgentType(previousAgentType);
     setUploadImage(previousUploadImage);
   };
   
-  useEffect(() => {
-    const messageHandler = (event: MessageEvent) => {
-      if (event.data && event.data.command === 'update_chat_details') {
-        const { model_details } = event.data;
-        if (model_details) {
-          setChatModelList(model_details);
-        }
-      }
-    };
-    window.addEventListener('message', messageHandler);
-    return () => {
-      window.removeEventListener('message', messageHandler);
-    };
-  }, [setChatModelList]);
 
   return (
     <>
@@ -176,7 +161,7 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
               {message.messageType === 'system' && !isTyping && (
                 <div className="flex justify-end">
                 {/* Model select dropdown component */}
-                  <ModelSelectDropdown
+                  <AgentTypeSelectDropdown
                     message={message}
                     handleRefresh={handleRefresh}
                   />

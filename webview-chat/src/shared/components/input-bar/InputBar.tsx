@@ -8,7 +8,6 @@ import {
   handleSendClick,
 } from '../../../features/chat/hooks/InputBarUtils';
 import ContextWrapper from './ContextWrapper';
-import ChatModelDropdown from './ChatModelDropdown';
 import ChatControls from './ChatControls';
 import { useVscode } from '../../../integration/vscode/api';
 import {handlePaste} from '../../../features/chat/hooks/InputBarUtils';
@@ -48,7 +47,7 @@ const InputBar: React.FC<InputBarProps> = ({
     const textarea = document.querySelector('.input-textarea') as HTMLTextAreaElement;
     if (textarea) {
       textarea.style.height = 'auto';
-      const newHeight = Math.min(Math.max(textarea.scrollHeight, 50), 140);
+      const newHeight = Math.min(Math.max(textarea.scrollHeight, 90), 250);
       textarea.style.height = `${newHeight}px`;
       document.documentElement.style.setProperty('--input-container-height', `${newHeight + 40}px`);
     }
@@ -128,9 +127,6 @@ const InputBar: React.FC<InputBarProps> = ({
           <div
             className="bottom-section flex justify-between items-center gap-2 mt-0 p-0"
           >
-            {/* Chat Model Dropdown */}
-            <ChatModelDropdown />
-
             {/* Chat Controls */}
             <ChatControls
               input={input}
