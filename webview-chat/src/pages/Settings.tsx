@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useChatContext } from '../features/chat/state/ChatContext';
-import { Brain, Info, X, ChevronDown, ChevronUp, Plug, SlidersHorizontal } from 'lucide-react'; // Import new icons
+import { Info, X, ChevronDown, ChevronUp, Plug, SlidersHorizontal, Settings as SettingsIcon } from 'lucide-react'; // Import new icons
+import ApiConfiguration from '../features/settings/components/ApiConfiguration';
+import { VSCodeButton, VSCodeCheckbox, VSCodeDropdown, VSCodeOption, VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
 
 const Settings: React.FC = () => {
   const { setCurrentView } = useChatContext();
-  const [expandedCard, setExpandedCard] = useState<'models' | 'about' | 'integrations' | 'preferences' | null>('models'); // Allow more cards
+  const [expandedCard, setExpandedCard] = useState<'api' | 'integrations' | 'preferences' | 'about' | null>('api'); // Allow more cards
 
-  const toggleCard = (cardName: 'models' | 'about' | 'integrations' | 'preferences') => {
+  const toggleCard = (cardName: 'api' | 'integrations' | 'preferences' | 'about') => {
     setExpandedCard(prev => (prev === cardName ? null : cardName));
   };
 
@@ -14,7 +16,7 @@ const Settings: React.FC = () => {
     title: string;
     icon: React.ReactNode;
     description: string;
-    name: 'models' | 'about' | 'integrations' | 'preferences';
+    name: 'api' | 'integrations' | 'preferences' | 'about';
     children: React.ReactNode;
   }> = ({ title, icon, description, name, children }) => {
     const isExpanded = expandedCard === name;
@@ -24,8 +26,9 @@ const Settings: React.FC = () => {
           isExpanded ? 'max-h-screen' : 'max-h-24'
         }`}
       >
-        <button
-          className="w-full flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--vscode-toolbar-hoverBackground)] focus:outline-none focus:ring-2 focus:ring-[var(--vscode-focusBorder)]"
+        <VSCodeButton
+          appearance="secondary"
+          className="w-full flex items-center justify-between p-2 cursor-pointer bg-[var(--vscode-button-background)] hover:bg-[var(--vscode-button-hoverBackground)]"
           onClick={() => toggleCard(name)}
           aria-expanded={isExpanded}
           aria-controls={`${name}-content`}
@@ -39,10 +42,10 @@ const Settings: React.FC = () => {
           ) : (
             <ChevronDown size={20} className="text-[var(--vscode-editor-foreground)]" />
           )}
-        </button>
+        </VSCodeButton>
         <div
           id={`${name}-content`}
-          className={`px-4 pb-4 pt-2 ${isExpanded ? 'block' : 'hidden'}`}
+          className={`px-4 pb-4 pt-2 ${isExpanded ? 'block' : 'hidden'} border-t border-[var(--vscode-editorWidget-border)]`}
         >
           <p className="text-[var(--vscode-editor-foreground)] text-sm mb-4">{description}</p>
           {children}
@@ -56,41 +59,26 @@ const Settings: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-[var(--vscode-editorGroup-border)]">
         <h1 className="text-2xl font-bold text-[var(--vscode-editor-foreground)]">Settings</h1>
-        <button
+        <VSCodeButton
+          appearance="icon"
           className="p-2 rounded-md hover:bg-[var(--vscode-toolbar-hoverBackground)] text-[var(--vscode-toolbar-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--vscode-focusBorder)]"
           onClick={() => setCurrentView('chat')}
           title="Close Settings"
           aria-label="Close Settings"
         >
           <X size={20} />
-        </button>
+        </VSCodeButton>
       </div>
 
       {/* Main Content Area - Dashboard */}
       <div className="flex-1 p-6 overflow-auto">
         <Card
-          title="Models"
-          icon={<Brain size={20} className="text-[var(--vscode-editor-foreground)]" />}
-          description="Configure the AI models used for chat interactions and code generation."
-          name="models"
+          title="API Configuration"
+          icon={<SettingsIcon size={20} className="text-[var(--vscode-editor-foreground)]" />}
+          description="Configure the API settings for connecting to AI models."
+          name="api"
         >
-          <div className="mb-6">
-            <label htmlFor="model-select" className="block text-[var(--vscode-editor-foreground)] text-sm font-semibold mb-2">
-              Choose a model:
-            </label>
-            <select
-              name="models"
-              id="model-select"
-              className="w-full p-2 rounded-md bg-[var(--vscode-input-background)] border border-[var(--vscode-input-border)] text-[var(--vscode-input-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--vscode-focusBorder)]"
-            >
-              <option value="gpt-4">GPT-4</option>
-              <option value="claude-3">Claude 3</option>
-              <option value="gemini-pro">Gemini Pro</option>
-            </select>
-          </div>
-          <p className="text-[var(--vscode-editor-foreground)] text-sm">
-            Select your preferred AI model for chat interactions. This setting will influence the responses you receive.
-          </p>
+          <ApiConfiguration />
         </Card>
 
         <Card
@@ -101,14 +89,14 @@ const Settings: React.FC = () => {
         >
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-2 text-[var(--vscode-editor-foreground)]">Vector Database Connection</h3>
-            <input
+            <VSCodeTextField
               type="text"
               placeholder="Enter connection string or API key"
-              className="w-full p-2 rounded-md bg-[var(--vscode-input-background)] border border-[var(--vscode-input-border)] text-[var(--vscode-input-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--vscode-focusBorder)]"
+              className="w-full"
             />
-            <button className="mt-3 py-2 px-4 rounded-md bg-[var(--vscode-button-background)] hover:bg-[var(--vscode-button-hoverBackground)] text-[var(--vscode-button-foreground)]">
+            <VSCodeButton className="mt-3">
               Connect
-            </button>
+            </VSCodeButton>
           </div>
           <p className="text-[var(--vscode-editor-foreground)] text-sm">
             Connect Neo Copilot to your external knowledge bases for enhanced context.
@@ -123,21 +111,18 @@ const Settings: React.FC = () => {
         >
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-2 text-[var(--vscode-editor-foreground)]">Theme</h3>
-            <select
+            <VSCodeDropdown
               name="theme-select"
               id="theme-select"
-              className="w-full p-2 rounded-md bg-[var(--vscode-input-background)] border border-[var(--vscode-input-border)] text-[var(--vscode-input-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--vscode-focusBorder)]"
+              className="w-full"
             >
-              <option value="dark">Dark</option>
-              <option value="light">Light</option>
-            </select>
+              <VSCodeOption value="dark">Dark</VSCodeOption>
+              <VSCodeOption value="light">Light</VSCodeOption>
+            </VSCodeDropdown>
           </div>
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-2 text-[var(--vscode-editor-foreground)]">Notifications</h3>
-            <label className="flex items-center cursor-pointer">
-              <input type="checkbox" className="form-checkbox h-5 w-5 text-[var(--vscode-button-background)]" defaultChecked />
-              <span className="ml-2 text-[var(--vscode-editor-foreground)]">Enable desktop notifications</span>
-            </label>
+            <VSCodeCheckbox>Enable desktop notifications</VSCodeCheckbox>
           </div>
           <p className="text-[var(--vscode-editor-foreground)] text-sm">
             Adjust various settings to personalize your Neo Copilot experience.
