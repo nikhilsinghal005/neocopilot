@@ -1,90 +1,44 @@
-import React, { useState } from 'react';
+import React, { useCallback } from 'react';
 import { VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
+import { useSettings } from '../../state/SettingsContext';
 
-export interface AzureApiConfig {
-  baseUrl: string;
-  apiKey: string;
-  modelId: string;
-  azureApiVersion: string;
-}
+const AzureFoundryConfigurationComponent: React.FC = () => {
+  const { configs, updateConfig, save, isDirty, saving } = useSettings();
+  const cfg = configs.azure;
 
-const initialApiConfig: AzureApiConfig = {
-    baseUrl: '',
-    apiKey: '',
-    modelId: '',
-    azureApiVersion: '',
-  };
-
-const AzureFoundryConfiguration: React.FC = () => {
-    const [apiConfig, setApiConfig] = useState(initialApiConfig);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleInputChange = (e: any) => {
-        const { id, value } = e.target;
-        setApiConfig(prevConfig => ({
-          ...prevConfig,
-          [id]: value,
-        }));
-      };
+  type PossibleEvent = Event | React.FormEvent<HTMLElement>;
+  const onInput = useCallback((e: PossibleEvent) => {
+    const target = e.target as HTMLInputElement | null;
+    if (!target) {return;}
+    updateConfig('azure', { [target.id]: target.value });
+  }, [updateConfig]);
 
   return (
     <div>
       <div style={{ marginBottom: '15px' }}>
         <label htmlFor="baseUrl" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em' }}>Base URL</label>
-        <VSCodeTextField
-          type="text"
-          id="baseUrl"
-          value={apiConfig.baseUrl}
-          onInput={handleInputChange}
-          style={{
-            width: '100%',
-          }}
-        />
+  <VSCodeTextField type="text" id="baseUrl" value={cfg.baseUrl} onInput={onInput} style={{ width: '100%' }} />
       </div>
-
       <div style={{ marginBottom: '15px' }}>
         <label htmlFor="apiKey" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em' }}>API Key</label>
-        <VSCodeTextField
-          type="password"
-          id="apiKey"
-          value={apiConfig.apiKey}
-          onInput={handleInputChange}
-          style={{
-            width: '100%',
-          }}
-        />
+  <VSCodeTextField type="password" id="apiKey" value={cfg.apiKey} onInput={onInput} style={{ width: '100%' }} />
         <p style={{ fontSize: '0.8em', color: 'var(--vscode-editor-foreground)', marginTop: '5px' }}>
-          This key is stored locally and only used to make API requests from this extension.
+          Stored locally for API calls only.
         </p>
       </div>
-
       <div style={{ marginBottom: '20px' }}>
         <label htmlFor="modelId" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em' }}>Model ID</label>
-        <VSCodeTextField
-          type="text"
-          id="modelId"
-          value={apiConfig.modelId}
-          onInput={handleInputChange}
-          style={{
-            width: '100%',
-          }}
-        />
+  <VSCodeTextField type="text" id="modelId" value={cfg.modelId} onInput={onInput} style={{ width: '100%' }} />
       </div>
-
       <div style={{ marginBottom: '20px' }}>
         <label htmlFor="azureApiVersion" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em' }}>Azure API Version</label>
-        <VSCodeTextField
-          type="text"
-          id="azureApiVersion"
-          value={apiConfig.azureApiVersion}
-          onInput={handleInputChange}
-          style={{
-            width: '100%',
-          }}
-        />
+  <VSCodeTextField type="text" id="azureApiVersion" value={cfg.azureApiVersion} onInput={onInput} style={{ width: '100%' }} />
       </div>
+      <button disabled={!isDirty || saving} onClick={save} style={{ width: '100%' }}>
+        {saving ? 'Saving...' : isDirty ? 'Save Settings' : 'Saved'}
+      </button>
     </div>
   );
 };
 
-export default AzureFoundryConfiguration;
+export default AzureFoundryConfigurationComponent;

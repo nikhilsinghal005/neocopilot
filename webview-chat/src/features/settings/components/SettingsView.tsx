@@ -1,24 +1,24 @@
 import React from 'react';
+import ApiConfiguration from './ApiConfiguration';
+import { SettingsProvider } from '../state/SettingsContext';
 
-interface SettingsViewProps {
-  onClose: () => void;
-}
+interface SettingsViewProps { onClose: () => void; }
 
-const SettingsView: React.FC<SettingsViewProps> = ({ onClose }) => {
-  return (
-    <div style={{ padding: '20px' }}>
-      <h1>Settings</h1>
-      <div style={{ margin: '20px 0' }}>
-        <label htmlFor="model-select">Choose a model:</label>
-        <select name="models" id="model-select">
-          <option value="gpt-4">GPT-4</option>
-          <option value="claude-3">Claude 3</option>
-          <option value="gemini-pro">Gemini Pro</option>
-        </select>
-      </div>
-      <button onClick={onClose}>Close</button>
+const settingsView: React.FC<SettingsViewProps> = ({ onClose }) => (
+  <SettingsProvider>
+    <div style={{ padding: '20px', height: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ margin: 0 }}>Settings</h2>
+        <button onClick={onClose}>Close</button>
+      </header>
+      <section style={{ flex: 1, overflowY: 'auto' }}>
+        <ApiConfiguration />
+      </section>
+      <footer style={{ fontSize: '0.75rem', opacity: 0.7 }}>
+        Changes must be saved per provider. Keys are stored locally.
+      </footer>
     </div>
-  );
-};
+  </SettingsProvider>
+);
 
-export default SettingsView;
+export default settingsView;

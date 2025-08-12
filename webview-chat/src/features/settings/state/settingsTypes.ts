@@ -1,0 +1,67 @@
+export type ProviderId = 'openai' | 'azure';
+
+export interface BaseProviderConfig {
+  baseUrl: string;
+  apiKey: string; // Stored locally (extension storage); not sent to remote except when invoking API
+  modelId: string;
+}
+
+export type OpenAIProviderConfig = BaseProviderConfig; // alias (was empty interface)
+
+export interface AzureProviderConfig extends BaseProviderConfig {
+  azureApiVersion: string;
+}
+
+export type ProviderConfigMap = {
+  openai: OpenAIProviderConfig;
+  azure: AzureProviderConfig;
+};
+
+export interface SettingsState {
+  activeProvider: ProviderId;
+  configs: ProviderConfigMap;
+  isDirty: boolean;
+  saving: boolean;
+  lastSavedAt?: string;
+}
+
+export const defaultSettingsState: SettingsState = {
+  activeProvider: 'openai',
+  configs: {
+    openai: { baseUrl: '', apiKey: '', modelId: '' },
+    azure: { baseUrl: '', apiKey: '', modelId: '', azureApiVersion: '' },
+  },
+  isDirty: false,
+  saving: false,
+};
+
+export type SettingsAction =
+  | { type: 'SET_ACTIVE_PROVIDER'; provider: ProviderId }
+  | { type: 'UPDATE_CONFIG'; provider: ProviderId; patch: Partial<OpenAIProviderConfig> | Partial<AzureProviderConfig> }
+  | { type: 'MARK_SAVED' }
+  | { type: 'START_SAVING' }
+  | { type: 'LOAD_STATE'; state: SettingsState };
+
+export const settingsReducer = (state: SettingsState, action: SettingsAction): SettingsState => {
+  switch (action.type) {
+    case 'SET_ACTIVE_PROVIDER':
+      return { ...state, activeProvider: action.provider, isDirty: true };
+    case 'UPDATE_CONFIG':
+      return {
+        ...state,
+        configs: {
+          ...state.configs,
+          [action.provider]: { ...state.configs[action.provider], ...action.patch },
+        },
+        isDirty: true,
+      };
+    case 'START_SAVING':
+      return { ...state, saving: true };
+    case 'MARK_SAVED':
+      return { ...state, isDirty: false, saving: false, lastSavedAt: new Date().toISOString() };
+    case 'LOAD_STATE':
+      return { ...action.state, isDirty: false, saving: false };
+    default:
+      return state;
+  }
+};
