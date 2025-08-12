@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import OpenAiConfiguration from './providers/OpenAiConfiguration';
 import AzureFoundryConfiguration from './providers/AzureFoundryConfiguration';
 import { VSCodeDropdown, VSCodeOption, VSCodeButton } from '@vscode/webview-ui-toolkit/react';
-import { useSettings } from '../state/SettingsContext';
+import { useActiveProvider, useSettingsActions } from '../state/SettingsSelectors';
 import { ProviderId } from '../state/settingsTypes';
 
 const providerRegistry: Record<ProviderId, { label: string; component: React.FC }> = {
@@ -11,7 +11,8 @@ const providerRegistry: Record<ProviderId, { label: string; component: React.FC 
 };
 
 const ApiConfigurationComponent: React.FC = () => {
-  const { activeProvider, setActiveProvider } = useSettings();
+  const activeProvider = useActiveProvider();
+  const { setActiveProvider } = useSettingsActions();
   const ActiveComponent = providerRegistry[activeProvider].component;
 
   type PossibleEvent = Event | React.FormEvent<HTMLElement>;
@@ -56,4 +57,4 @@ const ApiConfigurationComponent: React.FC = () => {
   );
 };
 
-export default ApiConfigurationComponent;
+export default React.memo(ApiConfigurationComponent);

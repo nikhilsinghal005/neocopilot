@@ -47,14 +47,26 @@ export const settingsReducer = (state: SettingsState, action: SettingsAction): S
     case 'SET_ACTIVE_PROVIDER':
       return { ...state, activeProvider: action.provider, isDirty: true };
     case 'UPDATE_CONFIG':
-      return {
-        ...state,
-        configs: {
-          ...state.configs,
-          [action.provider]: { ...state.configs[action.provider], ...action.patch },
-        },
-        isDirty: true,
-      };
+      {
+        const current = state.configs[action.provider];
+        const patch = action.patch as Record<string, unknown>;
+        // Detect real changes
+        let changed = false;
+        const currentRecord = current as unknown as Record<string, unknown>;
+        for (const [k, v] of Object.entries(patch)) {
+          if (currentRecord[k] !== v) { changed = true; break; }
+        }
+        if (!changed) {return state;}
+        const nextProviderConfig = { ...current, ...patch } as typeof current;
+        return {
+          ...state,
+          configs: {
+            ...state.configs,
+            [action.provider]: nextProviderConfig,
+          },
+          isDirty: true,
+        };
+      }
     case 'START_SAVING':
       return { ...state, saving: true };
     case 'MARK_SAVED':

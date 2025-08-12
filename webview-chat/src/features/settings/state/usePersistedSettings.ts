@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { SettingsState } from './settingsTypes';
 import { useVscode } from '../../../integration/vscode/api';
 
@@ -27,5 +27,5 @@ export const usePersistedSettings = () => {
     }
   }, [vscode]);
 
-  return { load, persist };
+  return useMemo(() => ({ load, persist }), [load, persist]);
 };

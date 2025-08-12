@@ -1,4 +1,4 @@
-import React, { useReducer, useCallback } from 'react';
+import React, { useReducer, useCallback, useMemo } from 'react';
 import { defaultSettingsState, settingsReducer, SettingsState, ProviderId } from './settingsTypes';
 import { usePersistedSettings } from './usePersistedSettings';
 
@@ -28,5 +28,13 @@ export const useSettingsLogic = (): SettingsContextValue => {
     dispatch({ type: 'MARK_SAVED' });
   }, [state, persist]);
 
-  return { ...state, setActiveProvider, updateConfig, save };
+  // Memoize the context value to prevent unnecessary rerenders
+  const contextValue = useMemo(() => ({
+    ...state,
+    setActiveProvider,
+    updateConfig,
+    save
+  }), [state, setActiveProvider, updateConfig, save]);
+
+  return contextValue;
 };

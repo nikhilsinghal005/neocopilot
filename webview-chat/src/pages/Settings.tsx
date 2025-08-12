@@ -4,11 +4,38 @@ import { Info, X, ChevronDown, ChevronUp, Settings as SettingsIcon } from 'lucid
 import ApiConfiguration from '../features/settings/components/ApiConfiguration';
 import SettingsNavigation from '../features/settings/components/SettingsNavigation';
 import usePersistentState from '../features/settings/components/hooks/usePersistentState';
+import { useSettingsActions, useSettingsStatus } from '../features/settings/state/SettingsSelectors';
 import { useSettings } from '../features/settings/state/SettingsContext';
+
+// Memoized About section to prevent rerender when configs change
+const AboutSection: React.FC = React.memo(() => {
+  const { activeProvider, configs } = useSettings();
+  return (
+    <div className="space-y-4">
+      <p className="text-[var(--vscode-editor-foreground)] text-base leading-relaxed">Neo Copilot is an AI-powered assistant designed to enhance your coding workflow. It provides intelligent code suggestions, helps with debugging, and offers contextual insights.</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <div className="rounded border border-[var(--vscode-editorWidget-border)] p-3 bg-[var(--vscode-editorWidget-background)]">
+          <h3 className="font-semibold mb-1">Active Provider</h3>
+          <p className="opacity-80">{activeProvider}</p>
+        </div>
+        <div className="rounded border border-[var(--vscode-editorWidget-border)] p-3 bg-[var(--vscode-editorWidget-background)]">
+          <h3 className="font-semibold mb-1">Model</h3>
+          <p className="opacity-80">{configs[activeProvider].modelId || '—'}</p>
+        </div>
+        <div className="rounded border border-[var(--vscode-editorWidget-border)] p-3 bg-[var(--vscode-editorWidget-background)]">
+          <h3 className="font-semibold mb-1">Version</h3>
+          <p className="opacity-80">1.0.0</p>
+        </div>
+      </div>
+      <p className="text-[var(--vscode-descriptionForeground)] text-[10px] leading-relaxed">© {new Date().getFullYear()} Neo Copilot. All rights reserved. Licensed under the project license.</p>
+    </div>
+  );
+});
 
 const Settings: React.FC = () => {
   const { setCurrentView } = useChatContext();
-  const { activeProvider, configs, save, isDirty } = useSettings();
+  const { save } = useSettingsActions();
+  const { isDirty } = useSettingsStatus();
   const [expandedCard, setExpandedCard] = usePersistentState<'api' | 'integrations' | 'preferences' | 'about' | null>('settings.expandedCard', 'api');
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -33,7 +60,7 @@ const Settings: React.FC = () => {
     description: string;
     name: 'api' | 'integrations' | 'preferences' | 'about';
     children: React.ReactNode;
-  }> = ({ title, icon, description, name, children }) => {
+  }> = React.memo(({ title, icon, description, name, children }) => {
     const isExpanded = expandedCard === name;
     return (
       <section id={`${name}-card-anchor`} className="group rounded-md border border-[var(--vscode-editorWidget-border)] bg-[var(--vscode-editorWidget-background)] shadow-sm mb-5 focus-within:border-[var(--vscode-focusBorder)] transition-colors">
@@ -52,7 +79,7 @@ const Settings: React.FC = () => {
         )}
       </section>
     );
-  };
+  });
 
   return (
     <div className="flex flex-col h-full w-full bg-[var(--vscode-sideBar-background)] text-[var(--vscode-sideBar-foreground)]">
@@ -91,24 +118,7 @@ const Settings: React.FC = () => {
           </Card>
 
           <Card title="About" icon={<Info size={20} className="text-[var(--vscode-editor-foreground)]" />} description="Information about Neo Copilot, its version, and licensing details." name="about">
-            <div className="space-y-4">
-              <p className="text-[var(--vscode-editor-foreground)] text-base leading-relaxed">Neo Copilot is an AI-powered assistant designed to enhance your coding workflow. It provides intelligent code suggestions, helps with debugging, and offers contextual insights.</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div className="rounded border border-[var(--vscode-editorWidget-border)] p-3 bg-[var(--vscode-editorWidget-background)]">
-                  <h3 className="font-semibold mb-1">Active Provider</h3>
-                  <p className="opacity-80">{activeProvider}</p>
-                </div>
-                <div className="rounded border border-[var(--vscode-editorWidget-border)] p-3 bg-[var(--vscode-editorWidget-background)]">
-                  <h3 className="font-semibold mb-1">Model</h3>
-                  <p className="opacity-80">{configs[activeProvider].modelId || '—'}</p>
-                </div>
-                <div className="rounded border border-[var(--vscode-editorWidget-border)] p-3 bg-[var(--vscode-editorWidget-background)]">
-                  <h3 className="font-semibold mb-1">Version</h3>
-                  <p className="opacity-80">1.0.0</p>
-                </div>
-              </div>
-              <p className="text-[var(--vscode-descriptionForeground)] text-[10px] leading-relaxed">© {new Date().getFullYear()} Neo Copilot. All rights reserved. Licensed under the project license.</p>
-            </div>
+            <AboutSection />
           </Card>
         </div>
       </div>
