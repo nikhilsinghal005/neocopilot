@@ -24,7 +24,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
   private static primaryInstance: AiChatPanel;
   public activePanels: vscode.WebviewView[] = [];
   private _view: vscode.WebviewView | undefined;
-  private _messageQueue: { command: string;[key: string]: unknown }[] = [];
   // SocketModule is removed, no socket communication in chat panel.
   public codeInsertionManager: CodeInsertionManager;
   private webviewListeners: WeakSet<vscode.WebviewView> = new WeakSet();
@@ -120,13 +119,6 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
 
       webviewView.webview.onDidReceiveMessage(async (message: { command: string;[key: string]: unknown }) => {
         switch (message.command) {
-
-
-          // Checks if the user is logged in and initializes necessary services
-          case 'ready':
-            // aiChatModelDetails removed
-            break;
-
           case 'upload_image': {
             const _chatId = message.chatId;
             vscode.window.showOpenDialog({
@@ -192,31 +184,7 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       });
     }
 
-    while (this._messageQueue.length > 0) {
-      const message = this._messageQueue.shift();
-      if (message) {
-        webviewView.webview.postMessage(message);
-      }
-    }
   }
-
-  public async sendMessageToChat(
-    fileName: string,
-    selectedText: string,
-    completeText: string,
-    documentLanguage: string
-  ) {
-    this.activePanels.forEach(panel => {
-      panel.webview.postMessage({
-        command: 'insertMessagesToChat',
-        fileName: fileName,
-        selectedText: selectedText,
-        completeText: completeText,
-        documentLanguage: documentLanguage,
-      });
-    });
-  }
-
 
   public sendAuthStatus(isAuthenticated: boolean) {
     this.activePanels.forEach(panel => {
@@ -227,10 +195,36 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     });
   }
 
-  // Returns the HTML content for the webview, including scripts and styles
-  private getHtmlForWebview(webview: vscode.Webview): string {
-    const scriptUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._extensionUri, 'out', 'webview-ui', 'assets', 'index.js')
+  public sendSettingToChat(setting: string, value: unknown) {
+    this.activePanels.forEach(panel => {
+      panel.webview.postMessage({
+        command: 'settingChanged',
+        setting: setting,
+        value: value,
+      });
+    });
+  }
+ 
+  public showSettings() {
+    this.activePanels.forEach(panel => {
+      panel.webview.postMessage({
+        command: 'showSettings',
+      });
+    });
+  }
+
+  public newChat() {
+    this.activePanels.forEach(panel => {
+      panel.webview.postMessage({
+        command: 'newChat',
+      });
+    });
+  }
+
+   // Returns the HTML content for the webview, including scripts and styles
+   private getHtmlForWebview(webview: vscode.Webview): string {
+     const scriptUri = webview.asWebviewUri(
+       vscode.Uri.joinPath(this._extensionUri, 'out', 'webview-ui', 'assets', 'index.js')
     );
 
     const styleUri = webview.asWebviewUri(

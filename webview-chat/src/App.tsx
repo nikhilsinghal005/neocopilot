@@ -1,33 +1,36 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import Chat from './pages/Chat';
-import { ChatProvider } from './context/ChatContext';
-import { VscodeProvider } from './context/VscodeContext';
+import Settings from './pages/Settings';
+import { ChatProvider, useChatContext } from './features/chat/state/ChatContext';
+import { VscodeProvider } from './integration/vscode/VscodeContext';
+import { VscodeApi } from './integration/vscode/api';
+import { SettingsProvider } from './features/settings';
 
-declare const acquireVsCodeApi: () => {
-  postMessage: (msg: any) => void;
-  getState: () => any;
-  setState: (state: any) => void;
-};
+// Declare the function that acquires the API.
+declare const acquireVsCodeApi: () => VscodeApi;
 
-const vscodeApi = acquireVsCodeApi() as {
-  postMessage: (msg: any) => void;
-  getState: () => any;
-  setState: (state: any) => void;
+// Get the VS Code API instance. It's a singleton, so it should be called only once.
+const vscodeApi = acquireVsCodeApi();
+
+const AppContent: React.FC = () => {
+  const { currentView } = useChatContext();
+
+  return (
+    <div className="App h-full flex items-center justify-center overflow-hidden">
+      {currentView === 'chat' && <Chat />}
+      {currentView === 'settings' && <Settings />}
+    </div>
+  );
 };
 
 const App: React.FC = () => {
-  useEffect(() => {
-    vscodeApi.postMessage({ command: 'ready' });
-    console.log('App mounted.');
-  }, []);
-
   return (
     <VscodeProvider vscode={vscodeApi}>
-      <ChatProvider>
-        <div className="App h-full flex items-center justify-center overflow-hidden">
-          <Chat />
-        </div>
-      </ChatProvider>
+      <SettingsProvider>
+        <ChatProvider>
+          <AppContent />
+        </ChatProvider>
+      </SettingsProvider>
     </VscodeProvider>
   );
 };

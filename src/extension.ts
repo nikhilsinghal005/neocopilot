@@ -32,6 +32,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       }
     )
   );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('neocopilot.showSettings', () => {
+      primaryViewProvider.showSettings();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('neocopilot.newChat', () => {
+      primaryViewProvider.newChat();
+    })
+  );
 }
 
 /**

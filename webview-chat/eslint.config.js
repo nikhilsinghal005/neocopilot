@@ -1,7 +1,7 @@
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
+// Fast refresh plugin caused rule resolution issues in pre-commit; omitted for production linting.
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
@@ -15,13 +15,17 @@ export default tseslint.config(
     },
     plugins: {
       'react-hooks': reactHooks,
-      'react-refresh': reactRefresh,
+      // 'react-refresh': reactRefresh,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
+      // Allow PascalCase for React components & preserve flexibility for property names
+      '@typescript-eslint/naming-convention': [
         'warn',
-        { allowConstantExport: true },
+        { selector: 'variable', format: ['camelCase', 'PascalCase', 'UPPER_CASE'] },
+        { selector: 'function', format: ['camelCase', 'PascalCase'] },
+        { selector: 'typeLike', format: ['PascalCase'] },
+        { selector: 'property', format: null },
       ],
     },
   },
