@@ -112,11 +112,13 @@ const OpenAiConfigurationComponent: React.FC = () => {
     const baseChanged = workingCfg.baseUrl !== persistedCfg.baseUrl;
     const modelChanged = workingCfg.modelId !== persistedCfg.modelId;
     // Api key dirty if user typed something new OR cleared existing secret
-    const apiKeyDirty = !!workingCfg.apiKey || (hasStoredSecret && clearing);
+    // But not dirty if we just cleared the working copy after saving
+    const apiKeyDirty = (!!workingCfg.apiKey && workingCfg.apiKey !== persistedCfg.apiKey) || 
+                       (hasStoredSecret && clearing);
     return baseChanged || modelChanged || apiKeyDirty;
-  }, [workingCfg.baseUrl, workingCfg.modelId, workingCfg.apiKey, persistedCfg.baseUrl, persistedCfg.modelId, hasStoredSecret, clearing]);
+  }, [workingCfg.baseUrl, workingCfg.modelId, workingCfg.apiKey, persistedCfg.baseUrl, persistedCfg.modelId, persistedCfg.apiKey, hasStoredSecret, clearing]);
 
-  const saving = false; // Local form save - global saving not tracked per keystroke now
+  // Note: global saving flag not wired; local optimistic save handled via onSave
 
   const onSave = useCallback(() => {
     if (!isDirty) {return;}
@@ -129,16 +131,18 @@ const OpenAiConfigurationComponent: React.FC = () => {
     save();
     // After save, clear local apiKey field to avoid keeping it in memory if we just stored it
     if (workingCfg.apiKey) {
-      setWorkingCfg(prev => ({ ...prev, apiKey: '' }));
       setHasStoredSecret(true);
     }
+    // Reset working config to match persisted state after save
+    setWorkingCfg(prev => ({ ...prev, apiKey: '' }));
     setClearing(false);
   }, [isDirty, updateConfig, workingCfg, save]);
 
   return (
     <form
       className="flex flex-col gap-6"
-      onSubmit={(e) => { e.preventDefault(); if (isDirty && !saving) {save();} }}
+  // Ensure pressing Enter triggers full save logic (including updateConfig) rather than just calling save() without patch
+  onSubmit={(e) => { e.preventDefault(); onSave(); }}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Field id="baseUrl" label="Base URL (optional)" description="Leave blank to use the default https://api.openai.com/v1">
