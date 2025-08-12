@@ -50,8 +50,8 @@ const AgentTypeSelectDropdown: React.FC<AgentTypeSelectDropdownProps> = ({
         className="w-full flex items-center justify-between px-1 py-0 text-left bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] rounded-sm"
       >
         <div className="flex items-center gap-2">
-          {message.modelSelected?.icon}
-          <span>{message.modelSelected?.agentName || 'Select Agent'}</span>
+          {message.selectedAgent?.icon}
+          <span>{message.selectedAgent?.agentName || 'Select Agent'}</span>
         </div>
         <ChevronDown size={16} />
       </button>

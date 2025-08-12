@@ -24,7 +24,7 @@ export type MessageInput = {
   messageType: 'system';
   response: string;
   isComplete?: boolean; // Indicates if the message is fully received
-  modelSelected: AgentDetail; // Indicates the model used to generate the response
+  selectedAgent: AgentDetail; // canonical
 };
 
 export type EditorOpenFileList = {
@@ -42,7 +42,7 @@ export type MessageOutput = {
   messageType: 'user';
   text: string;
   isComplete?: boolean; // Indicates if the message is fully received
-  modelSelected: string; // Indicates the model used to generate the response
+  selectedAgent: string; // Agent identifier used to generate the response
   useInternet: boolean;
   isProblemsSelected: boolean;
   isTerminalSelected: boolean;
@@ -58,7 +58,7 @@ export type MessageStore = {
   attachedFiles?: object[];  // List of file paths attached to the message
   uploadedImages?: UploadedImage[];     // List of image paths associated with the message
   isComplete?: boolean; // Indicates if the message is fully received
-  modelSelected?: AgentDetail; // Indicates the model used to generate the response
+  selectedAgent?: AgentDetail; // Agent used for this message
   useInternet?: boolean;
   isProblemsSelected?: boolean;
   isTerminalSelected?: boolean;

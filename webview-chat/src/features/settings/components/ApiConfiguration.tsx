@@ -12,7 +12,7 @@ const providerRegistry: Record<ProviderId, { label: string; component: React.FC 
 
 const ApiConfigurationComponent: React.FC = () => {
   const activeProvider = useActiveProvider();
-  const { setActiveProvider } = useSettingsActions();
+  const { setActiveProvider, setActiveProviderUiOnly, save } = useSettingsActions();
   const ActiveComponent = providerRegistry[activeProvider].component;
 
   type PossibleEvent = Event | React.FormEvent<HTMLElement>;
@@ -31,7 +31,12 @@ const ApiConfigurationComponent: React.FC = () => {
               <VSCodeButton
                 key={id}
                 appearance={isActive ? 'primary' : 'secondary'}
-                onClick={() => setActiveProvider(id as ProviderId)}
+                onClick={() => {
+                  // Instant UI persistence of selected provider (without model changes)
+                  setActiveProviderUiOnly(id as ProviderId);
+                  // Persist preference (redacted) without marking settings dirty
+                  save();
+                }}
               >
                 {meta.label}
               </VSCodeButton>

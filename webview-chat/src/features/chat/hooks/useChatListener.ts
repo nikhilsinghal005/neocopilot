@@ -4,7 +4,7 @@ import { MessageStore, MessageInput, ChatSession } from '../../../shared/types/M
 import { v4 as uuidv4 } from 'uuid';
 
 export const useChatListener = () => {
-  const { chatSession, setChatSession, isTyping, setIsTyping, isInterrupted, setCurrentView } = useChatContext();
+  const { chatSession, setChatSession, isTyping, setIsTyping, isInterrupted, setCurrentView, clearChatSession } = useChatContext();
   const accumulatedResponseRef = useRef<string>('');
   const messageInProgressRef = useRef<MessageStore | null>(null);
   const interruptedMessageIdsRef = useRef<Set<string>>(new Set());
@@ -18,14 +18,22 @@ export const useChatListener = () => {
 
   useEffect(() => {
     const handleIncomingMessage = (event: MessageEvent) => {
-      if (event.data.command === 'receive_chat_message') {
-        processMessage(event.data);
-      } else if (event.data.command === 'showSettings') {
-        setCurrentView('settings');
+      switch(event.data.command){
+        case 'receive_chat_message':
+          processMessage(event.data);
+          break;
+        case 'showSettings':
+          setCurrentView('settings');
+          break;
+        case 'newChat':
+          clearChatSession();
+          break;
       }
     };
 
-    const processMessage = (eventData: { data: MessageInput }) => {
+  interface SelectedAgentLike { agentId: string; agentName: string; agentDescription: string }
+  type ExtendedMessageInput = MessageInput & { selectedAgent?: SelectedAgentLike };
+  const processMessage = (eventData: { data: ExtendedMessageInput }) => {
       const { data } = eventData;
       try {
         if (!isValidMessage(data)) {return;}
@@ -76,13 +84,14 @@ export const useChatListener = () => {
       accumulatedResponseRef.current += data.response;
 
       if (!messageInProgressRef.current) {
+  const selectedAgentVal = data.selectedAgent;
         messageInProgressRef.current = {
           id: data.id !== 'unknown' ? data.id : uuidv4(),
           timestamp: new Date().toISOString(),
           messageType: 'system',
           text: accumulatedResponseRef.current,
           isComplete: data.isComplete,
-          modelSelected: data.modelSelected,
+          selectedAgent: selectedAgentVal,
         };
       } else {
         messageInProgressRef.current.text += data.response;
@@ -127,7 +136,7 @@ export const useChatListener = () => {
                   ...msg,
                   text: msg.text + data.response,
                   isComplete: data.isComplete,
-                  modelSelected: data.modelSelected,
+                  selectedAgent: data.selectedAgent,
                 }
               : msg
           );
@@ -163,5 +172,5 @@ export const useChatListener = () => {
 
     window.addEventListener('message', handleIncomingMessage);
     return () => window.removeEventListener('message', handleIncomingMessage);
-  }, [setChatSession, setIsTyping, isInterrupted]);
+  }, [setChatSession, setIsTyping, isInterrupted, setCurrentView, clearChatSession]);
 };

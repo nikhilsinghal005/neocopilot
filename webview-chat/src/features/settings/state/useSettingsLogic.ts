@@ -4,6 +4,7 @@ import { usePersistedSettings } from './usePersistedSettings';
 
 export interface SettingsContextValue extends SettingsState {
   setActiveProvider: (p: ProviderId) => void;
+  setActiveProviderUiOnly: (p: ProviderId) => void;
   updateConfig: (p: ProviderId, patch: Record<string, unknown>) => void;
   save: () => void;
 }
@@ -20,6 +21,7 @@ export const useSettingsLogic = (): SettingsContextValue => {
   }, [load]);
 
   const setActiveProvider = useCallback((p: ProviderId) => dispatch({ type: 'SET_ACTIVE_PROVIDER', provider: p }), []);
+  const setActiveProviderUiOnly = useCallback((p: ProviderId) => dispatch({ type: 'SET_ACTIVE_PROVIDER_UI', provider: p }), []);
   const updateConfig = useCallback((p: ProviderId, patch: Record<string, unknown>) => dispatch({ type: 'UPDATE_CONFIG', provider: p, patch }), []);
 
   const save = useCallback(() => {
@@ -32,9 +34,10 @@ export const useSettingsLogic = (): SettingsContextValue => {
   const contextValue = useMemo(() => ({
     ...state,
     setActiveProvider,
+    setActiveProviderUiOnly,
     updateConfig,
     save
-  }), [state, setActiveProvider, updateConfig, save]);
+  }), [state, setActiveProvider, setActiveProviderUiOnly, updateConfig, save]);
 
   return contextValue;
 };
