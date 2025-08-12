@@ -61,14 +61,26 @@ const Settings: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full w-full bg-[var(--vscode-sideBar-background)] text-[var(--vscode-sideBar-foreground)]">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--vscode-editorGroup-border)]">
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-xl font-semibold tracking-wide text-[var(--vscode-editor-foreground)]">Settings</h1>
-          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)]">Neo Copilot</span>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(circle_at_20%_20%,var(--vscode-editorWidget-border),transparent_60%)]" />
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--vscode-editorGroup-border)] relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <SettingsIcon size={20} className="text-[var(--vscode-editor-foreground)] opacity-90" />
+              <h1 className="text-xl font-semibold tracking-wide text-[var(--vscode-editor-foreground)]">Settings</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)] shadow-sm">Neo Copilot</span>
+              <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded border border-[var(--vscode-editorWidget-border)] bg-[var(--vscode-editorWidget-background)] text-[var(--vscode-descriptionForeground)]">v1.0.0</span>
+              <span className="hidden md:inline-block text-[10px] px-2 py-0.5 rounded bg-[var(--vscode-editorWidget-background)] border border-[var(--vscode-editorWidget-border)] text-[var(--vscode-descriptionForeground)]">Provider: <strong className="font-semibold text-[var(--vscode-editor-foreground)]">{activeProvider}</strong></span>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setCurrentView('chat')} className="p-1 rounded hover:bg-[var(--vscode-toolbar-hoverBackground)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--vscode-focusBorder)]" aria-label="Close Settings">
+              <X size={16} />
+            </button>
+          </div>
         </div>
-        <button onClick={() => setCurrentView('chat')} className="p-1 rounded hover:bg-[var(--vscode-toolbar-hoverBackground)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--vscode-focusBorder)]" aria-label="Close Settings">
-          <X size={16} />
-        </button>
       </div>
 
       <div ref={containerRef} className="flex-1 px-1 py-6 overflow-auto settings-scroll">
