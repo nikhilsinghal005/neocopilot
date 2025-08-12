@@ -4,6 +4,7 @@ import Settings from './pages/Settings';
 import { ChatProvider, useChatContext } from './features/chat/state/ChatContext';
 import { VscodeProvider } from './integration/vscode/VscodeContext';
 import { VscodeApi } from './integration/vscode/api';
+import { SettingsProvider } from './features/settings';
 
 // Declare the function that acquires the API.
 declare const acquireVsCodeApi: () => VscodeApi;
@@ -25,9 +26,11 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <VscodeProvider vscode={vscodeApi}>
-      <ChatProvider>
-        <AppContent />
-      </ChatProvider>
+      <SettingsProvider>
+        <ChatProvider>
+          <AppContent />
+        </ChatProvider>
+      </SettingsProvider>
     </VscodeProvider>
   );
 };
