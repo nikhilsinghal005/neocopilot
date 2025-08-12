@@ -1,4 +1,5 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import { useVscode } from '../../../../integration/vscode/api';
 import { VSCodeTextField, VSCodeButton, VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
 import { useSettingsActions } from '../../state/SettingsSelectors';
 import Field from '../ui/Field';
@@ -16,6 +17,7 @@ const OPENAI_MODELS = [
 ];
 
 const OpenAiConfigurationComponent: React.FC = () => {
+  const vscode = useVscode();
   // Global persisted config snapshot
   const persistedCfg = useProviderConfig('openai');
   const { updateConfig, save } = useSettingsActions();
@@ -24,6 +26,8 @@ const OpenAiConfigurationComponent: React.FC = () => {
   const [workingCfg, setWorkingCfg] = useState(persistedCfg);
   const [customModel, setCustomModel] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [hasStoredSecret, setHasStoredSecret] = useState(false); // indicates secret stored in extension secret storage
+  const [clearing, setClearing] = useState(false);
   // Separate UI selection state so selecting "Custom" doesn't immediately revert to previous model
   const [selectedModel, setSelectedModel] = useState<string>(() => {
     if (OPENAI_MODELS.includes(workingCfg.modelId)) {return workingCfg.modelId;}
@@ -43,6 +47,20 @@ const OpenAiConfigurationComponent: React.FC = () => {
       setSelectedModel('');
     }
   }, [persistedCfg]);
+
+  // Request secret status from extension when component mounts
+  useEffect(() => {
+    const handleMsg = (e: MessageEvent) => {
+      const msg = e.data;
+      if (msg?.command === 'settings:apiKeyStatus') {
+        setHasStoredSecret(!!msg.payload?.openai);
+      }
+    };
+    window.addEventListener('message', handleMsg);
+    // Ask extension for status
+  vscode?.postMessage?.({ command: 'settings:requestApiKeyStatus' });
+    return () => window.removeEventListener('message', handleMsg);
+  }, [vscode]);
 
   // Keep selectedModel in sync when working copy changes locally
   useEffect(() => {
@@ -90,11 +108,13 @@ const OpenAiConfigurationComponent: React.FC = () => {
   const effectiveModelInList = OPENAI_MODELS.includes(workingCfg.modelId);
 
   // Derived dirty flag (shallow compare working vs persisted)
-  const isDirty = useMemo(() => (
-    workingCfg.baseUrl !== persistedCfg.baseUrl ||
-    workingCfg.apiKey !== persistedCfg.apiKey ||
-    workingCfg.modelId !== persistedCfg.modelId
-  ), [workingCfg, persistedCfg]);
+  const isDirty = useMemo(() => {
+    const baseChanged = workingCfg.baseUrl !== persistedCfg.baseUrl;
+    const modelChanged = workingCfg.modelId !== persistedCfg.modelId;
+    // Api key dirty if user typed something new OR cleared existing secret
+    const apiKeyDirty = !!workingCfg.apiKey || (hasStoredSecret && clearing);
+    return baseChanged || modelChanged || apiKeyDirty;
+  }, [workingCfg.baseUrl, workingCfg.modelId, workingCfg.apiKey, persistedCfg.baseUrl, persistedCfg.modelId, hasStoredSecret, clearing]);
 
   const saving = false; // Local form save - global saving not tracked per keystroke now
 
@@ -102,11 +122,17 @@ const OpenAiConfigurationComponent: React.FC = () => {
     if (!isDirty) {return;}
     updateConfig('openai', {
       baseUrl: workingCfg.baseUrl,
-      apiKey: workingCfg.apiKey,
+      apiKey: workingCfg.apiKey, // will be redacted before localStorage; extension stores secret
       modelId: workingCfg.modelId,
     });
     // Persist global state
     save();
+    // After save, clear local apiKey field to avoid keeping it in memory if we just stored it
+    if (workingCfg.apiKey) {
+      setWorkingCfg(prev => ({ ...prev, apiKey: '' }));
+      setHasStoredSecret(true);
+    }
+    setClearing(false);
   }, [isDirty, updateConfig, workingCfg, save]);
 
   return (
@@ -142,12 +168,19 @@ const OpenAiConfigurationComponent: React.FC = () => {
             )}
           </div>
         </Field>
-        <Field id="apiKey" label="API Key" description="Required. Stored locally only; never synced." required>
-          <VSCodeTextField id="apiKey" type="password" value={workingCfg.apiKey} onInput={onInput} placeholder="sk-..." />
+        <Field id="apiKey" label="API Key" description="Stored securely in VS Code Secret Storage." required>
+          <div className="flex gap-2 items-center w-full">
+            <VSCodeTextField id="apiKey" type="password" value={workingCfg.apiKey} onInput={onInput} placeholder={hasStoredSecret ? '•••••••• (stored)' : 'sk-...'} className="flex-1" />
+            {hasStoredSecret && !workingCfg.apiKey && (
+              <VSCodeButton type="button" appearance="secondary" onClick={() => { setClearing(true); setHasStoredSecret(false); }}>
+                Clear
+              </VSCodeButton>
+            )}
+          </div>
         </Field>
       </div>
       <div className="flex items-center justify-between text-[10px] text-[var(--vscode-descriptionForeground)]">
-  {workingCfg.apiKey ? <span className="opacity-80">Key length: {workingCfg.apiKey.length}</span> : <span className="opacity-60">No key set</span>}
+  {workingCfg.apiKey ? <span className="opacity-80">Key length: {workingCfg.apiKey.length}</span> : hasStoredSecret ? <span className="opacity-70">Key stored securely</span> : <span className="opacity-60">No key set</span>}
   {!effectiveModelInList && workingCfg.modelId && <span className="opacity-70">Using custom model id</span>}
       </div>
       <div className="flex gap-3">
