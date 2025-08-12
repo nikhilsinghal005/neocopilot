@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { useChatContext } from '../features/chat/state/ChatContext';
-import { Info, X, ChevronDown, ChevronUp, Settings as SettingsIcon, Search } from 'lucide-react';
+import { Info, X, ChevronDown, ChevronUp, Settings as SettingsIcon } from 'lucide-react';
 import ApiConfiguration from '../features/settings/components/ApiConfiguration';
 import SettingsNavigation from '../features/settings/components/SettingsNavigation';
 import usePersistentState from '../features/settings/components/hooks/usePersistentState';
@@ -8,9 +8,8 @@ import { useSettings } from '../features/settings/state/SettingsContext';
 
 const Settings: React.FC = () => {
   const { setCurrentView } = useChatContext();
-  const { activeProvider, configs } = useSettings();
+  const { activeProvider, configs, save, isDirty } = useSettings();
   const [expandedCard, setExpandedCard] = usePersistentState<'api' | 'integrations' | 'preferences' | 'about' | null>('settings.expandedCard', 'api');
-  const [query, setQuery] = useState('');
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const toggleCard = (cardName: 'api' | 'integrations' | 'preferences' | 'about') => {
@@ -28,8 +27,6 @@ const Settings: React.FC = () => {
     });
   }, [expandedCard, setExpandedCard]);
 
-  const searchMatcher = useMemo(() => query.trim().toLowerCase(), [query]);
-
   const Card: React.FC<{
     title: string;
     icon: React.ReactNode;
@@ -38,8 +35,6 @@ const Settings: React.FC = () => {
     children: React.ReactNode;
   }> = ({ title, icon, description, name, children }) => {
     const isExpanded = expandedCard === name;
-    const haystack = (title + ' ' + description).toLowerCase();
-    if (searchMatcher && !haystack.includes(searchMatcher)) {return null;}
     return (
       <section id={`${name}-card-anchor`} className="group rounded-md border border-[var(--vscode-editorWidget-border)] bg-[var(--vscode-editorWidget-background)] shadow-sm mb-5 focus-within:border-[var(--vscode-focusBorder)] transition-colors">
         <header className="flex items-stretch">
@@ -62,20 +57,22 @@ const Settings: React.FC = () => {
   return (
     <div className="flex flex-col h-full w-full bg-[var(--vscode-sideBar-background)] text-[var(--vscode-sideBar-foreground)]">
       <div className="relative overflow-hidden">
+        {/* Decorative gradient */}
         <div className="absolute inset-0 pointer-events-none opacity-30 bg-[radial-gradient(circle_at_20%_20%,var(--vscode-editorWidget-border),transparent_60%)]" />
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--vscode-editorGroup-border)] relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-3 px-6 py-4 border-b border-[var(--vscode-editorGroup-border)] relative z-10 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start md:items-center gap-4 flex-1">
+            <div className="flex items-center gap-2 shrink-0">
               <SettingsIcon size={20} className="text-[var(--vscode-editor-foreground)] opacity-90" />
               <h1 className="text-xl font-semibold tracking-wide text-[var(--vscode-editor-foreground)]">Settings</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)] shadow-sm">Neo Copilot</span>
               <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded border border-[var(--vscode-editorWidget-border)] bg-[var(--vscode-editorWidget-background)] text-[var(--vscode-descriptionForeground)]">v1.0.0</span>
-              <span className="hidden md:inline-block text-[10px] px-2 py-0.5 rounded bg-[var(--vscode-editorWidget-background)] border border-[var(--vscode-editorWidget-border)] text-[var(--vscode-descriptionForeground)]">Provider: <strong className="font-semibold text-[var(--vscode-editor-foreground)]">{activeProvider}</strong></span>
+              {isDirty && (<span className="text-[10px] px-2 py-0.5 rounded bg-[var(--vscode-inputValidation-warningBackground)] text-[var(--vscode-inputValidation-warningForeground)] border border-[var(--vscode-inputValidation-warningBorder)]">Unsaved</span>)}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button onClick={() => save()} disabled={!isDirty} className={`text-[10px] px-3 py-1 rounded border transition-colors ${isDirty ? 'bg-[var(--vscode-button-secondaryBackground)] hover:border-[var(--vscode-focusBorder)]' : 'opacity-50 cursor-default bg-[var(--vscode-editorWidget-background)]'} text-[var(--vscode-editor-foreground)]`}>{isDirty ? 'Save' : 'Saved'}</button>
             <button onClick={() => setCurrentView('chat')} className="p-1 rounded hover:bg-[var(--vscode-toolbar-hoverBackground)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--vscode-focusBorder)]" aria-label="Close Settings">
               <X size={16} />
             </button>
@@ -87,10 +84,6 @@ const Settings: React.FC = () => {
         <div className="mx-auto w-full max-w-[1024px] space-y-6">
           <div className="flex flex-col gap-4 sticky top-0 z-10 pb-3 bg-[var(--vscode-sideBar-background)]/95 backdrop-blur border-b border-[var(--vscode-editorWidget-border)] mb-2">
             <SettingsNavigation sections={[{ id: 'api', label: 'API' }, { id: 'about', label: 'About' }]} active={expandedCard} onSelect={onSelectSection} />
-            <div className="relative w-full md:w-1/2">
-              <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 opacity-70" />
-              <input type="text" placeholder="Search settings…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-full pl-7 pr-2 py-1.5 rounded text-xs bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] focus:outline-none focus:ring-1 focus:ring-[var(--vscode-focusBorder)]" aria-label="Search settings" />
-            </div>
           </div>
 
           <Card title="API Configuration" icon={<SettingsIcon size={20} className="text-[var(--vscode-editor-foreground)]" />} description="Configure the API settings for connecting to AI models." name="api">
