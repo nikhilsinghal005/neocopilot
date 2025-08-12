@@ -8,6 +8,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { Logger } from '../../core/logging/Logger';
 import { handleSettingsSecretMessage } from '../settings/secretManager';
+import { EditorContextService } from './services/EditorContextService';
+import { ApiKeyService } from './services/ApiKeyService';
+import { ChatMessageService, ChatMessageData } from './services/ChatMessageService';
 
 interface UploadedImage {
   fileName: string;
@@ -22,6 +25,9 @@ interface UploadedImage {
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
   private logger = Logger.getInstance();
+  private editorContextService: EditorContextService;
+  private apiKeyService: ApiKeyService;
+  private chatMessageService: ChatMessageService;
 
   public static readonly primaryViewType = 'aiChatPanelPrimary';
   private static primaryInstance: AiChatPanel;
@@ -39,6 +45,15 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
     private readonly _authManager: AuthManager,
     private readonly viewType: string
   ) {
+    // Initialize services
+    this.editorContextService = new EditorContextService();
+    this.apiKeyService = new ApiKeyService(this._context);
+    this.chatMessageService = new ChatMessageService(
+      this.logger,
+      this.editorContextService,
+      this.apiKeyService
+    );
+    
     // SocketModule initialization removed.
     this.codeInsertionManager = CodeInsertionManager.getInstance(this._context);
     this.aiChatContextHandler = new AiChatContextHandler(this, this._authManager, this._context);
@@ -129,6 +144,32 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
         if (handled) { return; }
 
         switch (message.command) {
+          case 'send_chat_message': {
+            try {
+              this.logger.info('Received send_chat_message command');
+              const raw = message.data as ChatMessageData & { selectedAgent?: { agentId: string; agentName: string; agentDescription: string } };
+              const selected = raw.selectedAgent;
+              if (selected) {
+                this.logger.info('[Agent Selection] User selected agent:', {
+                  agentId: selected.agentId,
+                  agentName: selected.agentName,
+                  agentDescription: selected.agentDescription,
+                  sessionId: raw.chatSession?.chatId,
+                  at: raw.timestamp || new Date().toISOString()
+                });
+              } else {
+                this.logger.warn('[Agent Selection] No selectedAgent provided in payload');
+              }
+              
+              // Use the modular ChatMessageService to process the message
+              await this.chatMessageService.processMessage(raw);
+
+            } catch (error) {
+              this.logger.error('Error handling send_chat_message:', error);
+              vscode.window.showErrorMessage('Error processing chat message');
+            }
+            break;
+          }
           case 'upload_image': {
             const _chatId = message.chatId;
             vscode.window.showOpenDialog({

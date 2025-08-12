@@ -3,6 +3,8 @@ import { useChatContext } from '../../../features/chat/state/chatTypes';
 import CodeButtonWithText from '../../../shared/components/common/CodeButtonWithText';
 import { MessageStore, UploadedImage } from '../../../shared/types/Message';
 import { AgentDetail } from '../../../shared/types/AppDetails';
+import { sanitizeChatSession } from '../../../shared/utils/serialization';
+import { ChatSession } from '../../../shared/types/Message';
 import { useVscode } from '../../../integration/vscode/api';
 import MessageRenderer from './MessageRenderer';
 import AgentTypeSelectDropdown from '../../../shared/components/common/AgentTypeSelectDropdown';
@@ -12,7 +14,7 @@ interface MessageProps {
   message: MessageStore;
 }
 
-const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
+const MessageComponent: React.FC<MessageProps> = ({ message }) => {
   const {
     chatSession,
     setChatSession,
@@ -42,18 +44,34 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
   const handleRefresh = (messageId: string, agent: AgentDetail) => {
     const messageIndex = chatSession.messages.findIndex(msg => msg.id === messageId);
     if (messageIndex === -1) {
-      console.error("Message to refresh not found.");
+      console.error('Message to refresh not found.');
       return;
     }
-    // Remove messages from the found message onwards
+    // Keep messages up to the refreshed one
     chatSession.messages = chatSession.messages.slice(0, messageIndex + 1);
     const lastMessage = chatSession.messages[chatSession.messages.length - 1];
-    lastMessage.modelSelected = agent;
+  lastMessage.selectedAgent = agent;
     setChatSession({ ...chatSession });
     setIsTyping(true);
+    const serialized = sanitizeChatSession(chatSession as ChatSession);
     vscode.postMessage({
       command: 'send_chat_message',
-      data: chatSession,
+      data: {
+  chatSession: serialized,
+  selectedAgent: serialized.messages[serialized.messages.length - 1]?.selectedAgent,
+        userMessage: {
+          text: lastMessage.text,
+          images: (lastMessage.uploadedImages || []).map(img => ({
+            fileName: img.fileName,
+            filePath: img.filePath,
+            fileType: img.fileType,
+            fileContent: img.fileContent,
+            isActive: img.isActive,
+            isManuallyAddedByUser: img.isManuallyAddedByUser
+          }))
+        },
+        timestamp: new Date().toISOString()
+      }
     });
   };
 
@@ -77,31 +95,41 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
     // Setting Up new input Box and replce the old one
     setIsEditing(true); // Now a boolean
     setEditingMessageId(messageId); // Track the specific message ID
-    setAgentType(message.modelSelected || { agentId: 'ask', agentName: 'Ask', agentDescription: '', icon: <></> });
+  setAgentType(message.selectedAgent || { agentId: 'ask', agentName: 'Ask', agentDescription: '', icon: <></> });
     setUploadImage(message.uploadedImages ?? ([] as UploadedImage[]));
     setInput(message.text);
-     // Set the attached context of the message
+    // Context already applied
   };
 
   const handleEditSave = () => {
     const messageIndex = chatSession.messages.findIndex(msg => msg.id === editingMessageId);
     if (messageIndex === -1) {
-        console.error("Editing message not found.");
-        return;
+      console.error('Editing message not found.');
+      return;
     }
     const updatedMessages = chatSession.messages.slice(0, messageIndex + 1);
     updatedMessages[messageIndex] = {
-        ...updatedMessages[messageIndex],
-        text: input,
-        modelSelected: agentType
+      ...updatedMessages[messageIndex],
+  text: input,
+  selectedAgent: agentType
     };
     chatSession.messages = updatedMessages;
     setChatSession({ ...chatSession });
     setIsEditing(false);
-    setEditingMessageId(null); // Reset the editing message ID
+    setEditingMessageId(null);
+    const serialized = sanitizeChatSession(chatSession as ChatSession);
+    const editedMsg = serialized.messages[serialized.messages.length - 1];
     vscode.postMessage({
-      command: "send_chat_message",
-      data: chatSession,
+      command: 'send_chat_message',
+      data: {
+  chatSession: serialized,
+  selectedAgent: editedMsg?.selectedAgent,
+        userMessage: {
+          text: editedMsg?.text || '',
+          images: editedMsg?.uploadedImages || []
+        },
+        timestamp: new Date().toISOString()
+      }
     });
     // Reset inputs
     setInput(previousInput);
@@ -183,6 +211,6 @@ const MessageComponent: React.FC<MessageProps> = React.memo(({ message }) => {
       )}
     </>
   );
-});
+};
 
 export default MessageComponent;

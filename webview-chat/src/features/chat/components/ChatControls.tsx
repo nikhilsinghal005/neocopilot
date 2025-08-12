@@ -17,6 +17,7 @@ const ChatControls: React.FC = () => {
     });
   };
 
+
   const handleToggleClick = () => {
     if (isTyping) {
       // console.log("Please wait for the message to finish.");
@@ -41,10 +42,10 @@ const ChatControls: React.FC = () => {
         <span className="codicon codicon-refresh"></span>
       </VSCodeButton> */}
       <CodeButton
-        onClick={handleRefreshClick}
-        ariaLabel="Refresh"
-        icon="codicon-refresh"
-        tooltip="New Chat"
+  onClick={handleRefreshClick}
+  ariaLabel="New Chat"
+  icon="codicon-refresh"
+  tooltip="New Chat"
       />
       <CodeButton
         onClick={handleToggleClick}

@@ -37,6 +37,7 @@ export const defaultSettingsState: SettingsState = {
 
 export type SettingsAction =
   | { type: 'SET_ACTIVE_PROVIDER'; provider: ProviderId }
+  | { type: 'SET_ACTIVE_PROVIDER_UI'; provider: ProviderId }
   | { type: 'UPDATE_CONFIG'; provider: ProviderId; patch: Partial<OpenAIProviderConfig> | Partial<AzureProviderConfig> }
   | { type: 'MARK_SAVED' }
   | { type: 'START_SAVING' }
@@ -46,6 +47,10 @@ export const settingsReducer = (state: SettingsState, action: SettingsAction): S
   switch (action.type) {
     case 'SET_ACTIVE_PROVIDER':
       return { ...state, activeProvider: action.provider, isDirty: true };
+    case 'SET_ACTIVE_PROVIDER_UI':
+      // UI-only switch, do not mark dirty
+      if (state.activeProvider === action.provider) { return state; }
+      return { ...state, activeProvider: action.provider };
     case 'UPDATE_CONFIG':
       {
         const current = state.configs[action.provider];

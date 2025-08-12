@@ -33,7 +33,8 @@ const ChatControls: React.FC<ChatControlsProps> = ({
     setAgentType,
     previousInput,
     chatSession,
-    uploadImage, setUploadImage, previousUploadImage} = useChatContext();
+  uploadImage, setUploadImage, previousUploadImage
+  } = useChatContext();
   const vscode = useVscode();
 
 const handleCancelClick = () => {

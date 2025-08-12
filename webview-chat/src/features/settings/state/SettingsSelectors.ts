@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { useSettings } from './SettingsContext';
 import { ProviderId } from './settingsTypes';
+import { SettingsContextValue } from './useSettingsLogic';
 
 // Selective hooks to prevent unnecessary rerenders
 export const useSettingsActions = () => {
-  const { save, updateConfig, setActiveProvider } = useSettings();
-  return useMemo(() => ({ save, updateConfig, setActiveProvider }), [save, updateConfig, setActiveProvider]);
+  const { save, updateConfig, setActiveProvider, setActiveProviderUiOnly } = useSettings() as SettingsContextValue;
+  return useMemo(() => ({ save, updateConfig, setActiveProvider, setActiveProviderUiOnly }), [save, updateConfig, setActiveProvider, setActiveProviderUiOnly]);
 };
 
 export const useSettingsStatus = () => {
