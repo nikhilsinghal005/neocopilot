@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import OpenAiConfiguration from './providers/OpenAiConfiguration';
 import AzureFoundryConfiguration from './providers/AzureFoundryConfiguration';
-import { VSCodeDropdown, VSCodeOption } from '@vscode/webview-ui-toolkit/react';
+import { VSCodeDropdown, VSCodeOption, VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useSettings } from '../state/SettingsContext';
 import { ProviderId } from '../state/settingsTypes';
 
@@ -21,16 +21,37 @@ const ApiConfigurationComponent: React.FC = () => {
   }, [activeProvider, setActiveProvider]);
 
   return (
-    <div>
-      <div style={{ marginBottom: '15px' }}>
-        <label htmlFor="api-provider-select" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em' }}>API Provider</label>
-  <VSCodeDropdown id="api-provider-select" value={activeProvider} onChange={onChange} style={{ width: '100%' }}>
-          {Object.entries(providerRegistry).map(([id, meta]) => (
-            <VSCodeOption key={id} value={id}>{meta.label}</VSCodeOption>
-          ))}
-        </VSCodeDropdown>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(providerRegistry).map(([id, meta]) => {
+            const isActive = id === activeProvider;
+            return (
+              <VSCodeButton
+                key={id}
+                appearance={isActive ? 'primary' : 'secondary'}
+                onClick={() => setActiveProvider(id as ProviderId)}
+              >
+                {meta.label}
+              </VSCodeButton>
+            );
+          })}
+        </div>
+        <div className="text-[10px] text-[var(--vscode-descriptionForeground)]">
+          Switching providers does not erase unsaved changes. Save per provider.
+        </div>
+        <div className="md:hidden">
+          <label htmlFor="api-provider-select" className="text-[10px] font-semibold uppercase tracking-wide text-[var(--vscode-descriptionForeground)]">Provider (mobile)</label>
+          <VSCodeDropdown id="api-provider-select" value={activeProvider} onChange={onChange} className="w-full">
+            {Object.entries(providerRegistry).map(([id, meta]) => (
+              <VSCodeOption key={id} value={id}>{meta.label}</VSCodeOption>
+            ))}
+          </VSCodeDropdown>
+        </div>
       </div>
-      <ActiveComponent />
+      <div className="rounded-md border border-[var(--vscode-editorWidget-border)] p-4 bg-[var(--vscode-editorWidget-background)] shadow-sm">
+        <ActiveComponent />
+      </div>
     </div>
   );
 };

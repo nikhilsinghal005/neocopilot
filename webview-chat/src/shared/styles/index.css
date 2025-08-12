@@ -2,3 +2,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Settings specific animations (inlined to avoid @import ordering issues) */
+@keyframes fadeInSettings {
+	from { opacity: 0; transform: translateY(-2px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+	animation: fadeInSettings 180ms ease-out;
+}

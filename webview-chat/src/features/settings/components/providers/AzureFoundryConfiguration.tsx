@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
-import { VSCodeTextField } from '@vscode/webview-ui-toolkit/react';
+import { VSCodeTextField, VSCodeButton } from '@vscode/webview-ui-toolkit/react';
 import { useSettings } from '../../state/SettingsContext';
+import Field from '../ui/Field';
 
 const AzureFoundryConfigurationComponent: React.FC = () => {
   const { configs, updateConfig, save, isDirty, saving } = useSettings();
@@ -14,30 +15,34 @@ const AzureFoundryConfigurationComponent: React.FC = () => {
   }, [updateConfig]);
 
   return (
-    <div>
-      <div style={{ marginBottom: '15px' }}>
-        <label htmlFor="baseUrl" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em' }}>Base URL</label>
-  <VSCodeTextField type="text" id="baseUrl" value={cfg.baseUrl} onInput={onInput} style={{ width: '100%' }} />
+    <form
+      className="flex flex-col gap-6"
+      onSubmit={(e) => { e.preventDefault(); if (isDirty && !saving) {save();} }}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Field id="baseUrl" label="Base URL" description="Azure OpenAI endpoint root">
+          <VSCodeTextField id="baseUrl" value={cfg.baseUrl} onInput={onInput} placeholder="https://{resource}.openai.azure.com/" />
+        </Field>
+        <Field id="modelId" label="Deployment / Model ID" description="Azure deployment name (NOT the model family)" required>
+          <VSCodeTextField id="modelId" value={cfg.modelId} onInput={onInput} placeholder="gpt-4o" />
+        </Field>
+        <Field id="apiKey" label="API Key" description="Stored locally only; never synced." required>
+          <VSCodeTextField id="apiKey" type="password" value={cfg.apiKey} onInput={onInput} placeholder="xxxxxxxx" />
+        </Field>
+        <Field id="azureApiVersion" label="API Version" description="Version query param for Azure OpenAI">
+          <VSCodeTextField id="azureApiVersion" value={cfg.azureApiVersion} onInput={onInput} placeholder="2024-02-01" />
+        </Field>
       </div>
-      <div style={{ marginBottom: '15px' }}>
-        <label htmlFor="apiKey" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em' }}>API Key</label>
-  <VSCodeTextField type="password" id="apiKey" value={cfg.apiKey} onInput={onInput} style={{ width: '100%' }} />
-        <p style={{ fontSize: '0.8em', color: 'var(--vscode-editor-foreground)', marginTop: '5px' }}>
-          Stored locally for API calls only.
-        </p>
+      <div className="flex gap-3">
+        <VSCodeButton
+          disabled={!isDirty || saving}
+          type="submit"
+          className="flex-1"
+        >
+          {saving ? 'Saving…' : isDirty ? 'Save Settings' : 'Saved'}
+        </VSCodeButton>
       </div>
-      <div style={{ marginBottom: '20px' }}>
-        <label htmlFor="modelId" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em' }}>Model ID</label>
-  <VSCodeTextField type="text" id="modelId" value={cfg.modelId} onInput={onInput} style={{ width: '100%' }} />
-      </div>
-      <div style={{ marginBottom: '20px' }}>
-        <label htmlFor="azureApiVersion" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em' }}>Azure API Version</label>
-  <VSCodeTextField type="text" id="azureApiVersion" value={cfg.azureApiVersion} onInput={onInput} style={{ width: '100%' }} />
-      </div>
-      <button disabled={!isDirty || saving} onClick={save} style={{ width: '100%' }}>
-        {saving ? 'Saving...' : isDirty ? 'Save Settings' : 'Saved'}
-      </button>
-    </div>
+    </form>
   );
 };
 
