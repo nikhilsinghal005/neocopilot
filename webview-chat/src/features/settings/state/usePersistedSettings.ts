@@ -19,8 +19,17 @@ export const usePersistedSettings = () => {
 
   const persist = useCallback((state: SettingsState) => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      // Conform to VS Code message contract requiring a 'command' field
+      // Redact apiKeys before writing to localStorage
+      const redacted: SettingsState = {
+        ...state,
+        configs: {
+          ...state.configs,
+          openai: { ...state.configs.openai, apiKey: '' },
+          azure: { ...state.configs.azure, apiKey: '' },
+        }
+      };
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(redacted));
+      // Send full (unredacted) state to extension so it can store secrets securely
       vscode?.postMessage?.({ command: 'settings:update', payload: state });
     } catch {
       // Silent failure; consider telemetry instrumentation later

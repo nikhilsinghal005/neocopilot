@@ -7,6 +7,7 @@ import { AiChatContextHandler } from './aiChatContextHandler';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Logger } from '../../core/logging/Logger';
+import { handleSettingsSecretMessage } from '../settings/secretManager';
 
 interface UploadedImage {
   fileName: string;
@@ -16,6 +17,8 @@ interface UploadedImage {
   isActive: boolean;
   isManuallyAddedByUser: boolean;
 }
+
+// Lightweight representations of the settings structure sent from the webview.
 
 export class AiChatPanel implements vscode.WebviewViewProvider {
   private logger = Logger.getInstance();
@@ -117,7 +120,14 @@ export class AiChatPanel implements vscode.WebviewViewProvider {
       this.logger.debug('Adding webview listener');
       this.webviewListeners.add(webviewView);
 
-      webviewView.webview.onDidReceiveMessage(async (message: { command: string;[key: string]: unknown }) => {
+      webviewView.webview.onDidReceiveMessage(async (message: { command: string; [key: string]: unknown }) => {
+        // Delegate settings secret related messages to secret manager first for modularity
+        const handled = await handleSettingsSecretMessage({
+          context: this._context,
+          getActivePanels: () => this.activePanels,
+        }, message);
+        if (handled) { return; }
+
         switch (message.command) {
           case 'upload_image': {
             const _chatId = message.chatId;
