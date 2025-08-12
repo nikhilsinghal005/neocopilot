@@ -1,10 +1,11 @@
 // src/components/Chat/ChatContainer.tsx
 import React from 'react';
-import MessageList from '../../../features/chat/components/MessageList';
-import TypingIndicator from '../../../features/chat/components/TypingIndicator';
+// Import siblings directly to avoid self-referential barrel causing build resolution issues
+import MessageList from './MessageList';
+import TypingIndicator from './TypingIndicator';
+import NewChatPanel from './NewChatPanel';
 import InputBar from '../../../shared/components/input-bar/InputBar';
-import { useChatContext } from '../../../features/chat/state/chatTypes';
-import NewChatPanel from '../../../features/chat/components/NewChatPanel';
+import { useChatContext } from '../state/chatTypes';
 
 interface ChatContainerProps {
   input: string;

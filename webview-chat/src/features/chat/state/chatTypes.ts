@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from 'react';
-import { ChatSession, MessageStore, EditorOpenFileList, ChatSessionList, UploadedImage } from '../../../shared/types/Message';
+import { ChatSession, MessageStore, EditorOpenFileList, ChatSessionList, UploadedImage } from '@shared/types/Message';
 import { v4 as uuidv4 } from 'uuid';
-import { AgentDetail } from '../../../shared/types/AppDetails';
+import { AgentDetail } from '@shared/types/AppDetails';
 
 type ViewType = 'chat' | 'settings';
 
