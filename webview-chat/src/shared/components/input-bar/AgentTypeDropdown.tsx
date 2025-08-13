@@ -4,7 +4,7 @@ import { AgentDetail } from '../../../shared/types/AppDetails';
 import { ChevronDown, HelpCircle, Bot } from 'lucide-react';
 
 const ICON_SIZE_MENU = 14; // size for icons inside the dropdown list
-const ICON_SIZE_SELECTED = 12; // smaller size for the selected (button) display
+const ICON_SIZE_SELECTED = 13; // smaller size for the selected (button) display
 
 const AgentTypeDropdown: React.FC = () => {
   const { agentType, setAgentType, isTyping } = useChatContext();
@@ -54,13 +54,13 @@ const AgentTypeDropdown: React.FC = () => {
         onClick={() => setIsOpen(!isOpen)}
         disabled={isTyping}
         ref={buttonRef}
-        className="flex items-center gap-1 px-1 py-0 border rounded-sm disabled:opacity-50 transition-colors whitespace-nowrap"
+        className="flex items-center gap-1 px-1 py-0 rounded-sm disabled:opacity-50 transition-colors whitespace-nowrap"
         style={{
           background: isOpen
             ? 'var(--vscode-dropdown-background, var(--vscode-input-background))'
             : 'var(--vscode-editor-background, transparent)',
           color: 'var(--vscode-dropdown-foreground, var(--vscode-input-foreground))',
-          borderColor: 'var(--vscode-dropdown-border, var(--vscode-input-border))',
+          border: 'none',
         }}
         onMouseEnter={(e) => {
           if (!isOpen) {e.currentTarget.style.background = 'var(--vscode-dropdown-background, var(--vscode-input-background))';}
@@ -80,11 +80,11 @@ const AgentTypeDropdown: React.FC = () => {
       </button>
       {isOpen && (
         <div
-          className="absolute bottom-full mb-1 rounded-sm shadow-lg z-10 overflow-hidden border"
+          className="absolute bottom-full mb-1 rounded-sm shadow-lg z-10 overflow-hidden"
           style={{
             background: 'var(--vscode-dropdown-background, var(--vscode-input-background))',
             color: 'var(--vscode-dropdown-foreground, var(--vscode-input-foreground))',
-            borderColor: 'var(--vscode-dropdown-border, var(--vscode-input-border))',
+            border: 'none',
             minWidth: buttonWidth ? `${buttonWidth}px` : undefined,
             width: 'max-content',
           }}

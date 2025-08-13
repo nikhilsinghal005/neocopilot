@@ -1,5 +1,5 @@
 // InputBar.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useChatContext } from '../../../features/chat/state/chatTypes';
 
 import {
@@ -27,6 +27,8 @@ const InputBar: React.FC<InputBarProps> = ({
   isTyping,
 }) => {
   const [warningMessage, setWarningMessage] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const vscode = useVscode();
   const {
     setIsTyping,
@@ -63,6 +65,25 @@ const InputBar: React.FC<InputBarProps> = ({
   }
 `;
 
+  // Manage focus styling for any element within the input container
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) {return;}
+    const handleFocusIn = () => setIsFocused(true);
+    const handleFocusOut = (e: FocusEvent) => {
+      // When focus leaves the container entirely
+      if (el && !el.contains((e.relatedTarget as Node) || document.activeElement)) {
+        setIsFocused(false);
+      }
+    };
+    el.addEventListener('focusin', handleFocusIn);
+    el.addEventListener('focusout', handleFocusOut);
+    return () => {
+      el.removeEventListener('focusin', handleFocusIn);
+      el.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
+
   return (
     <div className="complete-wrapper w-full h-full flex flex-col items-center px-1 pt-0">
       {/* Context Wrapper */}
@@ -72,10 +93,15 @@ const InputBar: React.FC<InputBarProps> = ({
       <div className="chat-wrapper w-full h-full flex flex-col items-center p-1 pt-0">
       
         <div
-          className="input-container flex flex-col gap-0 w-full max-w-2xl p-1 border-2 rounded-md"
+          ref={containerRef}
+          className="input-container flex flex-col gap-0 w-full max-w-2xl p-1 rounded-md transition-colors"
           style={{
             backgroundColor: 'var(--vscode-editor-background)',
-            borderColor: 'var(--vscode-editorGroup-border)',
+            borderStyle: 'solid',
+            borderWidth: isFocused ? '1px' : '2px',
+            borderColor: isFocused
+              ? 'var(--vscode-focusBorder, var(--vscode-editorGroup-border))'
+              : 'var(--vscode-editorGroup-border)',
             color: 'var(--vscode-editor-foreground)',
           }}
         >
